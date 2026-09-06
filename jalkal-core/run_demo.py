@@ -1,21 +1,22 @@
 """
 JalKal (जलकाल) - Scientific Urban Flood Nowcasting & Safe Navigation Engine
-Multi-Page Web Application Server with Scientific Hydrology & Real Leaflet GIS
+Multi-Page Web Application Server with Scientific Hydrology, Transect Slice & Fleet Clearance
 Ministry of Earth Sciences / NCMRWF (SIH PS ID: SIH26085)
 
 Runs on http://localhost:3000
 Routes:
-  /               - Landing page with Hero & Architecture Pillars
-  /login          - Operator authentication
-  /signup         - Operator registration
-  /dashboard      - Overview cards, active catchments & street telemetry
-  /nowcast        - Radar precipitation timeline 0-3h with uncertainty bounds
-  /causal-chain   - Full 5-stage causal cascade (Radar -> Runoff -> Conduit -> Surcharge -> Depth)
-  /drainage-graph - Real GIS Leaflet map with manhole/pipe network & HGL modal
-  /routing        - Dynamic A* safe-route detour tool & dispatch
-  /reports        - Municipal briefings, historical storm archive & exports
-  /api-docs       - Developer-facing Navigation API demo panel & cURL runner
-  /settings       - Editable model parameters with live recompute
+  /                   - Landing page with Hero & Architecture Pillars
+  /login              - Operator authentication
+  /signup             - Operator registration
+  /dashboard          - Overview cards, street telemetry, Critical Infrastructure & Economic Ticker
+  /nowcast            - Radar precipitation timeline 0-3h with uncertainty bounds
+  /causal-chain       - Full 5-stage causal cascade (Radar -> Runoff -> Conduit -> Surcharge -> Depth)
+  /drainage-graph     - Real GIS Leaflet map with manhole/pipe network & HGL modal
+  /hydraulic-transect - Subsurface 2D longitudinal cutaway transect (DEM, Invert, HGL, EGL, Fountain)
+  /routing            - Dynamic A* safe detour tool with Multi-Modal Vehicle Fleet Clearance Matrix
+  /reports            - Municipal briefings, historical storm archive & exports
+  /api-docs           - Developer-facing Navigation API demo panel & cURL runner
+  /settings           - Editable model parameters with live recompute
 """
 
 import http.server
@@ -50,7 +51,7 @@ SIMULATION_STATE = {
     }
 }
 
-# Real Delhi Coordinates: Connaught Place & Minto Bridge Catchment
+# Real Delhi Coordinates: Connaught Place & Minto Bridge Catchment Nodes
 DELHI_NODES = [
     {
         "id": "node-1",
@@ -131,6 +132,16 @@ DELHI_NODES = [
     }
 ]
 
+# Longitudinal Profile Stations along CP -> Minto -> Yamuna (1690m trunk conduit)
+DELHI_TRANSECT_STATIONS = [
+    {"code": "MH_CP_INNER_01", "name": "CP Inner Circle North", "station_m": 0, "z_ground": 216.50, "z_invert": 214.00, "diam_m": 1.20, "x_pct": 5},
+    {"code": "MH_CP_RADIAL_02", "name": "CP Radial Node 3", "station_m": 280, "z_ground": 215.80, "z_invert": 213.20, "diam_m": 1.20, "x_pct": 21},
+    {"code": "MH_CP_OUTER_03", "name": "Outer Circle Junction", "station_m": 590, "z_ground": 214.90, "z_invert": 212.10, "diam_m": 1.20, "x_pct": 38},
+    {"code": "MH_MINTO_BRIDGE_LOW", "name": "Minto Railway Underpass Sump", "station_m": 1070, "z_ground": 211.80, "z_invert": 209.20, "diam_m": 1.20, "x_pct": 65},
+    {"code": "MH_BHAVBHUTI_06", "name": "Bhavbhuti Connector", "station_m": 1380, "z_ground": 213.00, "z_invert": 208.10, "diam_m": 1.20, "x_pct": 82},
+    {"code": "OUTFALL_YAMUNA_01", "name": "Trunk Drain Yamuna Outfall", "station_m": 1690, "z_ground": 209.50, "z_invert": 206.80, "diam_m": 1.40, "x_pct": 96}
+]
+
 def calculate_physics_model(t_min=None, alpha=None, inlet_cap=None, dem_res=None):
     if t_min is None:
         t_min = SIMULATION_STATE["horizon_min"]
@@ -152,7 +163,7 @@ def calculate_physics_model(t_min=None, alpha=None, inlet_cap=None, dem_res=None
     # 2. Topographic Runoff over DEM (Minto Catchment A = 12,400 m2)
     c_impervious = 0.88
     dem_factor = 1.0 + (10 - dem_res) * 0.015
-    minto_basin_area = 12400.0
+    minto_basin_area = 96000.0  # Combined CP subcatchment draining to Minto Underpass
     q_runoff = (c_impervious * rain_rate * minto_basin_area / 3600000.0) * dem_factor
 
     # 3. Inlet Interception vs Overflow
@@ -186,7 +197,7 @@ def calculate_physics_model(t_min=None, alpha=None, inlet_cap=None, dem_res=None
     # 6. Sump Ponding Depth (Minto Underpass Depression Area ~ 1120 m2)
     q_flood_total = q_overflow + q_surcharge
     pond_area = 1120.0
-    depth_minto_cm = min(135.0, max(1.5, round((q_flood_total * 1650.0 / pond_area) * 100.0, 1)))
+    depth_minto_cm = min(135.0, max(1.5, round((q_flood_total * 620.0 / pond_area) * 100.0, 1)))
 
     depth_radial_cm = max(1.0, round(depth_minto_cm * 0.38 * (1.0 + alpha * 0.3), 1))
     depth_inner_cm = max(1.0, round(4.6 * (rain_rate / 60.0), 1))
@@ -222,6 +233,117 @@ def calculate_physics_model(t_min=None, alpha=None, inlet_cap=None, dem_res=None
 
     impassable_count = len([r for r in roads if r["status"] == "IMPASSABLE"])
 
+    # 8. Multi-Modal Vehicle Fleet Clearance Matrix
+    vehicle_matrix = [
+        {
+            "id": "TWO_WHEELER",
+            "name": "Two-Wheeler / E-Rickshaw",
+            "clearance_cm": 10.0,
+            "margin_cm": round(10.0 - depth_minto_cm, 1),
+            "status": "PASSABLE" if depth_minto_cm <= 6.0 else ("FORDABLE" if depth_minto_cm <= 10.0 else "BLOCKED"),
+            "route_assigned": "Barakhamba Flyover Detour" if depth_minto_cm > 10.0 else "Direct Minto Underpass",
+            "travel_dist_km": 1.71 if depth_minto_cm > 10.0 else 1.23,
+            "travel_time_min": 12.4 if depth_minto_cm > 10.0 else (5.2 if depth_minto_cm <= 6.0 else 9.5)
+        },
+        {
+            "id": "SEDAN_CAR",
+            "name": "Civilian Sedan / Hatchback",
+            "clearance_cm": 15.0,
+            "margin_cm": round(15.0 - depth_minto_cm, 1),
+            "status": "PASSABLE" if depth_minto_cm <= 9.0 else ("FORDABLE" if depth_minto_cm <= 15.0 else "BLOCKED"),
+            "route_assigned": "Barakhamba Flyover Detour" if depth_minto_cm > 15.0 else "Direct Minto Underpass",
+            "travel_dist_km": 1.71 if depth_minto_cm > 15.0 else 1.23,
+            "travel_time_min": 9.8 if depth_minto_cm > 15.0 else (4.6 if depth_minto_cm <= 9.0 else 8.2)
+        },
+        {
+            "id": "EMERGENCY_AMBULANCE",
+            "name": "ALS Emergency Ambulance",
+            "clearance_cm": 25.0,
+            "margin_cm": round(25.0 - depth_minto_cm, 1),
+            "status": "PASSABLE" if depth_minto_cm <= 15.0 else ("FORDABLE" if depth_minto_cm <= 25.0 else "BLOCKED"),
+            "route_assigned": "Barakhamba Flyover Detour" if depth_minto_cm > 25.0 else "Direct Minto Underpass",
+            "travel_dist_km": 1.71 if depth_minto_cm > 25.0 else 1.23,
+            "travel_time_min": 8.4 if depth_minto_cm > 25.0 else (3.9 if depth_minto_cm <= 15.0 else 6.5)
+        },
+        {
+            "id": "DTC_BUS",
+            "name": "DTC Low-Floor Electric Bus",
+            "clearance_cm": 30.0,
+            "margin_cm": round(30.0 - depth_minto_cm, 1),
+            "status": "PASSABLE" if depth_minto_cm <= 18.0 else ("FORDABLE" if depth_minto_cm <= 30.0 else "BLOCKED"),
+            "route_assigned": "Barakhamba Flyover Detour" if depth_minto_cm > 30.0 else "Direct Minto Underpass",
+            "travel_dist_km": 1.71 if depth_minto_cm > 30.0 else 1.23,
+            "travel_time_min": 11.0 if depth_minto_cm > 30.0 else (5.5 if depth_minto_cm <= 18.0 else 8.8)
+        },
+        {
+            "id": "FIRE_TRUCK",
+            "name": "Heavy Fire Tender / NDRF 4x4",
+            "clearance_cm": 45.0,
+            "margin_cm": round(45.0 - depth_minto_cm, 1),
+            "status": "PASSABLE" if depth_minto_cm <= 28.0 else ("FORDABLE" if depth_minto_cm <= 45.0 else "BLOCKED"),
+            "route_assigned": "Barakhamba Flyover Detour" if depth_minto_cm > 45.0 else "Direct Minto Underpass",
+            "travel_dist_km": 1.71 if depth_minto_cm > 45.0 else 1.23,
+            "travel_time_min": 9.5 if depth_minto_cm > 45.0 else (4.8 if depth_minto_cm <= 28.0 else 7.2)
+        }
+    ]
+
+    # 9. Critical Infrastructure Asset Vulnerability Telemetry
+    critical_infrastructure = [
+        {
+            "id": "metro-gate",
+            "name": "Rajiv Chowk Metro Station (Gate 2 / Yellow Line)",
+            "elev_amsl": 215.20,
+            "water_depth_cm": depth_radial_cm,
+            "crit_depth_cm": 18.0,
+            "risk_level": "CRITICAL RISK (SANDBAGS ACTIVE)" if depth_radial_cm >= 15.0 else ("ELEVATED" if depth_radial_cm >= 10.0 else "NOMINAL"),
+            "vulnerability": "Subsurface concourse water ingress; 4,50,000 daily commuters."
+        },
+        {
+            "id": "railway-station",
+            "name": "New Delhi Railway Station (Ajmeri Gate Entry)",
+            "elev_amsl": 213.60,
+            "water_depth_cm": round(depth_minto_cm * 0.28, 1),
+            "crit_depth_cm": 20.0,
+            "risk_level": "RESTRICTED (TRACK SLOW ORDER)" if (depth_minto_cm * 0.28) >= 12.0 else "NOMINAL",
+            "vulnerability": "Access ramp water accumulation; 320 daily passenger train schedules."
+        },
+        {
+            "id": "hospital-corridor",
+            "name": "LNJP Hospital Trauma Center Corridor",
+            "elev_amsl": 214.80,
+            "water_depth_cm": depth_flyover_cm,
+            "crit_depth_cm": 15.0,
+            "risk_level": "DIRECT ACCESS CUT OFF (DETOUR ACTIVE)" if depth_minto_cm > 25.0 else "NOMINAL ACCESS",
+            "vulnerability": "Direct ambulance corridor blocked by Minto sump; +8.4 min detour penalty."
+        },
+        {
+            "id": "power-substation",
+            "name": "BSES Minto Road 33kV Power Substation",
+            "elev_amsl": 212.40,
+            "water_depth_cm": round(max(0.0, depth_minto_cm - 4.0), 1),
+            "crit_depth_cm": 28.0,
+            "risk_level": "HIGH THREAT (SUMP PUMPS ENGAGED)" if (depth_minto_cm - 4.0) >= 28.0 else ("ALERT" if (depth_minto_cm - 4.0) >= 15.0 else "NOMINAL"),
+            "vulnerability": "Transformer plinth water ingress; 42,000 Connaught commercial connections."
+        },
+        {
+            "id": "municipal-hq",
+            "name": "NDMC Palika Kendra Central Emergency Cell",
+            "elev_amsl": 218.10,
+            "water_depth_cm": 0.0,
+            "crit_depth_cm": 50.0,
+            "risk_level": "OPERATIONAL COMMAND",
+            "vulnerability": "Command and control coordination post; continuous power and comms."
+        }
+    ]
+
+    # 10. Real-Time Economic Congestion Loss Estimator
+    is_minto_closed = depth_minto_cm > 25.0
+    pcu_delayed_per_hr = 3200 if is_minto_closed else (1200 if depth_minto_cm > 10.0 else 0)
+    lost_hours_per_hr = int(round(pcu_delayed_per_hr * (11.2 / 60.0) * 1.35, 0))
+    hourly_economic_loss_inr = int(pcu_delayed_per_hr * 151.5) if is_minto_closed else int(pcu_delayed_per_hr * 85.0)
+    storm_active_hours = max(0.5, round(t_min / 60.0, 2))
+    total_event_economic_loss_inr = int(hourly_economic_loss_inr * storm_active_hours)
+
     return {
         "horizon_min": t_min,
         "rainfall_rate": rain_rate,
@@ -248,8 +370,13 @@ def calculate_physics_model(t_min=None, alpha=None, inlet_cap=None, dem_res=None
         "alpha": alpha,
         "inlet_capacity": inlet_cap,
         "dem_resolution": dem_res,
+        "vehicle_matrix": vehicle_matrix,
+        "critical_infrastructure": critical_infrastructure,
+        "hourly_economic_loss_inr": hourly_economic_loss_inr,
+        "total_event_economic_loss_inr": total_event_economic_loss_inr,
+        "lost_hours_per_hr": lost_hours_per_hr,
+        "pcu_delayed_per_hr": pcu_delayed_per_hr
     }
-
 
 APP_SHELL_HTML = """<!DOCTYPE html>
 <html lang="en">
@@ -364,18 +491,23 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       justify-content: space-between;
       padding: 0.65rem 0.9rem;
       border-radius: var(--radius-md);
-      color: var(--text-secondary);
-      font-weight: 500;
       font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
       cursor: pointer;
       transition: all 0.15s ease;
-      text-decoration: none;
     }
-    .sidebar-item:hover { background: var(--bg-card-alt); color: var(--text-primary); }
-    .sidebar-item.active {
-      background: var(--accent-orange-light);
+    .sidebar-item:hover {
+      background: var(--bg-card-alt);
       color: var(--text-primary);
-      border-left: 3px solid var(--accent-orange);
+    }
+    .sidebar-item.active {
+      background: white;
+      color: var(--text-primary);
+      font-weight: 700;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      border: 1px solid var(--border-light);
     }
 
     .toast {
@@ -384,19 +516,20 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       right: 24px;
       background: var(--accent-black);
       color: white;
-      padding: 0.85rem 1.4rem;
+      padding: 0.8rem 1.4rem;
       border-radius: var(--radius-md);
       font-size: 0.75rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-weight: 600;
       display: none;
       z-index: 2000;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     }
     .toast.show { display: block; }
 
     .modal-overlay {
       position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.45);
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(17, 17, 17, 0.45);
       backdrop-filter: blur(2px);
       display: none;
       align-items: center;
@@ -447,6 +580,8 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       demResolution: 10,
       radarInterval: 15,
       manningN: 0.014,
+      selectedVehicle: "EMERGENCY_AMBULANCE",
+      selectedStationCode: "MH_MINTO_BRIDGE_LOW",
       settingsTab: "parameters",
       reportsTab: "executive",
       selectedNode: null,
@@ -475,6 +610,15 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       { id: "node-5", code: "MH_BARAKHAMBA_05", name: "Barakhamba Elevated Deck", lat: 28.6275, lon: 77.2265, z_ground: 217.50, z_invert: 214.80, basin_area: 4900 },
       { id: "node-6", code: "MH_BHAVBHUTI_06", name: "Bhavbhuti Marg Bypass", lat: 28.6362, lon: 77.2235, z_ground: 216.00, z_invert: 213.50, basin_area: 5800 },
       { id: "node-7", code: "OUTFALL_YAMUNA_01", name: "Trunk Drain Outfall to Yamuna", lat: 28.6385, lon: 77.2340, z_ground: 209.50, z_invert: 206.80, basin_area: 18500 }
+    ];
+
+    const TRANSECT_STATIONS = [
+      { code: "MH_CP_INNER_01", name: "CP Inner Circle North", station_m: 0, z_ground: 216.50, z_invert: 214.00, diam_m: 1.20, x_pct: 6 },
+      { code: "MH_CP_RADIAL_02", name: "CP Radial Node 3", station_m: 280, z_ground: 215.80, z_invert: 213.20, diam_m: 1.20, x_pct: 22 },
+      { code: "MH_CP_OUTER_03", name: "Outer Circle Junction", station_m: 590, z_ground: 214.90, z_invert: 212.10, diam_m: 1.20, x_pct: 40 },
+      { code: "MH_MINTO_BRIDGE_LOW", name: "Minto Railway Underpass Sump", station_m: 1070, z_ground: 211.80, z_invert: 209.20, diam_m: 1.20, x_pct: 66 },
+      { code: "MH_BHAVBHUTI_06", name: "Bhavbhuti Connector", station_m: 1380, z_ground: 213.00, z_invert: 208.10, diam_m: 1.20, x_pct: 82 },
+      { code: "OUTFALL_YAMUNA_01", name: "Trunk Drain Yamuna Outfall", station_m: 1690, z_ground: 209.50, z_invert: 206.80, diam_m: 1.40, x_pct: 96 }
     ];
 
     const HISTORICAL_STORMS = [
@@ -522,7 +666,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       // 2. Topographic Runoff over DEM
       const cImpervious = 0.88;
       const demFactor = 1.0 + (10 - demRes) * 0.015;
-      const mintoBasinArea = 12400.0;
+      const mintoBasinArea = 96000.0; // Combined CP subcatchment draining to Minto
       const qRunoff = (cImpervious * rain * mintoBasinArea / 3600000.0) * demFactor;
 
       // 3. Inlet Interception vs Surface Overflow
@@ -558,7 +702,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       // 6. Street Ponding Depth (Minto Basin)
       const qFloodTotal = qOverflow + qSurcharge;
       const pondArea = 1120.0;
-      const mintoDepth = Math.min(135.0, Math.max(1.5, Math.round((qFloodTotal * 1650.0 / pondArea) * 1000) / 10));
+      const mintoDepth = Math.min(135.0, Math.max(1.5, Math.round((qFloodTotal * 620.0 / pondArea) * 1000) / 10));
 
       const radialDepth = Math.max(1.0, Math.round(mintoDepth * 0.38 * (1.0 + alpha * 0.3) * 10) / 10);
       const innerDepth = Math.max(1.0, Math.round(4.6 * (rain / 60.0) * 10) / 10);
@@ -592,6 +736,149 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         { id: "road-5", name: "Bhavbhuti Marg Bypass Corridor", coords: [[28.6345, 77.2195], [28.6362, 77.2235], [28.6360, 77.2290]], baseElev: 216.0, depth: bhavbhutiDepth, status: "PASSABLE", speed: 40 }
       ];
 
+      // 8. Multi-Modal Vehicle Fleet Clearance Matrix
+      const vehicleMatrix = [
+        {
+          id: "TWO_WHEELER",
+          name: "Two-Wheeler / E-Rickshaw",
+          clearanceCm: 10.0,
+          marginCm: Math.round((10.0 - mintoDepth) * 10) / 10,
+          status: mintoDepth <= 6.0 ? "PASSABLE" : (mintoDepth <= 10.0 ? "FORDABLE (SLOW)" : "BLOCKED"),
+          routeAssigned: mintoDepth > 10.0 ? "Barakhamba Flyover Detour" : "Direct Minto Underpass",
+          travelDistKm: mintoDepth > 10.0 ? 1.71 : 1.23,
+          travelTimeMin: mintoDepth > 10.0 ? 12.4 : (mintoDepth <= 6.0 ? 5.2 : 9.5)
+        },
+        {
+          id: "SEDAN_CAR",
+          name: "Civilian Sedan / Hatchback",
+          clearanceCm: 15.0,
+          marginCm: Math.round((15.0 - mintoDepth) * 10) / 10,
+          status: mintoDepth <= 9.0 ? "PASSABLE" : (mintoDepth <= 15.0 ? "FORDABLE (SLOW)" : "BLOCKED"),
+          routeAssigned: mintoDepth > 15.0 ? "Barakhamba Flyover Detour" : "Direct Minto Underpass",
+          travelDistKm: mintoDepth > 15.0 ? 1.71 : 1.23,
+          travelTimeMin: mintoDepth > 15.0 ? 9.8 : (mintoDepth <= 9.0 ? 4.6 : 8.2)
+        },
+        {
+          id: "EMERGENCY_AMBULANCE",
+          name: "ALS Emergency Ambulance",
+          clearanceCm: 25.0,
+          marginCm: Math.round((25.0 - mintoDepth) * 10) / 10,
+          status: mintoDepth <= 15.0 ? "PASSABLE" : (mintoDepth <= 25.0 ? "FORDABLE (SLOW)" : "BLOCKED"),
+          routeAssigned: mintoDepth > 25.0 ? "Barakhamba Flyover Detour" : "Direct Minto Underpass",
+          travelDistKm: mintoDepth > 25.0 ? 1.71 : 1.23,
+          travelTimeMin: mintoDepth > 25.0 ? 8.4 : (mintoDepth <= 15.0 ? 3.9 : 6.5)
+        },
+        {
+          id: "DTC_BUS",
+          name: "DTC Low-Floor Electric Bus",
+          clearanceCm: 30.0,
+          marginCm: Math.round((30.0 - mintoDepth) * 10) / 10,
+          status: mintoDepth <= 18.0 ? "PASSABLE" : (mintoDepth <= 30.0 ? "FORDABLE (SLOW)" : "BLOCKED"),
+          routeAssigned: mintoDepth > 30.0 ? "Barakhamba Flyover Detour" : "Direct Minto Underpass",
+          travelDistKm: mintoDepth > 30.0 ? 1.71 : 1.23,
+          travelTimeMin: mintoDepth > 30.0 ? 11.0 : (mintoDepth <= 18.0 ? 5.5 : 8.8)
+        },
+        {
+          id: "FIRE_TRUCK",
+          name: "Heavy Fire Tender / NDRF 4x4",
+          clearanceCm: 45.0,
+          marginCm: Math.round((45.0 - mintoDepth) * 10) / 10,
+          status: mintoDepth <= 28.0 ? "PASSABLE" : (mintoDepth <= 45.0 ? "FORDABLE (SLOW)" : "BLOCKED"),
+          routeAssigned: mintoDepth > 45.0 ? "Barakhamba Flyover Detour" : "Direct Minto Underpass",
+          travelDistKm: mintoDepth > 45.0 ? 1.71 : 1.23,
+          travelTimeMin: mintoDepth > 45.0 ? 9.5 : (mintoDepth <= 28.0 ? 4.8 : 7.2)
+        }
+      ];
+
+      // 9. Critical Infrastructure Asset Telemetry
+      const depthStation = Math.round(mintoDepth * 0.28 * 10) / 10;
+      const depthSubstation = Math.max(0.0, Math.round((mintoDepth - 4.0) * 10) / 10);
+      const criticalInfrastructure = [
+        {
+          id: "metro-gate",
+          name: "Rajiv Chowk Metro Station (Gate 2 / Yellow Line)",
+          elevAmsl: 215.20,
+          waterDepthCm: radialDepth,
+          critDepthCm: 18.0,
+          riskLevel: radialDepth >= 15.0 ? "CRITICAL RISK (SANDBAGS ACTIVE)" : (radialDepth >= 10.0 ? "ELEVATED INGRESS RISK" : "NOMINAL"),
+          riskClass: radialDepth >= 15.0 ? "badge-error" : (radialDepth >= 10.0 ? "badge-warning" : "badge-success"),
+          vulnerability: "Subsurface concourse water ingress; 4,50,000 daily commuters."
+        },
+        {
+          id: "railway-station",
+          name: "New Delhi Railway Station (Ajmeri Gate Entry)",
+          elevAmsl: 213.60,
+          waterDepthCm: depthStation,
+          critDepthCm: 20.0,
+          riskLevel: depthStation >= 12.0 ? "RESTRICTED (TRACK SLOW ORDER)" : "NOMINAL ACCESS",
+          riskClass: depthStation >= 12.0 ? "badge-warning" : "badge-success",
+          vulnerability: "Access ramp water accumulation; 320 daily passenger train schedules."
+        },
+        {
+          id: "hospital-corridor",
+          name: "LNJP Hospital Trauma Center Corridor",
+          elevAmsl: 214.80,
+          waterDepthCm: flyoverDepth,
+          critDepthCm: 15.0,
+          riskLevel: mintoDepth > 25.0 ? "DIRECT ACCESS CUT OFF (DETOUR ACTIVE)" : "NOMINAL TRANSIT",
+          riskClass: mintoDepth > 25.0 ? "badge-error" : "badge-success",
+          vulnerability: "Direct ambulance corridor blocked by Minto sump; +8.4 min detour penalty."
+        },
+        {
+          id: "power-substation",
+          name: "BSES Minto Road 33kV Power Substation",
+          elevAmsl: 212.40,
+          waterDepthCm: depthSubstation,
+          critDepthCm: 28.0,
+          riskLevel: depthSubstation >= 28.0 ? "HIGH THREAT (SUMP PUMPS ENGAGED)" : (depthSubstation >= 15.0 ? "ALERT (STANDBY PUMP)" : "NOMINAL"),
+          riskClass: depthSubstation >= 28.0 ? "badge-error" : (depthSubstation >= 15.0 ? "badge-warning" : "badge-success"),
+          vulnerability: "Transformer plinth water ingress; 42,000 Connaught commercial connections."
+        }
+      ];
+
+      // 10. Economic Congestion Loss Estimator
+      const isMintoClosed = mintoDepth > 25.0;
+      const pcuDelayedPerHr = isMintoClosed ? 3200 : (mintoDepth > 10.0 ? 1200 : 0);
+      const lostHoursPerHr = Math.round(pcuDelayedPerHr * (11.2 / 60.0) * 1.35);
+      const hourlyEconomicLossInr = isMintoClosed ? Math.round(pcuDelayedPerHr * 151.5) : Math.round(pcuDelayedPerHr * 85.0);
+      const stormActiveHours = Math.max(0.5, Math.round((t / 60.0) * 100) / 100);
+      const totalEventEconomicLossInr = Math.round(hourlyEconomicLossInr * stormActiveHours);
+
+      // 11. Dynamic Station Transect Calculation
+      const computedTransect = TRANSECT_STATIONS.map(st => {
+        let stHgl = 0.0;
+        let stSurcharge = 0.0;
+        if (st.code === "MH_MINTO_BRIDGE_LOW") {
+          stHgl = mintoHgl;
+          stSurcharge = hSurcharge;
+        } else if (st.code === "MH_CP_INNER_01") {
+          stHgl = st.z_invert + 0.85;
+        } else if (st.code === "MH_CP_RADIAL_02") {
+          stHgl = st.z_invert + 0.90;
+        } else if (st.code === "MH_CP_OUTER_03") {
+          stHgl = st.z_invert + 1.10;
+        } else if (st.code === "MH_BHAVBHUTI_06") {
+          stHgl = st.z_invert + 1.15;
+        } else {
+          stHgl = st.z_invert + 0.70;
+        }
+        let stEgl = Math.round((stHgl + 0.18) * 100) / 100;
+        let zCrown = Math.round((st.z_invert + st.diam_m) * 100) / 100;
+        let isOverRim = stHgl > st.z_ground;
+        let pressureHead = Math.round((stHgl - st.z_invert) * 100) / 100;
+
+        return {
+          ...st,
+          z_crown: zCrown,
+          hgl: stHgl,
+          egl: stEgl,
+          isOverRim: isOverRim,
+          surchargeHead: stSurcharge,
+          pressureHead: pressureHead,
+          regime: isOverRim ? "SURCHARGE OVERFLOW" : (stHgl > zCrown ? "PRESSURE CONDUIT" : "GRAVITY OPEN-CHANNEL")
+        };
+      });
+
       return {
         rain, dbz,
         qRunoff: Math.round(qRunoff * 1000) / 1000,
@@ -606,7 +893,14 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         confPct, confLabel, confStyle,
         roads,
         clearanceRate: flyoverDepth < 10 ? 100.0 : 0.0,
-        impassableCount: roads.filter(r => r.status === "IMPASSABLE").length
+        impassableCount: roads.filter(r => r.status === "IMPASSABLE").length,
+        vehicleMatrix,
+        criticalInfrastructure,
+        hourlyEconomicLossInr,
+        totalEventEconomicLossInr,
+        lostHoursPerHr,
+        pcuDelayedPerHr,
+        computedTransect
       };
     }
 
@@ -637,7 +931,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               </p>
               <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
                 <button class="btn-primary" style="padding: 0.8rem 1.8rem;" onclick="navigate('/dashboard')">LAUNCH DASHBOARD</button>
-                <button class="btn-secondary" style="padding: 0.8rem 1.8rem;" onclick="navigate('/causal-chain')">CAUSAL PIPELINE</button>
+                <button class="btn-secondary" style="padding: 0.8rem 1.8rem;" onclick="navigate('/hydraulic-transect')">CONDUIT TRANSECT</button>
               </div>
             </div>
 
@@ -660,9 +954,9 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
               <div class="card">
                 <div class="label-mono">PILLAR 03</div>
-                <h3 style="font-weight: 700; margin: 0.4rem 0;">Depth-Penalized Routing</h3>
+                <h3 style="font-weight: 700; margin: 0.4rem 0;">Multi-Modal Routing</h3>
                 <p style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; font-family: sans-serif;">
-                  Multi-criteria depth-weighted A* algorithm enforcing vehicle clearance thresholds to dynamically detour ambulances away from choke-points.
+                  Dynamic depth-penalized A* algorithm enforcing vehicle clearance thresholds across 5 vehicle classes to detour emergency units safely.
                 </p>
               </div>
             </div>
@@ -670,7 +964,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
           <footer style="border-top: 1px solid var(--border-light); padding: 1.5rem 2rem; display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted);">
             <span>Ministry of Earth Sciences / NCMRWF</span>
-            <span>Smart India Hackathon • PS ID: SIH26085</span>
+            <span>Smart India Hackathon &bull; PS ID: SIH26085</span>
           </footer>
         </div>
       `;
@@ -840,8 +1134,13 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                     <span>Drainage GIS Map</span>
                     <span style="font-size: 0.62rem; color: var(--text-muted);">LEAFLET</span>
                   </div>
+                  <div class="sidebar-item ${state.route === '/hydraulic-transect' ? 'active' : ''}" onclick="navigate('/hydraulic-transect')">
+                    <span>Conduit Transect</span>
+                    <span style="font-size: 0.62rem; background: var(--accent-orange); color: white; padding: 0.1rem 0.35rem; border-radius: 4px;">2D SLICE</span>
+                  </div>
                   <div class="sidebar-item ${state.route === '/routing' ? 'active' : ''}" onclick="navigate('/routing')">
                     <span>Safe Detour Routing</span>
+                    <span style="font-size: 0.62rem; background: #1E8E5A; color: white; padding: 0.1rem 0.35rem; border-radius: 4px;">FLEET</span>
                   </div>
                   <div class="sidebar-item ${state.route === '/reports' ? 'active' : ''}" onclick="navigate('/reports')">
                     <span>Reports & History</span>
@@ -884,7 +1183,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
       return `
         <div style="max-width: 1050px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.8rem;">
-          <div style="display: justify-content: space-between; align-items: flex-start; display: flex;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
               <h1 class="heading-display" style="font-size: 2.4rem; margin-bottom: 0.2rem;">Dashboard Overview</h1>
               <p style="font-size: 0.85rem; color: var(--text-secondary); font-family: sans-serif;">
@@ -892,7 +1191,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               </p>
             </div>
             <div style="display: flex; gap: 0.6rem;">
-              <button class="btn-secondary" onclick="navigate('/causal-chain')">CAUSAL PIPELINE</button>
+              <button class="btn-secondary" onclick="navigate('/hydraulic-transect')">CONDUIT TRANSECT</button>
               <button class="btn-primary" onclick="navigate('/routing')">SAFE DETOURS</button>
             </div>
           </div>
@@ -935,6 +1234,52 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                 ${h.qSurcharge.toFixed(2)}<span style="font-size: 0.8rem; font-family: monospace; color: var(--text-muted); margin-left: 2px;">m3/s</span>
               </div>
               <div style="font-size: 0.7rem; color: var(--text-secondary);">Minto Manhole</div>
+            </div>
+          </div>
+
+          <!-- Feature 3: Critical Infrastructure Vulnerability & Economic Congestion Ticker -->
+          <div class="card" style="border-left: 4px solid var(--accent-orange);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.6rem;">
+              <div>
+                <span class="label-mono">CRITICAL URBAN ASSETS & ECONOMIC RISK TICKER</span>
+                <h2 style="font-size: 1.1rem; font-weight: 800; margin-top: 0.2rem;">Monitored Delhi Infrastructure Telemetry</h2>
+              </div>
+              <div style="background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-pill); padding: 0.3rem 0.8rem; font-size: 0.7rem; font-weight: 700;">
+                LOSS RATE: ₹4,85,000 / HR CLOSED
+              </div>
+            </div>
+
+            <!-- 4 Asset Cards Grid -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.2rem;">
+              ${h.criticalInfrastructure.map(asset => `
+                <div style="background: var(--bg-card-alt); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 0.8rem; display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <div style="font-weight: 700; font-size: 0.75rem; margin-bottom: 0.3rem;">${asset.name}</div>
+                    <div style="font-size: 0.68rem; color: var(--text-secondary); margin-bottom: 0.4rem;">${asset.vulnerability}</div>
+                  </div>
+                  <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.68rem; margin-bottom: 0.4rem;">
+                      <span>Limit: <b>${asset.critDepthCm} cm</b></span>
+                      <span>Live: <b>${asset.waterDepthCm.toFixed(1)} cm</b></span>
+                    </div>
+                    <span class="${asset.riskClass}" style="font-size: 0.62rem; padding: 0.15rem 0.45rem;">${asset.riskLevel}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- Economic Congestion Ticker Strip -->
+            <div style="background: #FFFDF9; border: 1px solid #F0D4B8; border-radius: var(--radius-sm); padding: 0.9rem 1.2rem; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span class="label-mono" style="color: var(--accent-orange);">ECONOMIC LOSS MODEL & COMMUTER PRODUCTIVITY PENALTY</span>
+                <div style="font-size: 0.75rem; margin-top: 0.2rem;">
+                  Underpass closure detours <b>${h.pcuDelayedPerHr.toLocaleString('en-IN')} PCU/hr</b> via Barakhamba, creating <b>~${h.lostHoursPerHr.toLocaleString('en-IN')} lost commuter person-hours / hr</b>.
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div class="label-mono">ESTIMATED EVENT CONGESTION COST</div>
+                <div style="font-size: 1.3rem; font-weight: 800; color: #D64545;">₹ ${h.totalEventEconomicLossInr.toLocaleString('en-IN')}</div>
+              </div>
             </div>
           </div>
 
@@ -1073,7 +1418,6 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               <input type="range" min="0" max="180" step="15" value="${state.horizonMin}" oninput="updateHorizon(this.value)" style="flex: 1; accent-color: var(--accent-orange); cursor: pointer;">
             </div>
 
-            <!-- Uncertainty envelope strip -->
             <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--text-muted); padding-top: 0.2rem;">
               <span>0m (&plusmn;8% error)</span>
               <span>30m (&plusmn;14%)</span>
@@ -1092,51 +1436,46 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
             <div style="height: 180px; width: 100%; position: relative;">
               <svg width="100%" height="100%" viewBox="0 0 800 160" preserveAspectRatio="none">
-                <!-- Confidence Envelope Polygon -->
                 <polygon points="
                   40,140 100,120 160,80 220,25 280,60 340,105 400,125 460,135 520,138 580,140 640,140 700,140 760,140
                   760,155 700,155 640,155 580,155 520,155 460,155 400,155 340,150 280,110 220,65 160,110 100,135 40,148
                 " fill="#FDF0E4" stroke="none" />
-
-                <!-- Grid lines -->
-                <line x1="40" y1="40" x2="760" y2="40" stroke="#ECE7DC" stroke-dasharray="4,4"/>
-                <line x1="40" y1="80" x2="760" y2="80" stroke="#ECE7DC" stroke-dasharray="4,4"/>
-                <line x1="40" y1="120" x2="760" y2="120" stroke="#ECE7DC" stroke-dasharray="4,4"/>
-
-                <!-- Hydrograph Mean Line -->
-                <path d="M 40 145 Q 160 95 220 45 T 340 128 T 520 148 T 760 150" fill="none" stroke="#E8863A" stroke-width="3"/>
-
-                <!-- Current Horizon Scrubber Indicator Line -->
-                <line x1="${40 + (state.horizonMin / 180.0) * 720}" y1="10" x2="${40 + (state.horizonMin / 180.0) * 720}" y2="155" stroke="#111111" stroke-width="2" stroke-dasharray="3,3"/>
-                <circle cx="${40 + (state.horizonMin / 180.0) * 720}" cy="${Math.max(25, 145 - (h.mintoDepth / 100.0) * 110)}" r="5" fill="#111111"/>
+                <polyline points="
+                  40,144 100,128 160,95 220,45 280,85 340,128 400,140 460,145 520,147 580,148 640,148 700,148 760,148
+                " fill="none" stroke="#E8863A" stroke-width="3" />
+                ${state.horizonMin > 75 ? `
+                  <polyline points="
+                    400,140 460,145 520,147 580,148 640,148 700,148 760,148
+                  " fill="none" stroke="#E8863A" stroke-width="3" stroke-dasharray="6,6" />
+                ` : ''}
+                <line x1="${40 + (state.horizonMin / 180) * 720}" y1="10" x2="${40 + (state.horizonMin / 180) * 720}" y2="155" stroke="#111111" stroke-width="2" stroke-dasharray="4,4" />
+                <circle cx="${40 + (state.horizonMin / 180) * 720}" cy="${155 - (h.mintoDepth / 135) * 110}" r="5" fill="#D64545" stroke="#FFFFFF" stroke-width="2" />
               </svg>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--text-secondary); margin-top: 0.4rem;">
-              <span>T+0 min (Radar Ground-Truth)</span>
-              <span>T+45 min (Storm Peak: ${h.rain.toFixed(1)} mm/hr)</span>
-              <span>T+180 min (Extrapolated Dissipation)</span>
+            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.5rem;">
+              <span>T = 0m (Current)</span>
+              <span>T = 45m (Peak Squall)</span>
+              <span>T = 90m (Post-Frontal)</span>
+              <span>T = 180m (3-Hour Window)</span>
             </div>
           </div>
 
-          <!-- Real GIS Street Map with Styling according to Uncertainty -->
-          <div class="card">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.6rem;">
+          <!-- Real Leaflet Spatial Map -->
+          <div class="card" style="padding: 1.2rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
               <div>
-                <span style="font-weight: 700; font-size: 0.85rem;">Spatial Inundation Extent (Delhi Catchment)</span>
-                <span style="font-size: 0.7rem; color: var(--text-secondary); margin-left: 0.5rem;">
-                  Segments render ${h.confStyle === 'dashed' ? 'DASHED with uncertainty halo (Far-term forecast)' : 'SOLID (Near-term high confidence)'}
-                </span>
+                <span style="font-weight: 700; font-size: 0.85rem;">Spatial Inundation Heat & Depth Geometry</span>
+                <span style="font-size: 0.7rem; color: var(--text-secondary); margin-left: 0.5rem;">Forecast confidence style: ${h.confidence_style || h.confStyle}</span>
               </div>
-              <span class="label-mono">T+${state.horizonMin}M SLICE</span>
+              <span class="label-mono">LEAFLET GIS INTERACTIVE</span>
             </div>
-
             <div id="nowcast-leaflet-map" style="height: 380px; width: 100%; border-radius: var(--radius-md); border: 1px solid var(--border-light); background: var(--bg-card-alt);"></div>
           </div>
         </div>
       `;
     }
 
-    // Page 3: Causal Chain Visualization (Full 5-Stage Scientific Pipeline)
+    // Page 3: Causal Chain Architecture View
     function renderCausalChainPage() {
       const h = calculateHydraulics();
 
@@ -1144,57 +1483,27 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         <div style="max-width: 1050px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.8rem;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
-              <h1 class="heading-display" style="font-size: 2.4rem; margin-bottom: 0.2rem;">Causal Chain Architecture</h1>
+              <h1 class="heading-display" style="font-size: 2.4rem; margin-bottom: 0.2rem;">Causal Pipeline Architecture</h1>
               <p style="font-size: 0.85rem; color: var(--text-secondary); font-family: sans-serif;">
-                End-to-end physical pipeline: Radar Ingest &rarr; DEM Runoff &rarr; Subsurface Conduit &rarr; Surcharge &rarr; Flood Depth.
+                Step-by-step physical causality connecting rainfall nowcasting to surface runoff, drainage graph, manhole surcharge, and street ponding depth.
               </p>
             </div>
-            <div style="display: flex; gap: 0.5rem;">
-              <span class="badge-success">LIVE RECOMPUTE COUPLED</span>
-            </div>
+            <span class="badge-success">LIVE COUPLED COMPUTATION</span>
           </div>
 
-          <!-- Dynamic Controls Strip -->
-          <div class="card" style="padding: 1.2rem; background: var(--bg-card-alt); display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; align-items: center;">
-            <div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; margin-bottom: 0.2rem;">
-                <span>Storm Lead Time:</span>
-                <span style="color: var(--accent-orange);">T + ${state.horizonMin} min</span>
-              </div>
-              <input type="range" min="0" max="180" step="15" value="${state.horizonMin}" oninput="updateHorizon(this.value)" style="width: 100%; accent-color: var(--accent-orange); cursor: pointer;">
-            </div>
-
-            <div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; margin-bottom: 0.2rem;">
-                <span>Pipe Clogging (alpha):</span>
-                <span style="color: #D64545;">${state.cloggingRatio.toFixed(2)}</span>
-              </div>
-              <input type="range" min="0.0" max="0.95" step="0.05" value="${state.cloggingRatio}" oninput="updateParam('cloggingRatio', parseFloat(this.value))" style="width: 100%; accent-color: #D64545; cursor: pointer;">
-            </div>
-
-            <div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; margin-bottom: 0.2rem;">
-                <span>Inlet Capacity (m3/s):</span>
-                <span>${state.inletCapacity.toFixed(1)} m3/s</span>
-              </div>
-              <input type="range" min="1.0" max="6.0" step="0.2" value="${state.inletCapacity}" oninput="updateParam('inletCapacity', parseFloat(this.value))" style="width: 100%; accent-color: var(--accent-black); cursor: pointer;">
-            </div>
-          </div>
-
-          <!-- 5-Stage Linked Causal Cascade View -->
           <div style="display: flex; flex-direction: column; gap: 1rem;">
             <!-- Stage 1 -->
             <div class="card" style="padding: 1.2rem; border-left: 4px solid var(--accent-orange); display: flex; justify-content: space-between; align-items: center;">
               <div style="max-width: 600px;">
-                <div class="label-mono">STAGE 01 &bull; ATMOSPHERIC NOWCASTING</div>
-                <h3 style="font-weight: 800; font-size: 1.1rem; margin: 0.2rem 0;">Doppler Radar Extrapolation (Palam DWR)</h3>
+                <div class="label-mono">STAGE 01 &bull; ATMOSPHERIC NOWCAST</div>
+                <h3 style="font-weight: 800; font-size: 1.1rem; margin: 0.2rem 0;">Doppler Weather Radar Extrapolation (Palam)</h3>
                 <p style="font-size: 0.75rem; color: var(--text-secondary); font-family: sans-serif;">
-                  Marshall-Palmer conversion (Z = 200 &bull; R^1.6) translating ${h.dbz} dBZ radar reflectivity into instantaneous rainfall rate.
+                  Deep learning ConvLSTM optical flow tracks storm reflectivity. At T+${state.horizonMin}m, hyetograph produces peak rainfall rate.
                 </p>
               </div>
               <div style="text-align: right;">
                 <div style="font-size: 1.6rem; font-weight: 800; color: var(--accent-orange);">${h.rain.toFixed(1)} mm/hr</div>
-                <div class="label-mono">PRECIPITATION INTENSITY I(t)</div>
+                <div class="label-mono">REFLECTIVITY: ${h.dbz} dBZ</div>
               </div>
             </div>
 
@@ -1286,8 +1595,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               </p>
             </div>
             <div style="display: flex; gap: 0.5rem;">
-              <span class="badge-success">LEAFLET GIS ENGINE</span>
-              <span class="badge-warning">DELHI DATUM: EPSG:4326</span>
+              <button class="btn-primary" style="font-size: 0.7rem;" onclick="navigate('/hydraulic-transect')">OPEN 2D TRANSECT SLICE</button>
             </div>
           </div>
 
@@ -1341,51 +1649,422 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       `;
     }
 
-    // Page 5: Safe Detour Routing with Live Map
-    function renderRoutingPage() {
+    // Page 5: Hydraulic Cross-Section Transect Viewer (2D Subsurface Profile) - FEATURE 1
+    function renderHydraulicTransectPage() {
       const h = calculateHydraulics();
+      const activeSt = h.computedTransect.find(s => s.code === state.selectedStationCode) || h.computedTransect[3];
+
+      // Coordinate scaling for SVG profile: X: 0-1690m -> 50-870px, Y: 205-219m AMSL -> 330-40px
+      function mapX(x_m) { return 60 + (x_m / 1690) * 800; }
+      function mapY(z_m) { return 330 - ((z_m - 205.0) / 14.0) * 280; }
+
+      // Build ground polyline points
+      let groundPts = h.computedTransect.map(s => `${mapX(s.station_m)},${mapY(s.z_ground)}`).join(' ');
+      let invertPts = h.computedTransect.map(s => `${mapX(s.station_m)},${mapY(s.z_invert)}`).join(' ');
+      let crownPts = h.computedTransect.map(s => `${mapX(s.station_m)},${mapY(s.z_crown)}`).join(' ');
+      let hglPts = h.computedTransect.map(s => `${mapX(s.station_m)},${mapY(s.hgl)}`).join(' ');
+      let eglPts = h.computedTransect.map(s => `${mapX(s.station_m)},${mapY(s.egl)}`).join(' ');
+
+      // Pipe polygon between invert and crown
+      let pipePoly = invertPts + ' ' + h.computedTransect.slice().reverse().map(s => `${mapX(s.station_m)},${mapY(s.z_crown)}`).join(' ');
+
+      // Ground hatching polygon between ground and pipe crown
+      let groundSoilPoly = groundPts + ' ' + h.computedTransect.slice().reverse().map(s => `${mapX(s.station_m)},${mapY(s.z_crown)}`).join(' ');
 
       return `
         <div style="max-width: 1050px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.8rem;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
-              <h1 class="heading-display" style="font-size: 2.4rem; margin-bottom: 0.2rem;">Dynamic Safe Routing</h1>
+              <h1 class="heading-display" style="font-size: 2.4rem; margin-bottom: 0.2rem;">Conduit Longitudinal Transect</h1>
               <p style="font-size: 0.85rem; color: var(--text-secondary); font-family: sans-serif;">
-                Multi-criteria depth-penalized A* pathfinding for emergency transit avoiding inundated underpasses.
+                2D Subsurface cutaway elevation profile along CP &rarr; Minto Underpass &rarr; Yamuna Outfall (1,690m trunk, S0=0.0035).
               </p>
             </div>
-            <span class="badge-success">CLEARANCE: 100.0%</span>
+            <div style="display: flex; gap: 0.6rem;">
+              <span class="badge-success">LONGITUDINAL PROFILE</span>
+              <span class="${h.qSurcharge > 0 ? 'badge-error' : 'badge-success'}">${h.qSurcharge > 0 ? 'SURCHARGING FOUNTAIN ACTIVE' : 'GRAVITY CONVEYANCE'}</span>
+            </div>
           </div>
 
+          <!-- Parameter Scrubber Bar directly over Transect -->
+          <div class="card" style="padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span class="label-mono">DYNAMIC TRANSECT FORCING</span>
+                <div style="font-size: 1.1rem; font-weight: 800;">
+                  Lead Time: T+${state.horizonMin}m &bull; Clogging Alpha: ${state.cloggingRatio.toFixed(2)}
+                </div>
+              </div>
+              <div style="display: flex; gap: 1rem; font-size: 0.75rem;">
+                <div><span style="color: var(--text-secondary);">SURCHARGE Q: </span><b>${h.qSurcharge.toFixed(2)} m3/s</b></div>
+                <div><span style="color: var(--text-secondary);">SURCHARGE HEAD: </span><b>+${h.hSurcharge.toFixed(2)} m</b></div>
+                <div><span style="color: var(--text-secondary);">MINTO HGL: </span><b style="color: ${h.mintoHgl > 211.8 ? '#D64545' : '#1E8E5A'};">${h.mintoHgl.toFixed(2)} m</b></div>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.8rem;">
+                <span class="label-mono" style="width: 120px;">STORM LEAD TIME:</span>
+                <input type="range" min="0" max="180" step="15" value="${state.horizonMin}" oninput="updateHorizon(this.value)" style="flex: 1; accent-color: var(--accent-orange); cursor: pointer;">
+                <span style="font-size: 0.75rem; font-weight: 700; width: 45px;">${state.horizonMin}m</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.8rem;">
+                <span class="label-mono" style="width: 120px;">CLOGGING (ALPHA):</span>
+                <input type="range" min="0.0" max="0.95" step="0.05" value="${state.cloggingRatio}" oninput="updateParam('cloggingRatio', parseFloat(this.value))" style="flex: 1; accent-color: #D64545; cursor: pointer;">
+                <span style="font-size: 0.75rem; font-weight: 700; width: 45px;">${state.cloggingRatio.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main SVG 2D Longitudinal Transect Diagram -->
+          <div class="card" style="padding: 1.4rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.6rem;">
+              <div style="display: flex; gap: 1.5rem; font-size: 0.72rem;">
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                  <span style="width: 12px; height: 3px; background: #2C2C2C; display: inline-block;"></span>
+                  <span>Ground Rim (DEM)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                  <span style="width: 12px; height: 6px; background: #DDD6C7; border: 1px solid #666; display: inline-block;"></span>
+                  <span>1.2m Conduit Barrel</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                  <span style="width: 12px; height: 3px; background: #2563EB; display: inline-block;"></span>
+                  <span style="font-weight: 700; color: #2563EB;">Hydraulic Grade Line (HGL)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                  <span style="width: 12px; height: 2px; background: #D64545; border-top: 1px dashed #D64545; display: inline-block;"></span>
+                  <span>Energy Grade Line (EGL)</span>
+                </div>
+                ${h.qSurcharge > 0 ? `
+                  <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #D64545; display: inline-block;"></span>
+                    <span style="font-weight: 700; color: #D64545;">Surcharge Fountain Overflow</span>
+                  </div>
+                ` : ''}
+              </div>
+              <span class="label-mono">CLICK STATIONS TO PROBE</span>
+            </div>
+
+            <!-- SVG Container -->
+            <div style="height: 380px; width: 100%; position: relative; background: #FCFAF6; border: 1px solid var(--border-light); border-radius: var(--radius-md); overflow: hidden;">
+              <svg width="100%" height="100%" viewBox="0 0 920 360" preserveAspectRatio="none">
+                <!-- Grid lines & Elevation Axis -->
+                <line x1="50" y1="50" x2="890" y2="50" stroke="#ECE7DC" stroke-width="1" />
+                <text x="15" y="54" font-size="10" font-family="monospace" fill="#888">218m</text>
+
+                <line x1="50" y1="120" x2="890" y2="120" stroke="#ECE7DC" stroke-width="1" />
+                <text x="15" y="124" font-size="10" font-family="monospace" fill="#888">215m</text>
+
+                <line x1="50" y1="190" x2="890" y2="190" stroke="#ECE7DC" stroke-width="1" />
+                <text x="15" y="194" font-size="10" font-family="monospace" fill="#888">212m</text>
+
+                <line x1="50" y1="260" x2="890" y2="260" stroke="#ECE7DC" stroke-width="1" />
+                <text x="15" y="264" font-size="10" font-family="monospace" fill="#888">209m</text>
+
+                <line x1="50" y1="330" x2="890" y2="330" stroke="#ECE7DC" stroke-width="1" />
+                <text x="15" y="334" font-size="10" font-family="monospace" fill="#888">206m</text>
+
+                <!-- Soil stratum between ground and crown -->
+                <polygon points="${groundSoilPoly}" fill="#F4EDE1" opacity="0.8" />
+
+                <!-- Conduit barrel (shaded concrete) -->
+                <polygon points="${pipePoly}" fill="#E3DDD1" stroke="#999" stroke-width="1" />
+
+                <!-- Conduit Invert line (bottom bed) -->
+                <polyline points="${invertPts}" fill="none" stroke="#111111" stroke-width="2.5" />
+
+                <!-- Conduit Crown line (top rim) -->
+                <polyline points="${crownPts}" fill="none" stroke="#555555" stroke-width="1.8" stroke-dasharray="3,3" />
+
+                <!-- Ground Elevation line -->
+                <polyline points="${groundPts}" fill="none" stroke="#2C2C2C" stroke-width="3" />
+
+                <!-- Energy Grade Line (EGL) -->
+                <polyline points="${eglPts}" fill="none" stroke="#D64545" stroke-width="1.5" stroke-dasharray="4,4" />
+
+                <!-- Hydraulic Grade Line (HGL) -->
+                <polyline points="${hglPts}" fill="none" stroke="#2563EB" stroke-width="3.5" />
+
+                <!-- Surcharge Fountain at Minto Underpass Station (x=1070m -> 566px) -->
+                ${h.qSurcharge > 0 ? `
+                  <!-- Water plume upward -->
+                  <polygon points="
+                    ${mapX(1070)-14},${mapY(211.80)} 
+                    ${mapX(1070)-8},${mapY(h.mintoHgl+0.6)} 
+                    ${mapX(1070)},${mapY(h.mintoHgl+1.1)} 
+                    ${mapX(1070)+8},${mapY(h.mintoHgl+0.6)} 
+                    ${mapX(1070)+14},${mapY(211.80)}
+                  " fill="#2563EB" opacity="0.6" />
+                  
+                  <!-- Fountain spray lines -->
+                  <line x1="${mapX(1070)}" y1="${mapY(211.80)}" x2="${mapX(1070)-16}" y2="${mapY(h.mintoHgl+1.3)}" stroke="#2563EB" stroke-width="2" stroke-dasharray="2,2" />
+                  <line x1="${mapX(1070)}" y1="${mapY(211.80)}" x2="${mapX(1070)}" y2="${mapY(h.mintoHgl+1.6)}" stroke="#2563EB" stroke-width="2.5" stroke-dasharray="2,2" />
+                  <line x1="${mapX(1070)}" y1="${mapY(211.80)}" x2="${mapX(1070)+16}" y2="${mapY(h.mintoHgl+1.3)}" stroke="#2563EB" stroke-width="2" stroke-dasharray="2,2" />
+
+                  <!-- Surface ponding water pool -->
+                  <rect x="${mapX(1070)-45}" y="${mapY(211.80 + h.mintoDepth/100)}" width="90" height="${(h.mintoDepth/100) * 20}" fill="#2563EB" opacity="0.35" rx="3" />
+                  
+                  <!-- Surcharge Label Banner -->
+                  <rect x="${mapX(1070)-85}" y="${mapY(h.mintoHgl+1.8)-18}" width="170" height="20" fill="#D64545" rx="4" />
+                  <text x="${mapX(1070)}" y="${mapY(h.mintoHgl+1.8)-4}" fill="#FFF" font-size="9" font-weight="bold" font-family="monospace" text-anchor="middle">
+                    SURCHARGE FOUNTAIN: +${h.hSurcharge.toFixed(2)}m
+                  </text>
+                ` : ''}
+
+                <!-- Station Manhole Vertical Shafts & Clickable Nodes -->
+                ${h.computedTransect.map(st => `
+                  <!-- Vertical manhole shaft line -->
+                  <line x1="${mapX(st.station_m)}" y1="${mapY(st.z_ground)}" x2="${mapX(st.station_m)}" y2="${mapY(st.z_invert)}" stroke="#444" stroke-width="1.5" stroke-dasharray="3,3" />
+                  
+                  <!-- Station Rim marker -->
+                  <circle cx="${mapX(st.station_m)}" cy="${mapY(st.z_ground)}" r="6" fill="${st.code === state.selectedStationCode ? '#E8863A' : '#111111'}" stroke="#FFFFFF" stroke-width="2" style="cursor: pointer;" onclick="selectTransectStation('${st.code}')" />
+                  
+                  <!-- Station Invert marker -->
+                  <circle cx="${mapX(st.station_m)}" cy="${mapY(st.z_invert)}" r="4" fill="#666666" stroke="#FFFFFF" stroke-width="1" />
+
+                  <!-- HGL point marker -->
+                  <circle cx="${mapX(st.station_m)}" cy="${mapY(st.hgl)}" r="5" fill="${st.isOverRim ? '#D64545' : '#2563EB'}" stroke="#FFFFFF" stroke-width="1.5" style="cursor: pointer;" onclick="selectTransectStation('${st.code}')" />
+
+                  <!-- Station label at bottom -->
+                  <text x="${mapX(st.station_m)}" y="350" font-size="8.5" font-family="monospace" fill="#555" text-anchor="middle">${st.station_m}m</text>
+                  <text x="${mapX(st.station_m)}" y="${mapY(st.z_ground) - 10}" font-size="8" font-weight="bold" font-family="monospace" fill="#222" text-anchor="middle">${st.code.replace('MH_', '')}</text>
+                `).join('')}
+              </svg>
+            </div>
+          </div>
+
+          <!-- Station Inspector Card & Audit Table -->
+          <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem;">
+            <!-- Left: Selected Station Inspector -->
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div class="label-mono">SELECTED STATION PROBE</div>
+                <h3 style="font-size: 1.25rem; font-weight: 800; margin: 0.3rem 0 0.8rem 0;">${activeSt.code}</h3>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1rem;">${activeSt.name} &bull; Station Chainage: <b>${activeSt.station_m} m</b></div>
+
+                <div style="background: var(--bg-card-alt); border-radius: var(--radius-sm); padding: 0.9rem; display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.75rem;">
+                  <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.3rem;">
+                    <span style="color: var(--text-secondary);">Ground Rim Elevation:</span>
+                    <span style="font-weight: 700;">${activeSt.z_ground.toFixed(2)} m AMSL</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.3rem;">
+                    <span style="color: var(--text-secondary);">Conduit Invert Base:</span>
+                    <span style="font-weight: 700;">${activeSt.z_invert.toFixed(2)} m AMSL</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.3rem;">
+                    <span style="color: var(--text-secondary);">Conduit Crown (1.2m D):</span>
+                    <span style="font-weight: 700;">${activeSt.z_crown.toFixed(2)} m AMSL</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.3rem;">
+                    <span style="color: var(--text-secondary);">Hydraulic Grade Line (HGL):</span>
+                    <span style="font-weight: 800; color: ${activeSt.isOverRim ? '#D64545' : '#2563EB'};">${activeSt.hgl.toFixed(2)} m AMSL</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.3rem;">
+                    <span style="color: var(--text-secondary);">Energy Grade Line (EGL):</span>
+                    <span style="font-weight: 700;">${activeSt.egl.toFixed(2)} m AMSL</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Pressure Head (HGL - Invert):</span>
+                    <span style="font-weight: 700; color: ${activeSt.pressureHead > 1.2 ? '#D64545' : '#1E8E5A'};">${activeSt.pressureHead.toFixed(2)} m</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid var(--border-light);">
+                <div class="label-mono" style="margin-bottom: 0.3rem;">FLOW REGIME CLASSIFICATION</div>
+                <span class="${activeSt.isOverRim ? 'badge-error' : (activeSt.regime.includes('PRESSURE') ? 'badge-warning' : 'badge-success')}" style="padding: 0.3rem 0.8rem; font-size: 0.72rem;">
+                  ${activeSt.regime}
+                </span>
+              </div>
+            </div>
+
+            <!-- Right: Full Transect Audit Table -->
+            <div class="card">
+              <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.8rem;">Conduit Profile Station Inventory (1,690m Chainage)</h3>
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.72rem; text-align: left;">
+                <thead>
+                  <tr style="border-bottom: 1px solid var(--border-light); color: var(--text-secondary); font-size: 0.65rem;">
+                    <th style="padding: 0.4rem;">STATION</th>
+                    <th style="padding: 0.4rem;">CHAINAGE</th>
+                    <th style="padding: 0.4rem;">RIM (m)</th>
+                    <th style="padding: 0.4rem;">INVERT (m)</th>
+                    <th style="padding: 0.4rem;">HGL (m)</th>
+                    <th style="padding: 0.4rem;">REGIME</th>
+                    <th style="padding: 0.4rem; text-align: right;">ACTION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${h.computedTransect.map(st => `
+                    <tr style="border-bottom: 1px solid var(--border-light); background: ${st.code === state.selectedStationCode ? '#FFFDF9' : 'transparent'};">
+                      <td style="padding: 0.5rem 0.4rem; font-weight: 700;">${st.code}</td>
+                      <td style="padding: 0.5rem 0.4rem; color: var(--text-secondary);">${st.station_m} m</td>
+                      <td style="padding: 0.5rem 0.4rem;">${st.z_ground.toFixed(2)}</td>
+                      <td style="padding: 0.5rem 0.4rem;">${st.z_invert.toFixed(2)}</td>
+                      <td style="padding: 0.5rem 0.4rem; font-weight: 700; color: ${st.isOverRim ? '#D64545' : '#2563EB'};">${st.hgl.toFixed(2)}</td>
+                      <td style="padding: 0.5rem 0.4rem;">
+                        <span class="${st.isOverRim ? 'badge-error' : (st.regime.includes('PRESSURE') ? 'badge-warning' : 'badge-success')}" style="font-size: 0.58rem; padding: 0.1rem 0.35rem;">
+                          ${st.isOverRim ? 'SURCHARGE' : (st.regime.includes('PRESSURE') ? 'PRESSURE' : 'GRAVITY')}
+                        </span>
+                      </td>
+                      <td style="padding: 0.5rem 0.4rem; text-align: right;">
+                        <button class="btn-secondary" style="font-size: 0.62rem; padding: 0.2rem 0.5rem;" onclick="selectTransectStation('${st.code}')">PROBE</button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Page 6: Safe Detour Routing with Multi-Modal Vehicle Fleet Clearance Matrix - FEATURE 2
+    function renderRoutingPage() {
+      const h = calculateHydraulics();
+      const currentVehicle = h.vehicleMatrix.find(v => v.id === state.selectedVehicle) || h.vehicleMatrix[2];
+      const isBlocked = currentVehicle.status === "BLOCKED";
+
+      return `
+        <div style="max-width: 1050px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.8rem;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <h1 class="heading-display" style="font-size: 2.4rem; margin-bottom: 0.2rem;">Multi-Modal Safe Routing</h1>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); font-family: sans-serif;">
+                Multi-criteria depth-penalized A* pathfinding enforcing physical vehicle clearance thresholds across Delhi emergency fleets.
+              </p>
+            </div>
+            <span class="${isBlocked ? 'badge-error' : 'badge-success'}">
+              ACTIVE VEHICLE: ${currentVehicle.name.split('/')[0].toUpperCase()} (${currentVehicle.status})
+            </span>
+          </div>
+
+          <!-- Feature 2: Vehicle Fleet Profile Selector Pills -->
+          <div class="card" style="padding: 1.2rem;">
+            <div class="label-mono" style="margin-bottom: 0.6rem;">SELECT DISPATCH VEHICLE PROFILE FOR LIVE PATH COMPUTATION</div>
+            <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
+              ${h.vehicleMatrix.map(v => `
+                <button onclick="selectVehicle('${v.id}')" style="
+                  background: ${state.selectedVehicle === v.id ? 'var(--accent-black)' : 'white'};
+                  color: ${state.selectedVehicle === v.id ? 'white' : 'var(--text-primary)'};
+                  border: 1px solid ${state.selectedVehicle === v.id ? 'var(--accent-black)' : 'var(--border-medium)'};
+                  border-radius: var(--radius-pill);
+                  padding: 0.55rem 1.1rem;
+                  font-family: var(--font-mono);
+                  font-size: 0.72rem;
+                  font-weight: 700;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  gap: 0.5rem;
+                  transition: all 0.15s ease;
+                ">
+                  <span>${v.name}</span>
+                  <span style="
+                    background: ${state.selectedVehicle === v.id ? 'rgba(255,255,255,0.25)' : 'var(--bg-card-alt)'};
+                    padding: 0.1rem 0.45rem;
+                    border-radius: var(--radius-pill);
+                    font-size: 0.65rem;
+                  ">${v.clearanceCm} cm</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Multi-Modal Fleet Clearance Matrix Table -->
+          <div class="card" style="padding: 1.4rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.6rem;">
+              <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700;">Vehicle Fleet Clearance Matrix vs Current Inundation</h3>
+                <p style="font-size: 0.72rem; color: var(--text-secondary); font-family: sans-serif;">
+                  Current Minto Underpass Sump Depth: <b>${h.mintoDepth.toFixed(1)} cm</b>. Dynamic clearance margin determines barrier impedance.
+                </p>
+              </div>
+              <span class="label-mono">DYNAMIC RE-ROUTING ENGINE</span>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border-light); color: var(--text-secondary); font-size: 0.68rem;">
+                  <th style="padding: 0.5rem;">VEHICLE CLASS</th>
+                  <th style="padding: 0.5rem;">CLEARANCE LIMIT</th>
+                  <th style="padding: 0.5rem;">WATER DEPTH MARGIN</th>
+                  <th style="padding: 0.5rem;">PASSABILITY STATUS</th>
+                  <th style="padding: 0.5rem;">ASSIGNED ROUTE</th>
+                  <th style="padding: 0.5rem; text-align: right;">ESTIMATED ETA</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${h.vehicleMatrix.map(v => `
+                  <tr style="border-bottom: 1px solid var(--border-light); background: ${state.selectedVehicle === v.id ? '#FFFDF9' : 'transparent'};">
+                    <td style="padding: 0.6rem 0.5rem; font-weight: 700;">
+                      ${v.name}
+                      ${state.selectedVehicle === v.id ? '<span class="badge-warning" style="font-size: 0.58rem; margin-left: 6px;">ACTIVE</span>' : ''}
+                    </td>
+                    <td style="padding: 0.6rem 0.5rem;">${v.clearanceCm.toFixed(1)} cm</td>
+                    <td style="padding: 0.6rem 0.5rem; font-weight: 700; color: ${v.marginCm >= 0 ? '#1E8E5A' : '#D64545'};">
+                      ${v.marginCm > 0 ? '+' : ''}${v.marginCm.toFixed(1)} cm
+                    </td>
+                    <td style="padding: 0.6rem 0.5rem;">
+                      <span class="${v.status === 'BLOCKED' ? 'badge-error' : (v.status.includes('FORDABLE') ? 'badge-warning' : 'badge-success')}">
+                        ${v.status}
+                      </span>
+                    </td>
+                    <td style="padding: 0.6rem 0.5rem; color: var(--text-secondary);">${v.routeAssigned}</td>
+                    <td style="padding: 0.6rem 0.5rem; text-align: right; font-weight: 700;">${v.travelTimeMin.toFixed(1)} min (${v.travelDistKm} km)</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Routing Comparison Inspector & Leaflet Map -->
           <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem;">
             <!-- Left Side Inspector -->
             <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
               <div style="display: flex; flex-direction: column; gap: 1rem;">
-                <div class="label-mono">ROUTING METRIC COMPARISON</div>
+                <div class="label-mono">ROUTING METRIC COMPARISON FOR ${currentVehicle.name.toUpperCase()}</div>
                 
-                <div style="border: 1px solid #F5C6C6; background: #FFF7F7; border-radius: var(--radius-sm); padding: 0.8rem;">
-                  <div style="font-size: 0.68rem; font-weight: 700; color: #D64545;">BASELINE (SHORTEST PATH)</div>
-                  <div style="font-size: 1.4rem; font-weight: 800; margin: 0.2rem 0;">1.23 km &bull; IMPASSABLE</div>
-                  <div style="font-size: 0.7rem; color: #D64545;">Direct through Minto Underpass (${h.mintoDepth.toFixed(1)} cm water depth)</div>
+                <!-- Baseline route card -->
+                <div style="border: 1px solid ${isBlocked ? '#F5C6C6' : '#C5E8D6'}; background: ${isBlocked ? '#FFF7F7' : 'var(--success-bg)'}; border-radius: var(--radius-sm); padding: 0.8rem;">
+                  <div style="font-size: 0.68rem; font-weight: 700; color: ${isBlocked ? '#D64545' : 'var(--success-text)'};">
+                    BASELINE (SHORTEST PATH - DIRECT MINTO)
+                  </div>
+                  <div style="font-size: 1.4rem; font-weight: 800; margin: 0.2rem 0; color: ${isBlocked ? '#D64545' : 'var(--success-text)'};">
+                    1.23 km &bull; ${isBlocked ? 'IMPASSABLE' : 'PASSABLE (' + currentVehicle.travelTimeMin + ' MIN)'}
+                  </div>
+                  <div style="font-size: 0.7rem; color: ${isBlocked ? '#D64545' : 'var(--success-text)'};">
+                    ${isBlocked 
+                      ? `Water depth (${h.mintoDepth.toFixed(1)}cm) exceeds vehicle clearance (${currentVehicle.clearanceCm}cm)` 
+                      : `Water depth (${h.mintoDepth.toFixed(1)}cm) is within clearance buffer (+${currentVehicle.marginCm}cm margin)`}
+                  </div>
                 </div>
 
+                <!-- Detour route card -->
                 <div style="border: 1px solid #C5E8D6; background: var(--success-bg); border-radius: var(--radius-sm); padding: 0.8rem;">
                   <div style="font-size: 0.68rem; font-weight: 700; color: var(--success-text);">FLOOD-SAFE DETOUR (DYNAMIC A*)</div>
-                  <div style="font-size: 1.4rem; font-weight: 800; color: var(--success-text); margin: 0.2rem 0;">1.71 km &bull; 8.4 MIN</div>
-                  <div style="font-size: 0.7rem; color: var(--success-text);">Via Barakhamba Elevated Flyover (+0.48 km, 0 blocked nodes)</div>
+                  <div style="font-size: 1.4rem; font-weight: 800; color: var(--success-text); margin: 0.2rem 0;">
+                    1.71 km &bull; ${isBlocked ? currentVehicle.travelTimeMin.toFixed(1) : '8.4'} MIN
+                  </div>
+                  <div style="font-size: 0.7rem; color: var(--success-text);">
+                    Via Barakhamba Elevated Flyover (+0.48 km, 0 flooded choke-points)
+                  </div>
                 </div>
 
                 <div style="background: var(--bg-card-alt); border-radius: var(--radius-sm); padding: 0.8rem; font-size: 0.72rem;">
-                  <span class="label-mono">DISPATCH PROTOCOL</span>
+                  <span class="label-mono">DISPATCH PROTOCOL ADVISORY</span>
                   <p class="heading-editorial" style="margin-top: 0.3rem; line-height: 1.5;">
-                    "Vehicle clearance threshold set at 25.0 cm. Minto Bridge segment has depth of ${h.mintoDepth.toFixed(1)} cm with impedance penalty infinity. Detour dispatched."
+                    ${isBlocked 
+                      ? `"Vehicle profile ${currentVehicle.name} has clearance threshold ${currentVehicle.clearanceCm}cm. Minto Bridge depth is ${h.mintoDepth.toFixed(1)}cm (negative margin ${currentVehicle.marginCm}cm). Impedance penalty set to infinity; routing over Barakhamba flyover."`
+                      : `"Vehicle profile ${currentVehicle.name} has clearance threshold ${currentVehicle.clearanceCm}cm. Sump depth ${h.mintoDepth.toFixed(1)}cm is fordable with caution (+${currentVehicle.marginCm}cm clearance buffer). Direct transit authorized."`}
                   </p>
                 </div>
               </div>
 
               <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
-                <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="showToast('Dispatched to Emergency Services: Safe detour turn coordinates transmitted.')">
-                  DISPATCH TO FLEET (SMS)
+                <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="showToast('Dispatched to Emergency Fleet: Safe navigation coordinates transmitted.')">
+                  DISPATCH TO FLEET (RADIO & SMS)
                 </button>
               </div>
             </div>
@@ -1404,7 +2083,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       `;
     }
 
-    // Page 6: Reports & Historical Event Log
+    // Page 7: Reports & Historical Event Log
     function renderReportsPage() {
       const h = calculateHydraulics();
 
@@ -1531,7 +2210,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       `;
     }
 
-    // Page 7: Developer Navigation API Demo Panel
+    // Page 8: Developer Navigation API Demo Panel
     function renderApiDocsPage() {
       const h = calculateHydraulics();
 
@@ -1600,103 +2279,96 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               </div>
 
               <div>
-                <label class="label-mono" style="display: block; margin-bottom: 0.4rem;">Select Vehicle Profile</label>
-                <div style="display: flex; gap: 0.5rem;">
-                  <button class="${state.apiActiveProfile === 'EMERGENCY_AMBULANCE' ? 'btn-primary' : 'btn-secondary'}" style="font-size: 0.68rem; padding: 0.4rem 0.8rem;" onclick="state.apiActiveProfile='EMERGENCY_AMBULANCE'; render();">AMBULANCE (25cm)</button>
-                  <button class="${state.apiActiveProfile === 'FIRE_TRUCK' ? 'btn-primary' : 'btn-secondary'}" style="font-size: 0.68rem; padding: 0.4rem 0.8rem;" onclick="state.apiActiveProfile='FIRE_TRUCK'; render();">FIRE TRUCK (40cm)</button>
-                  <button class="${state.apiActiveProfile === 'CIVILIAN_CAR' ? 'btn-primary' : 'btn-secondary'}" style="font-size: 0.68rem; padding: 0.4rem 0.8rem;" onclick="state.apiActiveProfile='CIVILIAN_CAR'; render();">CIVILIAN (15cm)</button>
-                </div>
+                <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">Vehicle Profile Type</label>
+                <select onchange="state.apiActiveProfile = this.value; render();" style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem; font-size: 0.75rem; font-family: monospace;">
+                  <option value="TWO_WHEELER" ${state.apiActiveProfile === 'TWO_WHEELER' ? 'selected' : ''}>TWO_WHEELER (10 cm clearance)</option>
+                  <option value="SEDAN_CAR" ${state.apiActiveProfile === 'SEDAN_CAR' ? 'selected' : ''}>SEDAN_CAR (15 cm clearance)</option>
+                  <option value="EMERGENCY_AMBULANCE" ${state.apiActiveProfile === 'EMERGENCY_AMBULANCE' ? 'selected' : ''}>EMERGENCY_AMBULANCE (25 cm clearance)</option>
+                  <option value="DTC_BUS" ${state.apiActiveProfile === 'DTC_BUS' ? 'selected' : ''}>DTC_BUS (30 cm clearance)</option>
+                  <option value="FIRE_TRUCK" ${state.apiActiveProfile === 'FIRE_TRUCK' ? 'selected' : ''}>FIRE_TRUCK (45 cm clearance)</option>
+                </select>
               </div>
 
               <div>
-                <label class="label-mono" style="display: block; margin-bottom: 0.4rem;">cURL Request Command</label>
+                <div class="label-mono" style="margin-bottom: 0.3rem;">cURL Terminal Runner</div>
                 <pre class="code-block">${curlSnippet}</pre>
               </div>
 
-              <button class="btn-primary" style="justify-content: center; padding: 0.8rem;" onclick="executeLiveApiCall()">
+              <button class="btn-primary" style="justify-content: center;" onclick="executeLiveApiCall()">
                 EXECUTE LIVE API REQUEST
               </button>
             </div>
 
-            <!-- Right: Live Response JSON -->
+            <!-- Right: Live Response Payload -->
             <div class="card" style="display: flex; flex-direction: column; gap: 0.8rem;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div class="label-mono">RESPONSE PAYLOAD (HTTP 200)</div>
-                <button class="btn-secondary" style="font-size: 0.65rem; padding: 0.25rem 0.6rem;" onclick="navigator.clipboard.writeText(JSON.stringify(sampleResponse, null, 2)); showToast('Response JSON copied to clipboard.');">COPY JSON</button>
+                <span class="label-mono">RESPONSE PAYLOAD (JSON)</span>
+                <span class="badge-success">${state.apiLatencyMs ? state.apiLatencyMs + ' ms' : '200 OK'}</span>
               </div>
-
-              <pre class="code-block" style="flex: 1; max-height: 440px;">${JSON.stringify(sampleResponse, null, 2)}</pre>
+              <pre class="code-block" style="flex: 1; max-height: 480px;">${JSON.stringify(sampleResponse, null, 2)}</pre>
             </div>
           </div>
         </div>
       `;
     }
 
-    // Page 8: Settings with Live Model Parameter Recompute
+    // Page 9: Model Parameters & Settings
     function renderSettingsPage() {
       const h = calculateHydraulics();
 
       return `
-        <div style="max-width: 950px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.8rem;">
-          <div>
-            <h1 class="heading-display" style="font-size: 2.4rem; margin-bottom: 0.2rem;">Model Settings & Tunable Constants</h1>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); font-family: sans-serif;">
-              Modifying these values immediately recomputes the Saint-Venant hydraulic solver across all screens.
-            </p>
+        <div style="max-width: 1050px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.8rem;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <h1 class="heading-display" style="font-size: 2.4rem; margin-bottom: 0.2rem;">Model Parameters & Feeds</h1>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); font-family: sans-serif;">
+                Hydraulic solver configuration, conduit silt coefficients, and municipal agency telemetry.
+              </p>
+            </div>
+            <button class="btn-secondary" onclick="resetParams()">RESET DEFAULTS</button>
           </div>
 
-          <!-- Settings Tab Header -->
+          <!-- Tab Selector -->
           <div style="display: flex; gap: 1rem; border-bottom: 1px solid var(--border-light); font-size: 0.75rem; font-weight: 700;">
-            <span style="padding-bottom: 0.6rem; cursor: pointer; border-bottom: 2px solid ${state.settingsTab === 'parameters' ? 'var(--accent-orange)' : 'transparent'}; color: ${state.settingsTab === 'parameters' ? 'var(--text-primary)' : 'var(--text-secondary)'};" onclick="setTab('parameters')">MODEL PARAMETERS</span>
-            <span style="padding-bottom: 0.6rem; cursor: pointer; border-bottom: 2px solid ${state.settingsTab === 'account' ? 'var(--accent-orange)' : 'transparent'}; color: ${state.settingsTab === 'account' ? 'var(--text-primary)' : 'var(--text-secondary)'};" onclick="setTab('account')">ACCOUNT PROFILE</span>
-            <span style="padding-bottom: 0.6rem; cursor: pointer; border-bottom: 2px solid ${state.settingsTab === 'datasources' ? 'var(--accent-orange)' : 'transparent'}; color: ${state.settingsTab === 'datasources' ? 'var(--text-primary)' : 'var(--text-secondary)'};" onclick="setTab('datasources')">DATA SOURCES</span>
+            <span style="padding-bottom: 0.6rem; cursor: pointer; border-bottom: 2px solid ${state.settingsTab === 'parameters' ? 'var(--accent-orange)' : 'transparent'}; color: ${state.settingsTab === 'parameters' ? 'var(--text-primary)' : 'var(--text-secondary)'};" onclick="setTab('parameters')">PHYSICS PARAMETERS</span>
+            <span style="padding-bottom: 0.6rem; cursor: pointer; border-bottom: 2px solid ${state.settingsTab === 'account' ? 'var(--accent-orange)' : 'transparent'}; color: ${state.settingsTab === 'account' ? 'var(--text-primary)' : 'var(--text-secondary)'};" onclick="setTab('account')">OPERATOR PROFILE</span>
+            <span style="padding-bottom: 0.6rem; cursor: pointer; border-bottom: 2px solid ${state.settingsTab === 'feeds' ? 'var(--accent-orange)' : 'transparent'}; color: ${state.settingsTab === 'feeds' ? 'var(--text-primary)' : 'var(--text-secondary)'};" onclick="setTab('feeds')">DATA FEEDS & RADAR</span>
           </div>
 
           ${state.settingsTab === 'parameters' ? `
             <div class="card" style="display: flex; flex-direction: column; gap: 1.5rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 0.8rem;">
-                <div>
-                  <h3 style="font-size: 0.95rem; font-weight: 700;">Hydraulic & Hydrologic Parameters</h3>
-                  <p style="font-size: 0.75rem; color: var(--text-secondary); font-family: sans-serif;">Live Saint-Venant equations re-solve instantly on input.</p>
-                </div>
-                <button class="btn-secondary" style="font-size: 0.7rem; padding: 0.35rem 0.8rem;" onclick="resetParams()">RESET DEFAULTS</button>
-              </div>
+              <h3 style="font-size: 0.95rem; font-weight: 700;">Real-Time Hydrodynamic Inputs</h3>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                <!-- Clogging Factor alpha -->
-                <div style="background: var(--bg-card-alt); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                  <div style="display: flex; justify-content: space-between;">
-                    <label style="font-weight: 700; font-size: 0.75rem;">Pipe Clogging Ratio (&alpha;)</label>
-                    <span style="font-weight: 700; color: var(--accent-orange);">${state.cloggingRatio.toFixed(2)}</span>
+                <div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                    <label class="label-mono">Pipe Clogging Ratio (alpha)</label>
+                    <span style="font-weight: 700; font-size: 0.8rem;">${state.cloggingRatio.toFixed(2)}</span>
                   </div>
-                  <p style="font-size: 0.7rem; color: var(--text-secondary); font-family: sans-serif;">Cross-sectional silt/debris restriction (0.0 = clean, 0.95 = blocked).</p>
-                  <input type="range" min="0.0" max="0.95" step="0.05" value="${state.cloggingRatio}" oninput="updateParam('cloggingRatio', parseFloat(this.value))" style="accent-color: var(--accent-orange); cursor: pointer;">
+                  <input type="range" min="0.0" max="0.95" step="0.05" value="${state.cloggingRatio}" oninput="updateParam('cloggingRatio', parseFloat(this.value))" style="width: 100%; accent-color: var(--accent-orange); cursor: pointer;">
+                  <p style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.3rem; font-family: sans-serif;">Fractional conduit reduction due to monsoon debris and silt.</p>
                 </div>
 
-                <!-- Inlet Capacity -->
-                <div style="background: var(--bg-card-alt); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                  <div style="display: flex; justify-content: space-between;">
-                    <label style="font-weight: 700; font-size: 0.75rem;">Inlet Intake Capacity (m3/s)</label>
-                    <span style="font-weight: 700;">${state.inletCapacity.toFixed(1)} m3/s</span>
+                <div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                    <label class="label-mono">Curb Inlet Interception Capacity</label>
+                    <span style="font-weight: 700; font-size: 0.8rem;">${state.inletCapacity.toFixed(1)} m3/s</span>
                   </div>
-                  <p style="font-size: 0.7rem; color: var(--text-secondary); font-family: sans-serif;">Curb catch-basin intake threshold before surface weir bypass.</p>
-                  <input type="range" min="1.0" max="6.0" step="0.2" value="${state.inletCapacity}" oninput="updateParam('inletCapacity', parseFloat(this.value))" style="accent-color: var(--accent-black); cursor: pointer;">
+                  <input type="range" min="1.0" max="8.0" step="0.2" value="${state.inletCapacity}" oninput="updateParam('inletCapacity', parseFloat(this.value))" style="width: 100%; accent-color: var(--accent-orange); cursor: pointer;">
+                  <p style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.3rem; font-family: sans-serif;">Maximum overland flow rate caught by street catch basins.</p>
                 </div>
 
-                <!-- DEM Resolution -->
-                <div style="background: var(--bg-card-alt); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                  <label style="font-weight: 700; font-size: 0.75rem;">DEM Grid Resolution</label>
-                  <p style="font-size: 0.7rem; color: var(--text-secondary); font-family: sans-serif;">Topographic raster cell size for depression storage.</p>
-                  <select onchange="updateParam('demResolution', parseInt(this.value))" style="background: white; border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.5rem; font-size: 0.75rem; font-family: monospace;">
-                    <option value="5" ${state.demResolution===5?'selected':''}>5-Meter High-Res LiDAR Grid</option>
-                    <option value="10" ${state.demResolution===10?'selected':''}>10-Meter CartoDEM (Operational)</option>
-                    <option value="30" ${state.demResolution===30?'selected':''}>30-Meter SRTM Grid</option>
-                  </select>
+                <div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                    <label class="label-mono">CartoDEM Topographic Resolution</label>
+                    <span style="font-weight: 700; font-size: 0.8rem;">${state.demResolution} Meters</span>
+                  </div>
+                  <input type="range" min="2" max="30" step="2" value="${state.demResolution}" oninput="updateParam('demResolution', parseInt(this.value))" style="width: 100%; accent-color: var(--accent-orange); cursor: pointer;">
+                  <p style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.3rem; font-family: sans-serif;">Spatial resolution for sheet runoff slope accumulation.</p>
                 </div>
 
-                <!-- Radar Interval -->
-                <div style="background: var(--bg-card-alt); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                  <label style="font-weight: 700; font-size: 0.75rem;">Radar Refresh Interval</label>
+                <div>
+                  <div class="label-mono" style="margin-bottom: 0.3rem;">Doppler Radar Volume Cadence</div>
                   <p style="font-size: 0.7rem; color: var(--text-secondary); font-family: sans-serif;">Doppler weather radar volume scan cadence.</p>
                   <select onchange="updateParam('radarInterval', parseInt(this.value))" style="background: white; border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.5rem; font-size: 0.75rem; font-family: monospace;">
                     <option value="5" ${state.radarInterval===5?'selected':''}>5 Minutes (Rapid Volume Scan)</option>
@@ -1833,8 +2505,10 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         content = renderAppShell(renderCausalChainPage(), "Causal Pipeline Architecture");
       } else if (path === "/drainage-graph") {
         content = renderAppShell(renderDrainageGraphPage(), "Drainage GIS Map & HGL Inspector");
+      } else if (path === "/hydraulic-transect") {
+        content = renderAppShell(renderHydraulicTransectPage(), "Hydraulic Conduit Transect");
       } else if (path === "/routing") {
-        content = renderAppShell(renderRoutingPage(), "Safe Detour Routing");
+        content = renderAppShell(renderRoutingPage(), "Multi-Modal Safe Routing");
       } else if (path === "/reports") {
         content = renderAppShell(renderReportsPage(), "Reports & Historical Log");
       } else if (path === "/api-docs") {
@@ -1969,7 +2643,10 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             maxZoom: 18
           }).addTo(map);
 
-          // Baseline Flooded Route (Red Dashed)
+          const curVeh = h.vehicleMatrix.find(v => v.id === state.selectedVehicle) || h.vehicleMatrix[2];
+          const isBlocked = curVeh.status === "BLOCKED";
+
+          // Baseline Direct Route
           let baselineCoords = [
             [28.6340, 77.2180],
             [28.6335, 77.2210],
@@ -1978,12 +2655,12 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             [28.6360, 77.2290]
           ];
           L.polyline(baselineCoords, {
-            color: '#D64545',
-            weight: 4,
-            dashArray: '6,6'
-          }).addTo(map).bindPopup('Baseline Shortest Path: Traversing Minto Underpass (Blocked)');
+            color: isBlocked ? '#D64545' : '#1E8E5A',
+            weight: isBlocked ? 4 : 6,
+            dashArray: isBlocked ? '6,6' : null
+          }).addTo(map).bindPopup(`Baseline Path: ${isBlocked ? 'Blocked by Minto Sump' : 'Passable with Caution'}`);
 
-          // Flood-Safe Detour Route (Solid Charcoal)
+          // Flood-Safe Detour Route (Barakhamba Flyover)
           let detourCoords = [
             [28.6340, 77.2180],
             [28.6335, 77.2210],
@@ -1993,8 +2670,9 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             [28.6360, 77.2290]
           ];
           L.polyline(detourCoords, {
-            color: '#111111',
-            weight: 6
+            color: isBlocked ? '#111111' : '#A3A3A3',
+            weight: isBlocked ? 6 : 3,
+            dashArray: isBlocked ? null : '4,4'
           }).addTo(map).bindPopup('A* Flood-Safe Detour: Via Barakhamba Elevated Flyover');
 
           // Origin and Destination Markers
@@ -2005,6 +2683,18 @@ APP_SHELL_HTML = """<!DOCTYPE html>
     }
 
     // Interaction Handlers
+    function selectVehicle(vId) {
+      state.selectedVehicle = vId;
+      state.apiActiveProfile = vId;
+      showToast("Dispatch profile set to " + vId);
+      render();
+    }
+
+    function selectTransectStation(code) {
+      state.selectedStationCode = code;
+      render();
+    }
+
     function handleLoginSubmit(e) {
       e.preventDefault();
       let em = document.getElementById('login-email').value;
@@ -2229,10 +2919,26 @@ class MultiPageHandler(http.server.SimpleHTTPRequestHandler):
             payload = {}
 
         if parsed.path in ["/api/v1/routing/safe-route", "/api/safe-route"]:
-            h = calculate_physics_model()
+            t_horiz = payload.get("time_horizon_min")
+            if t_horiz is not None:
+                try:
+                    t_horiz = float(t_horiz)
+                except Exception:
+                    t_horiz = None
+            h = calculate_physics_model(t_min=t_horiz)
             profile = payload.get("vehicle_profile", "EMERGENCY_AMBULANCE")
-            clearance_thresh = float(payload.get("max_clearance_depth_cm", 25.0))
+            
+            # Map clearance thresholds
+            clearance_map = {
+                "TWO_WHEELER": 10.0,
+                "SEDAN_CAR": 15.0,
+                "EMERGENCY_AMBULANCE": 25.0,
+                "DTC_BUS": 30.0,
+                "FIRE_TRUCK": 45.0
+            }
+            clearance_thresh = float(payload.get("max_clearance_depth_cm", clearance_map.get(profile, 25.0)))
             is_blocked = h["minto_depth"] > clearance_thresh
+            margin = round(clearance_thresh - h["minto_depth"], 1)
 
             response_data = {
                 "status": "200 OK",
@@ -2242,12 +2948,13 @@ class MultiPageHandler(http.server.SimpleHTTPRequestHandler):
                 "routing_engine": "Dynamic Depth-Penalized A*",
                 "vehicle_profile": profile,
                 "clearance_threshold_cm": clearance_thresh,
+                "depth_margin_cm": margin,
                 "baseline_route": {
                     "path_name": "Direct via Minto Underpass Subway",
                     "distance_km": 1.23,
                     "status": "BLOCKED" if is_blocked else "PASSABLE",
                     "peak_depth_cm": h["minto_depth"],
-                    "failure_reason": f"Water depth {h['minto_depth']}cm exceeds clearance threshold {clearance_thresh}cm" if is_blocked else "Passable"
+                    "failure_reason": f"Water depth {h['minto_depth']}cm exceeds clearance threshold {clearance_thresh}cm" if is_blocked else "Passable with caution"
                 },
                 "flood_safe_detour": {
                     "path_name": "Barakhamba Elevated Flyover Corridor",
@@ -2293,17 +3000,18 @@ def run():
     print(f"======================================================================")
     print(f"[+] Scientific Multi-Page Server running at http://localhost:{PORT}")
     print(f"[+] Routes Available:")
-    print(f"    - /               (Landing page with Hero & CTAs)")
-    print(f"    - /login          (Operator authentication)")
-    print(f"    - /signup         (Operator registration)")
-    print(f"    - /dashboard      (Active catchments, alert level, peak depth)")
-    print(f"    - /nowcast        (Radar precipitation timeline with uncertainty)")
-    print(f"    - /causal-chain   (5-Stage cascade: Radar->DEM->Conduit->Surcharge->Depth)")
-    print(f"    - /drainage-graph (Real Leaflet GIS map with Delhi coordinates & HGL modal)")
-    print(f"    - /routing        (Dynamic A* safe detour tool & dispatch)")
-    print(f"    - /reports        (Briefing, multi-year storm archive & exports)")
-    print(f"    - /api-docs       (Developer Navigation API demo panel & cURL runner)")
-    print(f"    - /settings       (Editable parameters with live recompute)")
+    print(f"    - /                   (Landing page with Hero & CTAs)")
+    print(f"    - /login              (Operator authentication)")
+    print(f"    - /signup             (Operator registration)")
+    print(f"    - /dashboard          (Active catchments, alert level, peak depth, asset ticker)")
+    print(f"    - /nowcast            (Radar precipitation timeline with uncertainty)")
+    print(f"    - /causal-chain       (5-Stage cascade: Radar->DEM->Conduit->Surcharge->Depth)")
+    print(f"    - /drainage-graph     (Real Leaflet GIS map with Delhi coordinates & HGL modal)")
+    print(f"    - /hydraulic-transect (2D Longitudinal Cutaway Transect: DEM, Invert, HGL, Fountain)")
+    print(f"    - /routing            (Multi-Modal Vehicle Fleet Clearance Matrix & A* safe detour)")
+    print(f"    - /reports            (Briefing, multi-year storm archive & exports)")
+    print(f"    - /api-docs           (Developer Navigation API demo panel & cURL runner)")
+    print(f"    - /settings           (Editable parameters with live recompute)")
     print(f"[+] Press Ctrl+C to stop.")
     print(f"======================================================================")
 
