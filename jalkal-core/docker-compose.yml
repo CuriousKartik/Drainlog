@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # 1. Spatial Database with PostGIS 3.4 & pgRouting
+  database:
+    image: postgis/postgis:16-3.4
+    container_name: jalkal_postgis
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: jalkal_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/01_init_postgis.sql:/docker-entrypoint-initdb.d/01_init_postgis.sql:ro
+      - jalkal_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d jalkal_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis Cache for Dynamic Nowcast Time-Slices
+  redis:
+    image: redis:7-alpine
+    container_name: jalkal_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - jalkal_redisdata:/data
+
+  # 3. Hybrid Physics-AI FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jalkal_backend
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      POSTGRES_SERVER: database
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: jalkal_db
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./ml_engine:/app/ml_engine
+
+  # 4. Command & Control Dashboard Frontend (Next.js / React + Deck.gl)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: jalkal_frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  jalkal_pgdata:
+  jalkal_redisdata:
+

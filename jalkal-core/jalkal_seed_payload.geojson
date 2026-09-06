@@ -1,0 +1,351 @@
+{
+  "type": "FeatureCollection",
+  "name": "JalKal_Urban_Drainage_Catchment_Seed",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "drain_node",
+        "id": "40160c2a-5a24-45a0-9826-f0d2d3f0b1df",
+        "node_code": "MH_CP_INNER_01",
+        "z_ground": 216.5,
+        "z_invert": 214.0,
+        "basin_area_m2": 5200.0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.2185,
+          28.6328
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "drain_node",
+        "id": "032d65dc-d8fc-447b-801d-a4709a2885db",
+        "node_code": "MH_CP_INNER_02",
+        "z_ground": 215.8,
+        "z_invert": 213.2,
+        "basin_area_m2": 6100.0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.2205,
+          28.6315
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "drain_node",
+        "id": "9457af51-7d53-4355-af0c-286c90edfc1a",
+        "node_code": "MH_CP_OUTER_03",
+        "z_ground": 214.9,
+        "z_invert": 212.1,
+        "basin_area_m2": 7800.0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.22250000000001,
+          28.6295
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "drain_node",
+        "id": "1f577390-7fed-487c-8c85-db1019e2e871",
+        "node_code": "MH_MINTO_BRIDGE_LOW",
+        "z_ground": 212.2,
+        "z_invert": 209.5,
+        "basin_area_m2": 12000.0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.2245,
+          28.636
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "drain_node",
+        "id": "40f945a0-67ea-4a39-acb5-d578963cc8b4",
+        "node_code": "MH_BARAKHAMBA_05",
+        "z_ground": 215.2,
+        "z_invert": 212.8,
+        "basin_area_m2": 4900.0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.226,
+          28.628
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "drain_node",
+        "id": "2da22759-37b4-4660-8e40-26f1f500fc9c",
+        "node_code": "MH_KG_MARG_06",
+        "z_ground": 215.6,
+        "z_invert": 213.0,
+        "basin_area_m2": 5500.0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.221,
+          28.6255
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "drain_conduit",
+        "id": "4eae5917-9f71-4e54-9795-12c97143b4cb",
+        "conduit_code": "COND_CP_01",
+        "diameter_m": 0.9,
+        "length_m": 240.0,
+        "clogging_ratio": 0.05
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.2185,
+            28.6328
+          ],
+          [
+            77.2205,
+            28.6315
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "drain_conduit",
+        "id": "46e7f24a-c99a-422d-a0fc-a0bb7d760311",
+        "conduit_code": "COND_CP_02",
+        "diameter_m": 1.0,
+        "length_m": 290.0,
+        "clogging_ratio": 0.1
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.2205,
+            28.6315
+          ],
+          [
+            77.22250000000001,
+            28.6295
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "drain_conduit",
+        "id": "e8dd71fc-30de-4482-ae28-3e8cd318a243",
+        "conduit_code": "COND_MINTO_OUTFALL",
+        "diameter_m": 1.2,
+        "length_m": 650.0,
+        "clogging_ratio": 0.5
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.22250000000001,
+            28.6295
+          ],
+          [
+            77.2245,
+            28.636
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "drain_conduit",
+        "id": "bffd2e88-33e9-4556-a045-124bae2db00d",
+        "conduit_code": "COND_BARAKHAMBA_04",
+        "diameter_m": 0.9,
+        "length_m": 380.0,
+        "clogging_ratio": 0.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.22250000000001,
+            28.6295
+          ],
+          [
+            77.226,
+            28.628
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "road_segment",
+        "id": 101,
+        "road_name": "Connaught Place Inner Circle",
+        "z_elevation": 216.2,
+        "length_m": 250.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.2185,
+            28.6328
+          ],
+          [
+            77.21950000000001,
+            28.6322
+          ],
+          [
+            77.2205,
+            28.6315
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "road_segment",
+        "id": 102,
+        "road_name": "Radial Road 3 Connector",
+        "z_elevation": 215.4,
+        "length_m": 300.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.2205,
+            28.6315
+          ],
+          [
+            77.2215,
+            28.630499999999998
+          ],
+          [
+            77.22250000000001,
+            28.6295
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "road_segment",
+        "id": 103,
+        "road_name": "Minto Road Railway Underpass (Inundation Hotspot)",
+        "z_elevation": 211.8,
+        "length_m": 680.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.22250000000001,
+            28.6295
+          ],
+          [
+            77.2235,
+            28.6328
+          ],
+          [
+            77.2245,
+            28.636
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "road_segment",
+        "id": 104,
+        "road_name": "Barakhamba Road Elevated Flyover",
+        "z_elevation": 217.5,
+        "length_m": 420.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.22250000000001,
+            28.6295
+          ],
+          [
+            77.2243,
+            28.6288
+          ],
+          [
+            77.226,
+            28.628
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "feature_type": "road_segment",
+        "id": 105,
+        "road_name": "Bhavbhuti Marg Bypass Corridor",
+        "z_elevation": 216.0,
+        "length_m": 580.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            77.226,
+            28.628
+          ],
+          [
+            77.22550000000001,
+            28.631999999999998
+          ],
+          [
+            77.2245,
+            28.636
+          ]
+        ]
+      }
+    }
+  ]
+}

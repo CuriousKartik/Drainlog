@@ -1,0 +1,9 @@
+node_modules/
+.next/
+__pycache__/
+*.pyc
+*.log
+.env
+.env*.local
+scratch/
+test_py.txt
