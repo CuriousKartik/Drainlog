@@ -1637,36 +1637,39 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                 <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                   <div class="sidebar-item ${state.route === '/dashboard' ? 'active' : ''}" onclick="navigate('/dashboard')">
                     <span>Dashboard</span>
+                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
                   </div>
                   <div class="sidebar-item ${state.route === '/nowcast' ? 'active' : ''}" onclick="navigate('/nowcast')">
                     <span>Radar Nowcast</span>
-                    <span class="badge-warning" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">0-3H</span>
+                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
                   </div>
                   <div class="sidebar-item ${state.route === '/causal-chain' ? 'active' : ''}" onclick="navigate('/causal-chain')">
                     <span>Causal Pipeline</span>
-                    <span style="font-size: 0.62rem; background: #111; color: white; padding: 0.1rem 0.35rem; border-radius: 4px;">CHAIN</span>
+                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
                   </div>
                   <div class="sidebar-item ${state.route === '/drainage-graph' ? 'active' : ''}" onclick="navigate('/drainage-graph')">
                     <span>Drainage GIS Map</span>
-                    <span style="font-size: 0.62rem; color: var(--text-muted);">LEAFLET</span>
+                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
                   </div>
                   <div class="sidebar-item ${state.route === '/hydraulic-transect' ? 'active' : ''}" onclick="navigate('/hydraulic-transect')">
                     <span>Conduit Transect</span>
-                    <span style="font-size: 0.62rem; background: var(--accent-orange); color: white; padding: 0.1rem 0.35rem; border-radius: 4px;">2D SLICE</span>
+                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
                   </div>
                   <div class="sidebar-item ${state.route === '/routing' ? 'active' : ''}" onclick="navigate('/routing')">
                     <span>Safe Detour Routing</span>
-                    <span style="font-size: 0.62rem; background: #1E8E5A; color: white; padding: 0.1rem 0.35rem; border-radius: 4px;">FLEET</span>
+                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
                   </div>
                   <div class="sidebar-item ${state.route === '/reports' ? 'active' : ''}" onclick="navigate('/reports')">
                     <span>Reports & History</span>
+                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
                   </div>
                   <div class="sidebar-item ${state.route === '/api-docs' ? 'active' : ''}" onclick="navigate('/api-docs')">
                     <span>Navigation API</span>
-                    <span style="font-size: 0.62rem; background: var(--accent-orange); color: white; padding: 0.1rem 0.35rem; border-radius: 4px;">DEV</span>
+                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
                   </div>
                   <div class="sidebar-item ${state.route === '/settings' ? 'active' : ''}" onclick="navigate('/settings')">
                     <span>Model Parameters</span>
+                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
                   </div>
                 </div>
               </div>
@@ -1738,9 +1741,13 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             </div>
 
             <div class="card" style="padding: 1.2rem;">
-              <div class="label-mono">ROUTE CLEARANCE</div>
-              <div class="heading-display" style="font-size: 2.2rem; color: var(--success-text); margin-top: 0.3rem;">${h.clearanceRate.toFixed(1)}%</div>
-              <div style="font-size: 0.7rem; color: var(--text-secondary);">Flyover Detour Clear</div>
+              <div class="label-mono">ROUTE CLEARANCE (REROUTED)</div>
+              <div class="heading-display" style="font-size: 1.65rem; color: var(--success-text); margin-top: 0.3rem;">
+                ${h.clearanceRate.toFixed(1)}% <span style="font-size: 0.75rem; color: var(--accent-black); font-family: var(--font-mono); font-weight: 600;">CLEAR</span>
+              </div>
+              <div style="font-size: 0.68rem; color: var(--text-secondary); margin-top: 0.25rem; line-height: 1.35;">
+                via flood-safe detour &bull; Direct Minto: 0% (${h.mintoDepth > 25 ? 'Blocked' : 'Restricted'})
+              </div>
             </div>
 
             <div class="card" style="padding: 1.2rem;">
@@ -1759,8 +1766,9 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                 <span class="label-mono">CRITICAL URBAN ASSETS & ECONOMIC RISK TICKER</span>
                 <h2 style="font-size: 1.1rem; font-weight: 800; margin-top: 0.2rem;">Monitored Delhi Infrastructure Telemetry</h2>
               </div>
-              <div style="background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-pill); padding: 0.3rem 0.8rem; font-size: 0.7rem; font-weight: 700;">
-                LOSS RATE: ₹4,85,000 / HR CLOSED
+              <div style="background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-pill); padding: 0.3rem 0.8rem; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">
+                <span>LOSS RATE: ₹${h.hourlyEconomicLossInr.toLocaleString('en-IN')} / HR ${h.mintoDepth > 25.0 ? 'CLOSED' : 'OPEN'}</span>
+                <span title="Est. from vehicle-hours delayed x avg commercial time-value (VOT) + excess fuel operating costs (VOC) for diverted corridor" style="cursor: help; width: 15px; height: 15px; border-radius: 50%; background: var(--accent-black); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold;">?</span>
               </div>
             </div>
 
@@ -1789,6 +1797,9 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                 <span class="label-mono" style="color: var(--accent-orange);">ECONOMIC LOSS MODEL & COMMUTER PRODUCTIVITY PENALTY</span>
                 <div style="font-size: 0.75rem; margin-top: 0.2rem;">
                   Underpass closure detours <b>${h.pcuDelayedPerHr.toLocaleString('en-IN')} PCU/hr</b> via Barakhamba, creating <b>~${h.lostHoursPerHr.toLocaleString('en-IN')} lost commuter person-hours / hr</b>.
+                </div>
+                <div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 0.35rem;">
+                  Est. methodology: <b>[Vehicle-Hours Delayed &times; Avg Commercial Time-Value (₹250/hr VOT)] + [Excess Fuel &amp; VOC (₹18.5/km &times; 1.12 km detour)]</b>.
                 </div>
               </div>
               <div style="text-align: right;">
@@ -2634,10 +2645,14 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               <div class="label-mono">EXECUTIVE ADVISORY</div>
               <h2 style="font-size: 1.2rem; font-weight: 800; margin: 0.4rem 0 1rem 0;">Monsoon Storm Inundation Briefing</h2>
               <p class="heading-editorial" style="font-size: 1.05rem; line-height: 1.6;">
-                "During the evaluated 0-3 hour forecast horizon, convective rainfall reached a maximum intensity of ${h.rain.toFixed(1)} mm/hr over the Connaught Place basin. While primary residential roads sustained nominal gravity drainage, the Minto Railway Underpass accumulated a critical water depth of ${h.mintoDepth.toFixed(1)} cm (&plusmn;${h.uncertaintyCm} cm) under dynamic conduit clogging ratio alpha = ${state.cloggingRatio.toFixed(2)}. Transit dispatch models successfully routed 100.0% of emergency ambulance runs over the Barakhamba Elevated Flyover, avoiding stalled vehicle risks."
+                ${h.mintoDepth > 25.0 ? `
+                  "During the evaluated 0-3 hour forecast horizon (T+${state.horizonMin}m), convective rainfall is currently calculated at ${h.rain.toFixed(1)} mm/hr (${h.dbz} dBZ) over the Connaught Place basin. While primary residential streets sustain nominal drainage, the Minto Railway Underpass has accumulated a critical water depth of ${h.mintoDepth.toFixed(1)} cm (&plusmn;${h.uncertaintyCm} cm, ${h.confPct}% confidence) under dynamic conduit clogging ratio alpha = ${state.cloggingRatio.toFixed(2)}. This restricts conduit conveyance to ${h.qPipeEff.toFixed(2)} m3/s against ${h.qRunoff.toFixed(2)} m3/s runoff, discharging ${h.qSurcharge.toFixed(2)} m3/s of manhole surcharge fountain backflow. Transit dispatch models have rerouted 100.0% of emergency fleet runs over the Barakhamba Elevated Flyover detour (${(state.osrmDetourDistanceKm || 2.41).toFixed(2)} km), circumventing all ${h.impassableCount} impassable roadway chokepoint(s)."
+                ` : `
+                  "During the evaluated 0-3 hour forecast horizon (T+${state.horizonMin}m), rainfall is modeled at ${h.rain.toFixed(1)} mm/hr (${h.dbz} dBZ) across the Connaught Place catchment. Underground conduits convey ${h.qPipeEff.toFixed(2)} m3/s under clogging ratio alpha = ${state.cloggingRatio.toFixed(2)}, safely absorbing peak inflows with surcharge contained to ${h.qSurcharge.toFixed(2)} m3/s. Minto Underpass ponding depth is nominal at ${h.mintoDepth.toFixed(1)} cm (&plusmn;${h.uncertaintyCm} cm), maintaining 100.0% route passability across standard municipal transit corridors."
+                `}
               </p>
-              <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed var(--border-light); display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted);">
-                <span>REPORT SOURCE: JalKal Physics-AI Engine</span>
+              <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed var(--border-light); display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.5rem;">
+                <span>REPORT SOURCE: JalKal Physics-AI Engine (alpha = ${state.cloggingRatio.toFixed(2)}, T+${state.horizonMin}m)</span>
                 <span>SPONSOR: Ministry of Earth Sciences / NCMRWF (SIH26085)</span>
               </div>
             </div>
@@ -2710,19 +2725,27 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                   </tr>
                 </thead>
                 <tbody>
-                  ${HISTORICAL_STORMS.map(s => `
-                    <tr style="border-bottom: 1px solid var(--border-light);">
-                      <td style="padding: 0.6rem 0.5rem; font-weight: 600;">${s.date}</td>
-                      <td style="padding: 0.6rem 0.5rem;">${s.event}</td>
-                      <td style="padding: 0.6rem 0.5rem;">${s.rainfall_mm === 'LIVE' ? h.rain.toFixed(1) + ' mm/hr' : s.rainfall_mm + ' mm'}</td>
-                      <td style="padding: 0.6rem 0.5rem; font-weight: 700; color: #D64545;">${s.peak_depth_cm === 'LIVE' ? h.mintoDepth.toFixed(1) + ' cm' : s.peak_depth_cm + ' cm'}</td>
-                      <td style="padding: 0.6rem 0.5rem;">${s.detours === 'LIVE' ? '1 Active' : s.detours + ' Dispatched'}</td>
+                  ${HISTORICAL_STORMS.map(s => {
+                    const isCurrent = s.date === "CURRENT SESSION";
+                    const rainVal = isCurrent ? `${h.rain.toFixed(1)} mm/hr (T+${state.horizonMin}m)` : `${s.rainfall_mm} mm`;
+                    const depthVal = isCurrent ? `${h.mintoDepth.toFixed(1)} cm (±${h.uncertaintyCm})` : `${s.peak_depth_cm} cm`;
+                    const detourVal = isCurrent ? (h.mintoDepth > 25 ? '1 Active (Detour)' : '0 (Direct Free)') : `${s.detours} Dispatched`;
+                    const statusVal = isCurrent ? (h.mintoDepth > 25 ? 'CRITICAL SURCHARGE' : (h.mintoDepth > 10 ? 'ELEVATED' : 'NOMINAL')) : s.status;
+                    const badgeClass = isCurrent ? (h.mintoDepth > 25 ? 'badge-error' : (h.mintoDepth > 10 ? 'badge-warning' : 'badge-success')) : 'badge-success';
+                    return `
+                    <tr style="border-bottom: 1px solid var(--border-light); background: ${isCurrent ? '#FFFDF9' : 'transparent'};">
+                      <td style="padding: 0.6rem 0.5rem; font-weight: 700;">${isCurrent ? 'CURRENT SIMULATION SESSION' : s.date}</td>
+                      <td style="padding: 0.6rem 0.5rem;">${isCurrent ? `Live Doppler Nowcast (alpha=${state.cloggingRatio.toFixed(2)})` : s.event}</td>
+                      <td style="padding: 0.6rem 0.5rem;">${rainVal}</td>
+                      <td style="padding: 0.6rem 0.5rem; font-weight: 700; color: ${isCurrent && h.mintoDepth <= 10 ? '#1E8E5A' : '#D64545'};">${depthVal}</td>
+                      <td style="padding: 0.6rem 0.5rem;">${detourVal}</td>
                       <td style="padding: 0.6rem 0.5rem; color: var(--text-secondary);">${s.solver_latency_s} s</td>
                       <td style="padding: 0.6rem 0.5rem; text-align: right;">
-                        <span class="${s.status === 'ACTIVE' ? 'badge-warning' : 'badge-success'}">${s.status}</span>
+                        <span class="${badgeClass}">${statusVal}</span>
                       </td>
                     </tr>
-                  `).join('')}
+                    `;
+                  }).join('')}
                 </tbody>
               </table>
             </div>
@@ -3483,6 +3506,16 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               openNodeModal(n.code, n.z_ground, n.z_invert);
             });
           });
+
+          // Dynamic Minto depression sump inundation pool on GIS map
+          if (h.mintoDepth > 10) {
+            L.circle([28.6348, 77.2268], {
+              radius: Math.min(90, h.mintoDepth * 1.5),
+              color: h.mintoDepth > 25 ? '#D64545' : '#E8863A',
+              fillColor: h.mintoDepth > 25 ? '#D64545' : '#E8863A',
+              fillOpacity: 0.35
+            }).addTo(map).bindPopup(`<b>Minto Depression Inundation Pool</b><br>Water Depth: <b>${h.mintoDepth.toFixed(1)} cm</b> (&plusmn;${h.uncertaintyCm} cm)<br>Status: <b>${h.mintoDepth > 25 ? 'CRITICAL SURCHARGE' : 'ELEVATED PONDING'}</b>`);
+          }
         }, 100);
       }
 
