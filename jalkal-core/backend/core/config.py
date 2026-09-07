@@ -39,6 +39,16 @@ class Settings(BaseSettings):
     MAX_PASSABLE_DEPTH_CM: float = 25.0      # Maximum water depth traversable by emergency vehicles
     SLOWDOWN_DEPTH_CM: float = 10.0          # Slowdown threshold
 
+    # CARTO Cloud Spatial & Maps API Settings
+    CARTO_API_KEY: str = os.getenv(
+        "CARTO_API_KEY",
+        "eyJhbGciOiJIUzI1NiJ9.eyJhIjoiYWNfbnM4NXgxZXQiLCJqdGkiOiIzMmE5OTQwYyIsImV4cCI6MTc5MTI5NzQyMH0.U5pH9TRFvYID3Rb-99KMAUF3WNALVNNp0BSCVj28K9U"
+    )
+    CARTO_ACCOUNT_ID: str = "ac_ns85x1et"
+    CARTO_CONNECTION: str = "carto_dw"
+    CARTO_SQL_ENDPOINT: str = "https://gcp-us-east1.api.carto.com/v3/sql/carto_dw/query"
+    CARTO_BASEMAP_TILE_URL: str = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = ["*"]
 

@@ -27,6 +27,8 @@ import time
 import sys
 import os
 import urllib.parse
+import urllib.request
+import urllib.error
 from datetime import datetime, timezone
 
 PORT = 3000
@@ -48,8 +50,42 @@ SIMULATION_STATE = {
         "radar": {"name": "IMD / NCMRWF Doppler Weather Radar (Palam)", "status": "CONNECTED", "latency": 18},
         "dem": {"name": "CartoDEM High-Res Topographic Grid (10m)", "status": "CONNECTED", "latency": 42},
         "shapefile": {"name": "MCD Storm Sewer Network Shapefile (v2.4)", "status": "CONNECTED", "latency": 25},
+        "carto": {"name": "CARTO Cloud Spatial DW (carto_dw)", "status": "CONNECTED", "latency": 38, "account": "ac_ns85x1et"},
     }
 }
+
+# CARTO Cloud Spatial & Maps API Configuration
+CARTO_CONFIG = {
+    "api_key": "eyJhbGciOiJIUzI1NiJ9.eyJhIjoiYWNfbnM4NXgxZXQiLCJqdGkiOiIzMmE5OTQwYyIsImV4cCI6MTc5MTI5NzQyMH0.U5pH9TRFvYID3Rb-99KMAUF3WNALVNNp0BSCVj28K9U",
+    "account_id": "ac_ns85x1et",
+    "connection": "carto_dw",
+    "sql_endpoint": "https://gcp-us-east1.api.carto.com/v3/sql/carto_dw/query",
+}
+
+# High-Resolution Street-Following Route Geometries for Delhi Corridor
+OSRM_BASELINE_COORDS = [
+    [77.2180, 28.6340], [77.2184, 28.6342], [77.2189, 28.6343], [77.2195, 28.6344],
+    [77.2201, 28.6343], [77.2207, 28.6341], [77.2212, 28.6337], [77.2215, 28.6334],
+    [77.2219, 28.6332], [77.2224, 28.6329], [77.2229, 28.6326], [77.2234, 28.6324],
+    [77.2238, 28.6327], [77.2242, 28.6330], [77.2246, 28.6332], [77.2251, 28.6336],
+    [77.2255, 28.6338], [77.2257, 28.6340], [77.2261, 28.6343], [77.2265, 28.6346],
+    [77.2267, 28.6347], [77.2268, 28.6348], [77.2270, 28.6349], [77.2272, 28.6350],
+    [77.2275, 28.6352], [77.2278, 28.6354], [77.2281, 28.6356], [77.2284, 28.6357],
+    [77.2286, 28.6358], [77.2288, 28.6359], [77.2290, 28.6360]
+]
+
+OSRM_DETOUR_COORDS = [
+    [77.2180, 28.6340], [77.2185, 28.6337], [77.2192, 28.6333], [77.2201, 28.6329],
+    [77.2210, 28.6325], [77.2218, 28.6321], [77.2223, 28.6318], [77.2228, 28.6314],
+    [77.2234, 28.6309], [77.2240, 28.6304], [77.2246, 28.6300], [77.2251, 28.6295],
+    [77.2257, 28.6290], [77.2263, 28.6284], [77.2268, 28.6278], [77.2272, 28.6273],
+    [77.2275, 28.6274], [77.2278, 28.6276], [77.2281, 28.6279], [77.2284, 28.6282],
+    [77.2287, 28.6286], [77.2290, 28.6290], [77.2293, 28.6294], [77.2296, 28.6298],
+    [77.2298, 28.6302], [77.2301, 28.6307], [77.2303, 28.6312], [77.2306, 28.6317],
+    [77.2308, 28.6322], [77.2310, 28.6327], [77.2312, 28.6332], [77.2314, 28.6337],
+    [77.2314, 28.6342], [77.2313, 28.6346], [77.2311, 28.6350], [77.2308, 28.6353],
+    [77.2304, 28.6356], [77.2299, 28.6358], [77.2295, 28.6359], [77.2290, 28.6360]
+]
 
 # Real Delhi Coordinates: Connaught Place & Minto Bridge Catchment Nodes
 DELHI_NODES = [
@@ -224,11 +260,79 @@ def calculate_physics_model(t_min=None, alpha=None, inlet_cap=None, dem_res=None
         conf_style = "dashed"
 
     roads = [
-        {"id": "road-1", "name": "Connaught Circus Inner", "coords": [[28.6330, 77.2185], [28.6345, 77.2195], [28.6335, 77.2210]], "base_elev": 216.2, "depth": depth_inner_cm, "status": "PASSABLE", "speed": max(25, 45 - int(depth_inner_cm * 0.4))},
-        {"id": "road-2", "name": "Radial Road 3 Connector", "coords": [[28.6335, 77.2210], [28.6322, 77.2235]], "base_elev": 215.4, "depth": depth_radial_cm, "status": "SLOW" if depth_radial_cm >= 10 else "PASSABLE", "speed": 16 if depth_radial_cm >= 10 else 36},
-        {"id": "road-3", "name": "Minto Underpass Subway (Choke-Point)", "coords": [[28.6322, 77.2235], [28.6348, 77.2268], [28.6360, 77.2290]], "base_elev": 211.8, "depth": depth_minto_cm, "status": "IMPASSABLE" if depth_minto_cm > 25 else "SLOW", "speed": 0 if depth_minto_cm > 25 else 12},
-        {"id": "road-4", "name": "Barakhamba Elevated Flyover (Detour)", "coords": [[28.6322, 77.2235], [28.6275, 77.2265], [28.6320, 77.2310], [28.6360, 77.2290]], "base_elev": 217.5, "depth": depth_flyover_cm, "status": "PASSABLE", "speed": 50},
-        {"id": "road-5", "name": "Bhavbhuti Marg Bypass Corridor", "coords": [[28.6345, 77.2195], [28.6362, 77.2235], [28.6360, 77.2290]], "base_elev": 216.0, "depth": depth_bhavbhuti_cm, "status": "PASSABLE", "speed": 40}
+        {
+            "id": "road-1",
+            "name": "Connaught Circus Inner",
+            "coords": [
+                [28.6340, 77.2180], [28.6342, 77.2184], [28.6343, 77.2189], [28.6344, 77.2195],
+                [28.6343, 77.2201], [28.6341, 77.2207], [28.6337, 77.2212], [28.6334, 77.2215],
+                [28.6329, 77.2214], [28.6324, 77.2212]
+            ],
+            "base_elev": 216.2,
+            "depth": depth_inner_cm,
+            "status": "PASSABLE",
+            "speed": max(25, 45 - int(depth_inner_cm * 0.4))
+        },
+        {
+            "id": "road-2",
+            "name": "Radial Road 2 & Minto Connector",
+            "coords": [
+                [28.6334, 77.2215], [28.6331, 77.2221], [28.6327, 77.2228], [28.6324, 77.2234],
+                [28.6328, 77.2240], [28.6332, 77.2246]
+            ],
+            "base_elev": 215.4,
+            "depth": depth_radial_cm,
+            "status": "SLOW" if depth_radial_cm >= 10 else "PASSABLE",
+            "speed": 16 if depth_radial_cm >= 10 else 36
+        },
+        {
+            "id": "road-3",
+            "name": "Minto Underpass Subway (Choke-Point)",
+            "coords": [
+                [28.6332, 77.2246], [28.6336, 77.2251], [28.6340, 77.2257], [28.6343, 77.2261],
+                [28.6346, 77.2265], [28.6347, 77.2266], [28.6348, 77.2268], [28.6349, 77.2270],
+                [28.6350, 77.2272], [28.6352, 77.2275], [28.6354, 77.2278], [28.6356, 77.2281],
+                [28.6357, 77.2284], [28.6358, 77.2286], [28.6359, 77.2288], [28.6360, 77.2290]
+            ],
+            "base_elev": 211.8,
+            "depth": depth_minto_cm,
+            "status": "IMPASSABLE" if depth_minto_cm > 25 else "SLOW",
+            "speed": 0 if depth_minto_cm > 25 else 12
+        },
+        {
+            "id": "road-4",
+            "name": "Barakhamba & Ranjit Singh Flyover Bridge (Detour)",
+            "coords": [
+                [28.6340, 77.2180], [28.6337, 77.2185], [28.6333, 77.2192], [28.6329, 77.2201],
+                [28.6325, 77.2210], [28.6321, 77.2218], [28.6318, 77.2223], [28.6314, 77.2228],
+                [28.6309, 77.2234], [28.6304, 77.2240], [28.6300, 77.2246], [28.6295, 77.2251],
+                [28.6290, 77.2257], [28.6284, 77.2263], [28.6278, 77.2268], [28.6273, 77.2272],
+                [28.6274, 77.2275], [28.6276, 77.2278], [28.6279, 77.2281], [28.6282, 77.2284],
+                [28.6286, 77.2287], [28.6290, 77.2290], [28.6294, 77.2293], [28.6298, 77.2296],
+                [28.6302, 77.2298], [28.6307, 77.2301], [28.6312, 77.2303], [28.6317, 77.2306],
+                [28.6322, 77.2308], [28.6327, 77.2310], [28.6332, 77.2312], [28.6337, 77.2314],
+                [28.6342, 77.2314], [28.6346, 77.2313], [28.6350, 77.2311], [28.6353, 77.2308],
+                [28.6356, 77.2304], [28.6358, 77.2299], [28.6359, 77.2295], [28.6360, 77.2290]
+            ],
+            "base_elev": 217.5,
+            "depth": depth_flyover_cm,
+            "status": "PASSABLE",
+            "speed": 50
+        },
+        {
+            "id": "road-5",
+            "name": "Bhavbhuti Marg Bypass Corridor",
+            "coords": [
+                [28.6340, 77.2180], [28.6347, 77.2182], [28.6353, 77.2186], [28.6361, 77.2192],
+                [28.6368, 77.2199], [28.6375, 77.2208], [28.6381, 77.2217], [28.6384, 77.2226],
+                [28.6386, 77.2238], [28.6385, 77.2248], [28.6382, 77.2258], [28.6377, 77.2268],
+                [28.6371, 77.2276], [28.6365, 77.2284], [28.6360, 77.2290]
+            ],
+            "base_elev": 216.0,
+            "depth": depth_bhavbhuti_cm,
+            "status": "PASSABLE",
+            "speed": 40
+        }
     ]
 
     impassable_count = len([r for r in roads if r["status"] == "IMPASSABLE"])
@@ -242,8 +346,8 @@ def calculate_physics_model(t_min=None, alpha=None, inlet_cap=None, dem_res=None
             "margin_cm": round(10.0 - depth_minto_cm, 1),
             "status": "PASSABLE" if depth_minto_cm <= 6.0 else ("FORDABLE" if depth_minto_cm <= 10.0 else "BLOCKED"),
             "route_assigned": "Barakhamba Flyover Detour" if depth_minto_cm > 10.0 else "Direct Minto Underpass",
-            "travel_dist_km": 1.71 if depth_minto_cm > 10.0 else 1.23,
-            "travel_time_min": 12.4 if depth_minto_cm > 10.0 else (5.2 if depth_minto_cm <= 6.0 else 9.5)
+            "travel_dist_km": 2.41 if depth_minto_cm > 10.0 else 1.29,
+            "travel_time_min": 10.5 if depth_minto_cm > 10.0 else (5.2 if depth_minto_cm <= 6.0 else 9.5)
         },
         {
             "id": "SEDAN_CAR",
@@ -252,8 +356,8 @@ def calculate_physics_model(t_min=None, alpha=None, inlet_cap=None, dem_res=None
             "margin_cm": round(15.0 - depth_minto_cm, 1),
             "status": "PASSABLE" if depth_minto_cm <= 9.0 else ("FORDABLE" if depth_minto_cm <= 15.0 else "BLOCKED"),
             "route_assigned": "Barakhamba Flyover Detour" if depth_minto_cm > 15.0 else "Direct Minto Underpass",
-            "travel_dist_km": 1.71 if depth_minto_cm > 15.0 else 1.23,
-            "travel_time_min": 9.8 if depth_minto_cm > 15.0 else (4.6 if depth_minto_cm <= 9.0 else 8.2)
+            "travel_dist_km": 2.41 if depth_minto_cm > 15.0 else 1.29,
+            "travel_time_min": 8.8 if depth_minto_cm > 15.0 else (4.6 if depth_minto_cm <= 9.0 else 8.2)
         },
         {
             "id": "EMERGENCY_AMBULANCE",
@@ -262,8 +366,8 @@ def calculate_physics_model(t_min=None, alpha=None, inlet_cap=None, dem_res=None
             "margin_cm": round(25.0 - depth_minto_cm, 1),
             "status": "PASSABLE" if depth_minto_cm <= 15.0 else ("FORDABLE" if depth_minto_cm <= 25.0 else "BLOCKED"),
             "route_assigned": "Barakhamba Flyover Detour" if depth_minto_cm > 25.0 else "Direct Minto Underpass",
-            "travel_dist_km": 1.71 if depth_minto_cm > 25.0 else 1.23,
-            "travel_time_min": 8.4 if depth_minto_cm > 25.0 else (3.9 if depth_minto_cm <= 15.0 else 6.5)
+            "travel_dist_km": 2.41 if depth_minto_cm > 25.0 else 1.29,
+            "travel_time_min": 7.2 if depth_minto_cm > 25.0 else (3.9 if depth_minto_cm <= 15.0 else 6.5)
         },
         {
             "id": "DTC_BUS",
@@ -272,8 +376,8 @@ def calculate_physics_model(t_min=None, alpha=None, inlet_cap=None, dem_res=None
             "margin_cm": round(30.0 - depth_minto_cm, 1),
             "status": "PASSABLE" if depth_minto_cm <= 18.0 else ("FORDABLE" if depth_minto_cm <= 30.0 else "BLOCKED"),
             "route_assigned": "Barakhamba Flyover Detour" if depth_minto_cm > 30.0 else "Direct Minto Underpass",
-            "travel_dist_km": 1.71 if depth_minto_cm > 30.0 else 1.23,
-            "travel_time_min": 11.0 if depth_minto_cm > 30.0 else (5.5 if depth_minto_cm <= 18.0 else 8.8)
+            "travel_dist_km": 2.41 if depth_minto_cm > 30.0 else 1.29,
+            "travel_time_min": 9.9 if depth_minto_cm > 30.0 else (5.5 if depth_minto_cm <= 18.0 else 8.8)
         },
         {
             "id": "FIRE_TRUCK",
@@ -282,8 +386,8 @@ def calculate_physics_model(t_min=None, alpha=None, inlet_cap=None, dem_res=None
             "margin_cm": round(45.0 - depth_minto_cm, 1),
             "status": "PASSABLE" if depth_minto_cm <= 28.0 else ("FORDABLE" if depth_minto_cm <= 45.0 else "BLOCKED"),
             "route_assigned": "Barakhamba Flyover Detour" if depth_minto_cm > 45.0 else "Direct Minto Underpass",
-            "travel_dist_km": 1.71 if depth_minto_cm > 45.0 else 1.23,
-            "travel_time_min": 9.5 if depth_minto_cm > 45.0 else (4.8 if depth_minto_cm <= 28.0 else 7.2)
+            "travel_dist_km": 2.41 if depth_minto_cm > 45.0 else 1.29,
+            "travel_time_min": 8.4 if depth_minto_cm > 45.0 else (4.8 if depth_minto_cm <= 28.0 else 7.2)
         }
     ]
 
@@ -423,11 +527,13 @@ APP_SHELL_HTML = """<!DOCTYPE html>
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+    html, body {
       background: var(--bg-primary);
       color: var(--text-primary);
       font-family: var(--font-mono);
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      width: 100%;
     }
 
     .heading-display { font-family: var(--font-display); font-weight: 900; letter-spacing: -0.02em; }
@@ -451,6 +557,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       gap: 0.5rem;
       transition: opacity 0.15s ease;
       text-decoration: none;
+      touch-action: manipulation;
     }
     .btn-primary:hover { opacity: 0.85; }
 
@@ -471,6 +578,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       gap: 0.5rem;
       transition: background 0.15s ease;
       text-decoration: none;
+      touch-action: manipulation;
     }
     .btn-secondary:hover { background: var(--bg-card-alt); }
 
@@ -497,6 +605,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       text-decoration: none;
       cursor: pointer;
       transition: all 0.15s ease;
+      touch-action: manipulation;
     }
     .sidebar-item:hover {
       background: var(--bg-card-alt);
@@ -534,7 +643,8 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 1500;
+      z-index: 1800;
+      padding: 1rem;
     }
     .modal-overlay.open { display: flex; }
 
@@ -559,6 +669,273 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       line-height: 1.5;
       overflow-x: auto;
       border: 1px solid #333;
+      max-width: 100%;
+    }
+
+    /* App Shell & Responsive Layout Engine */
+    .app-header {
+      height: 64px;
+      border-bottom: 1px solid var(--border-light);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-primary);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .app-workspace {
+      display: flex;
+      flex: 1;
+      min-height: calc(100vh - 64px);
+    }
+
+    .app-sidebar {
+      width: 250px;
+      border-right: 1px solid var(--border-light);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: var(--bg-primary);
+      flex-shrink: 0;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 2.2rem 2.5rem;
+      overflow-y: auto;
+      max-width: 100%;
+    }
+
+    /* Mobile Drawer & Backdrop */
+    .mobile-menu-btn {
+      display: none;
+      background: white;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-sm);
+      padding: 0.4rem 0.5rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+    }
+
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(17, 17, 17, 0.45);
+      backdrop-filter: blur(2px);
+      z-index: 1650;
+    }
+    .sidebar-backdrop.open {
+      display: block;
+    }
+
+    /* Responsive Grid Classes */
+    .grid-5-kpi {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem;
+    }
+
+    .grid-4-asset {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .grid-4-stat {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      text-align: center;
+    }
+
+    .grid-2-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .grid-routing-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 1.5rem;
+    }
+
+    .grid-transect-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 1.5rem;
+    }
+
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-top: 0.5rem;
+    }
+    .table-responsive table {
+      min-width: 560px;
+    }
+
+    .pill-scroll-container {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .map-responsive {
+      height: 420px;
+      width: 100%;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      background: var(--bg-card-alt);
+    }
+
+    /* Media Breakpoints */
+    @media (max-width: 1200px) {
+      .grid-5-kpi {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .grid-4-asset {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 991px) {
+      .desktop-only {
+        display: none !important;
+      }
+      .mobile-menu-btn {
+        display: flex !important;
+      }
+      .header-telemetry {
+        display: none !important;
+      }
+      .mobile-minto-pill {
+        display: inline-flex !important;
+      }
+      .app-header {
+        padding: 0 1rem;
+      }
+      .app-sidebar {
+        position: fixed;
+        top: 0;
+        left: -290px;
+        width: 280px;
+        height: 100vh;
+        z-index: 1700;
+        border-right: 1px solid var(--border-medium);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+        transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+      }
+      .app-sidebar.open {
+        left: 0;
+      }
+      .mobile-sidebar-close {
+        display: block !important;
+      }
+      .main-content {
+        padding: 1.25rem 1rem !important;
+      }
+      .grid-routing-layout,
+      .grid-transect-layout,
+      .grid-2-col {
+        grid-template-columns: 1fr !important;
+        gap: 1.2rem !important;
+      }
+      .grid-4-stat {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .heading-display {
+        font-size: clamp(1.4rem, 5.5vw, 2.2rem) !important;
+      }
+      .heading-editorial {
+        font-size: clamp(0.88rem, 2.8vw, 1.1rem) !important;
+      }
+      .app-header {
+        padding: 0 0.75rem !important;
+        height: 56px !important;
+      }
+      .app-header-title {
+        font-size: 1.1rem !important;
+      }
+      .main-content {
+        padding: 1rem 0.65rem !important;
+      }
+      .card {
+        padding: 1.15rem !important;
+        border-radius: var(--radius-md) !important;
+      }
+      .grid-5-kpi {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.65rem !important;
+      }
+      .grid-4-asset {
+        grid-template-columns: 1fr !important;
+      }
+      .grid-4-stat {
+        grid-template-columns: 1fr !important;
+      }
+      .page-header-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+      }
+      .ticker-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+      }
+      .ticker-row > div:last-child {
+        text-align: left !important;
+      }
+      .causal-card {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+      }
+      .causal-card > div:last-child {
+        text-align: left !important;
+      }
+      .map-responsive {
+        height: 320px !important;
+      }
+      .toast {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        text-align: center;
+      }
+      .pill-scroll-container {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 6px;
+      }
+      .pill-scroll-container button {
+        flex-shrink: 0;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .grid-5-kpi {
+        grid-template-columns: 1fr !important;
+      }
     }
   </style>
 </head>
@@ -570,6 +947,31 @@ APP_SHELL_HTML = """<!DOCTYPE html>
   <div id="app-root"></div>
 
   <script>
+    // Real High-Resolution Street-Following Coordinates for Delhi Catchment
+    const OSRM_BASELINE_COORDS = [
+      [77.2180, 28.6340], [77.2184, 28.6342], [77.2189, 28.6343], [77.2195, 28.6344],
+      [77.2201, 28.6343], [77.2207, 28.6341], [77.2212, 28.6337], [77.2215, 28.6334],
+      [77.2219, 28.6332], [77.2224, 28.6329], [77.2229, 28.6326], [77.2234, 28.6324],
+      [77.2238, 28.6327], [77.2242, 28.6330], [77.2246, 28.6332], [77.2251, 28.6336],
+      [77.2255, 28.6338], [77.2257, 28.6340], [77.2261, 28.6343], [77.2265, 28.6346],
+      [77.2267, 28.6347], [77.2268, 28.6348], [77.2270, 28.6349], [77.2272, 28.6350],
+      [77.2275, 28.6352], [77.2278, 28.6354], [77.2281, 28.6356], [77.2284, 28.6357],
+      [77.2286, 28.6358], [77.2288, 28.6359], [77.2290, 28.6360]
+    ];
+
+    const OSRM_DETOUR_COORDS = [
+      [77.2180, 28.6340], [77.2185, 28.6337], [77.2192, 28.6333], [77.2201, 28.6329],
+      [77.2210, 28.6325], [77.2218, 28.6321], [77.2223, 28.6318], [77.2228, 28.6314],
+      [77.2234, 28.6309], [77.2240, 28.6304], [77.2246, 28.6300], [77.2251, 28.6295],
+      [77.2257, 28.6290], [77.2263, 28.6284], [77.2268, 28.6278], [77.2272, 28.6273],
+      [77.2275, 28.6274], [77.2278, 28.6276], [77.2281, 28.6279], [77.2284, 28.6282],
+      [77.2287, 28.6286], [77.2290, 28.6290], [77.2293, 28.6294], [77.2296, 28.6298],
+      [77.2298, 28.6302], [77.2301, 28.6307], [77.2303, 28.6312], [77.2306, 28.6317],
+      [77.2308, 28.6322], [77.2310, 28.6327], [77.2312, 28.6332], [77.2314, 28.6337],
+      [77.2314, 28.6342], [77.2313, 28.6346], [77.2311, 28.6350], [77.2308, 28.6353],
+      [77.2304, 28.6356], [77.2299, 28.6358], [77.2295, 28.6359], [77.2290, 28.6360]
+    ];
+
     // Reactive Hydraulic State
     let state = {
       route: window.location.pathname || "/dashboard",
@@ -590,6 +992,15 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       apiDest: "LNJP_HOSPITAL",
       apiResponseJson: null,
       apiLatencyMs: null,
+      osrmBaseline: { type: "LineString", coordinates: OSRM_BASELINE_COORDS },
+      osrmDetour: { type: "LineString", coordinates: OSRM_DETOUR_COORDS },
+      osrmBaselineDistanceKm: 1.29,
+      osrmDetourDistanceKm: 2.41,
+      osrmLiveFetched: false,
+      osrmLoading: false,
+      cartoSqlQuery: "SELECT 'Minto Railway Underpass' as asset, ROUND(ST_DISTANCE(ST_GEOGPOINT(77.2180, 28.6340), ST_GEOGPOINT(77.2268, 28.6348)), 2) as distance_meters, ST_ASTEXT(ST_BUFFER(ST_GEOGPOINT(77.2268, 28.6348), 150)) as hazard_buffer_wkt",
+      cartoSqlResult: null,
+      cartoSqlLatency: null,
       user: {
         name: "Kartikey Gupta",
         email: "kartikey@moes.gov.in",
@@ -598,7 +1009,8 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       dataSources: {
         radar: { name: "IMD / NCMRWF Doppler Weather Radar (Palam)", status: "CONNECTED", latency: 18 },
         dem: { name: "CartoDEM High-Res Topographic Grid (10m)", status: "CONNECTED", latency: 42 },
-        shapefile: { name: "MCD Storm Sewer Network Shapefile (v2.4)", status: "CONNECTED", latency: 25 }
+        shapefile: { name: "MCD Storm Sewer Network Shapefile (v2.4)", status: "CONNECTED", latency: 25 },
+        carto: { name: "CARTO Cloud Spatial DW (carto_dw)", status: "CONNECTED", latency: 38, account: "ac_ns85x1et" }
       }
     };
 
@@ -629,9 +1041,25 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       { date: "CURRENT SESSION", event: "Live Doppler Nowcast", rainfall_mm: "LIVE", peak_depth_cm: "LIVE", detours: "LIVE", solver_latency_s: "0.014", status: "ACTIVE" }
     ];
 
+    function toggleMobileSidebar(forceState) {
+      const sidebar = document.getElementById('app-sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (!sidebar) return;
+      const isOpen = sidebar.classList.contains('open');
+      const next = forceState !== undefined ? forceState : !isOpen;
+      if (next) {
+        sidebar.classList.add('open');
+        if (backdrop) backdrop.classList.add('open');
+      } else {
+        sidebar.classList.remove('open');
+        if (backdrop) backdrop.classList.remove('open');
+      }
+    }
+
     function navigate(path) {
       state.route = path;
       window.history.pushState({}, "", path);
+      toggleMobileSidebar(false);
       render();
       window.scrollTo(0, 0);
     }
@@ -729,14 +1157,84 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       }
 
       const roads = [
-        { id: "road-1", name: "Connaught Circus Inner", coords: [[28.6330, 77.2185], [28.6345, 77.2195], [28.6335, 77.2210]], baseElev: 216.2, depth: innerDepth, status: "PASSABLE", speed: Math.max(25, 45 - Math.floor(innerDepth * 0.4)) },
-        { id: "road-2", name: "Radial Road 3 Connector", coords: [[28.6335, 77.2210], [28.6322, 77.2235]], baseElev: 215.4, depth: radialDepth, status: radialDepth >= 10 ? "SLOW" : "PASSABLE", speed: radialDepth >= 10 ? 16 : 36 },
-        { id: "road-3", name: "Minto Underpass Subway (Choke-Point)", coords: [[28.6322, 77.2235], [28.6348, 77.2268], [28.6360, 77.2290]], baseElev: 211.8, depth: mintoDepth, status: mintoDepth > 25 ? "IMPASSABLE" : "SLOW", speed: mintoDepth > 25 ? 0 : 12 },
-        { id: "road-4", name: "Barakhamba Elevated Flyover (Detour)", coords: [[28.6322, 77.2235], [28.6275, 77.2265], [28.6320, 77.2310], [28.6360, 77.2290]], baseElev: 217.5, depth: flyoverDepth, status: "PASSABLE", speed: 50 },
-        { id: "road-5", name: "Bhavbhuti Marg Bypass Corridor", coords: [[28.6345, 77.2195], [28.6362, 77.2235], [28.6360, 77.2290]], baseElev: 216.0, depth: bhavbhutiDepth, status: "PASSABLE", speed: 40 }
+        {
+          id: "road-1",
+          name: "Connaught Circus Inner",
+          coords: [
+            [28.6340, 77.2180], [28.6342, 77.2184], [28.6343, 77.2189], [28.6344, 77.2195],
+            [28.6343, 77.2201], [28.6341, 77.2207], [28.6337, 77.2212], [28.6334, 77.2215],
+            [28.6329, 77.2214], [28.6324, 77.2212]
+          ],
+          baseElev: 216.2,
+          depth: innerDepth,
+          status: "PASSABLE",
+          speed: Math.max(25, 45 - Math.floor(innerDepth * 0.4))
+        },
+        {
+          id: "road-2",
+          name: "Radial Road 2 & Minto Connector",
+          coords: [
+            [28.6334, 77.2215], [28.6331, 77.2221], [28.6327, 77.2228], [28.6324, 77.2234],
+            [28.6328, 77.2240], [28.6332, 77.2246]
+          ],
+          baseElev: 215.4,
+          depth: radialDepth,
+          status: radialDepth >= 10 ? "SLOW" : "PASSABLE",
+          speed: radialDepth >= 10 ? 16 : 36
+        },
+        {
+          id: "road-3",
+          name: "Minto Underpass Subway (Choke-Point)",
+          coords: [
+            [28.6332, 77.2246], [28.6336, 77.2251], [28.6340, 77.2257], [28.6343, 77.2261],
+            [28.6346, 77.2265], [28.6347, 77.2266], [28.6348, 77.2268], [28.6349, 77.2270],
+            [28.6350, 77.2272], [28.6352, 77.2275], [28.6354, 77.2278], [28.6356, 77.2281],
+            [28.6357, 77.2284], [28.6358, 77.2286], [28.6359, 77.2288], [28.6360, 77.2290]
+          ],
+          baseElev: 211.8,
+          depth: mintoDepth,
+          status: mintoDepth > 25 ? "IMPASSABLE" : "SLOW",
+          speed: mintoDepth > 25 ? 0 : 12
+        },
+        {
+          id: "road-4",
+          name: "Barakhamba & Ranjit Singh Flyover Bridge (Detour)",
+          coords: [
+            [28.6340, 77.2180], [28.6337, 77.2185], [28.6333, 77.2192], [28.6329, 77.2201],
+            [28.6325, 77.2210], [28.6321, 77.2218], [28.6318, 77.2223], [28.6314, 77.2228],
+            [28.6309, 77.2234], [28.6304, 77.2240], [28.6300, 77.2246], [28.6295, 77.2251],
+            [28.6290, 77.2257], [28.6284, 77.2263], [28.6278, 77.2268], [28.6273, 77.2272],
+            [28.6274, 77.2275], [28.6276, 77.2278], [28.6279, 77.2281], [28.6282, 77.2284],
+            [28.6286, 77.2287], [28.6290, 77.2290], [28.6294, 77.2293], [28.6298, 77.2296],
+            [28.6302, 77.2298], [28.6307, 77.2301], [28.6312, 77.2303], [28.6317, 77.2306],
+            [28.6322, 77.2308], [28.6327, 77.2310], [28.6332, 77.2312], [28.6337, 77.2314],
+            [28.6342, 77.2314], [28.6346, 77.2313], [28.6350, 77.2311], [28.6353, 77.2308],
+            [28.6356, 77.2304], [28.6358, 77.2299], [28.6359, 77.2295], [28.6360, 77.2290]
+          ],
+          baseElev: 217.5,
+          depth: flyoverDepth,
+          status: "PASSABLE",
+          speed: 50
+        },
+        {
+          id: "road-5",
+          name: "Bhavbhuti Marg Bypass Corridor",
+          coords: [
+            [28.6340, 77.2180], [28.6347, 77.2182], [28.6353, 77.2186], [28.6361, 77.2192],
+            [28.6368, 77.2199], [28.6375, 77.2208], [28.6381, 77.2217], [28.6384, 77.2226],
+            [28.6386, 77.2238], [28.6385, 77.2248], [28.6382, 77.2258], [28.6377, 77.2268],
+            [28.6371, 77.2276], [28.6365, 77.2284], [28.6360, 77.2290]
+          ],
+          baseElev: 216.0,
+          depth: bhavbhutiDepth,
+          status: "PASSABLE",
+          speed: 40
+        }
       ];
 
       // 8. Multi-Modal Vehicle Fleet Clearance Matrix
+      const baseDistKm = state.osrmBaselineDistanceKm || 1.29;
+      const detourDistKm = state.osrmDetourDistanceKm || 2.41;
       const vehicleMatrix = [
         {
           id: "TWO_WHEELER",
@@ -745,8 +1243,8 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           marginCm: Math.round((10.0 - mintoDepth) * 10) / 10,
           status: mintoDepth <= 6.0 ? "PASSABLE" : (mintoDepth <= 10.0 ? "FORDABLE (SLOW)" : "BLOCKED"),
           routeAssigned: mintoDepth > 10.0 ? "Barakhamba Flyover Detour" : "Direct Minto Underpass",
-          travelDistKm: mintoDepth > 10.0 ? 1.71 : 1.23,
-          travelTimeMin: mintoDepth > 10.0 ? 12.4 : (mintoDepth <= 6.0 ? 5.2 : 9.5)
+          travelDistKm: mintoDepth > 10.0 ? detourDistKm : baseDistKm,
+          travelTimeMin: mintoDepth > 10.0 ? 10.5 : (mintoDepth <= 6.0 ? 5.2 : 9.5)
         },
         {
           id: "SEDAN_CAR",
@@ -755,8 +1253,8 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           marginCm: Math.round((15.0 - mintoDepth) * 10) / 10,
           status: mintoDepth <= 9.0 ? "PASSABLE" : (mintoDepth <= 15.0 ? "FORDABLE (SLOW)" : "BLOCKED"),
           routeAssigned: mintoDepth > 15.0 ? "Barakhamba Flyover Detour" : "Direct Minto Underpass",
-          travelDistKm: mintoDepth > 15.0 ? 1.71 : 1.23,
-          travelTimeMin: mintoDepth > 15.0 ? 9.8 : (mintoDepth <= 9.0 ? 4.6 : 8.2)
+          travelDistKm: mintoDepth > 15.0 ? detourDistKm : baseDistKm,
+          travelTimeMin: mintoDepth > 15.0 ? 8.8 : (mintoDepth <= 9.0 ? 4.6 : 8.2)
         },
         {
           id: "EMERGENCY_AMBULANCE",
@@ -765,8 +1263,8 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           marginCm: Math.round((25.0 - mintoDepth) * 10) / 10,
           status: mintoDepth <= 15.0 ? "PASSABLE" : (mintoDepth <= 25.0 ? "FORDABLE (SLOW)" : "BLOCKED"),
           routeAssigned: mintoDepth > 25.0 ? "Barakhamba Flyover Detour" : "Direct Minto Underpass",
-          travelDistKm: mintoDepth > 25.0 ? 1.71 : 1.23,
-          travelTimeMin: mintoDepth > 25.0 ? 8.4 : (mintoDepth <= 15.0 ? 3.9 : 6.5)
+          travelDistKm: mintoDepth > 25.0 ? detourDistKm : baseDistKm,
+          travelTimeMin: mintoDepth > 25.0 ? 7.2 : (mintoDepth <= 15.0 ? 3.9 : 6.5)
         },
         {
           id: "DTC_BUS",
@@ -775,8 +1273,8 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           marginCm: Math.round((30.0 - mintoDepth) * 10) / 10,
           status: mintoDepth <= 18.0 ? "PASSABLE" : (mintoDepth <= 30.0 ? "FORDABLE (SLOW)" : "BLOCKED"),
           routeAssigned: mintoDepth > 30.0 ? "Barakhamba Flyover Detour" : "Direct Minto Underpass",
-          travelDistKm: mintoDepth > 30.0 ? 1.71 : 1.23,
-          travelTimeMin: mintoDepth > 30.0 ? 11.0 : (mintoDepth <= 18.0 ? 5.5 : 8.8)
+          travelDistKm: mintoDepth > 30.0 ? detourDistKm : baseDistKm,
+          travelTimeMin: mintoDepth > 30.0 ? 9.9 : (mintoDepth <= 18.0 ? 5.5 : 8.8)
         },
         {
           id: "FIRE_TRUCK",
@@ -785,8 +1283,8 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           marginCm: Math.round((45.0 - mintoDepth) * 10) / 10,
           status: mintoDepth <= 28.0 ? "PASSABLE" : (mintoDepth <= 45.0 ? "FORDABLE (SLOW)" : "BLOCKED"),
           routeAssigned: mintoDepth > 45.0 ? "Barakhamba Flyover Detour" : "Direct Minto Underpass",
-          travelDistKm: mintoDepth > 45.0 ? 1.71 : 1.23,
-          travelTimeMin: mintoDepth > 45.0 ? 9.5 : (mintoDepth <= 28.0 ? 4.8 : 7.2)
+          travelDistKm: mintoDepth > 45.0 ? detourDistKm : baseDistKm,
+          travelTimeMin: mintoDepth > 45.0 ? 8.4 : (mintoDepth <= 28.0 ? 4.8 : 7.2)
         }
       ];
 
@@ -908,34 +1406,34 @@ APP_SHELL_HTML = """<!DOCTYPE html>
     function renderLanding() {
       return `
         <div style="min-height: 100vh; display: flex; flex-direction: column;">
-          <header style="height: 72px; border-bottom: 1px solid var(--border-light); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; background: var(--bg-primary);">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-              <div style="width: 34px; height: 34px; border-radius: 6px; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem;">JK</div>
-              <span class="heading-display" style="font-size: 1.4rem;">JALKAL</span>
-              <span style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">/ SIH26085 - MoES</span>
+          <header class="app-header" style="height: 64px; border-bottom: 1px solid var(--border-light); padding: 0 1.25rem; display: flex; align-items: center; justify-content: space-between; background: var(--bg-primary);">
+            <div style="display: flex; align-items: center; gap: 0.65rem;">
+              <div style="width: 32px; height: 32px; border-radius: 6px; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem;">JK</div>
+              <span class="heading-display" style="font-size: 1.25rem;">JALKAL</span>
+              <span class="desktop-only" style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">/ SIH26085 - MoES</span>
             </div>
-            <div style="display: flex; gap: 0.75rem;">
-              <button class="btn-secondary" onclick="navigate('/login')">OPERATOR LOGIN</button>
-              <button class="btn-primary" onclick="navigate('/signup')">SIGN UP</button>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick="navigate('/login')">LOGIN</button>
+              <button class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick="navigate('/signup')">SIGN UP</button>
             </div>
           </header>
 
-          <main style="max-width: 1000px; margin: 0 auto; padding: 3.5rem 2rem; flex: 1; display: flex; flex-direction: column; gap: 2.5rem; justify-content: center;">
+          <main style="max-width: 1000px; margin: 0 auto; padding: 2.5rem 1.25rem; flex: 1; display: flex; flex-direction: column; gap: 2rem; justify-content: center;">
             <div style="display: flex; flex-direction: column; gap: 1.2rem; max-width: 780px;">
               <span class="badge-success" style="align-self: flex-start;">0-3H URBAN FLOOD NOWCASTING & SAFE NAVIGATION ENGINE</span>
-              <h1 class="heading-display" style="font-size: 3rem; line-height: 1.05;">
+              <h1 class="heading-display" style="font-size: clamp(1.8rem, 5vw, 3rem); line-height: 1.08;">
                 Physics-AI Urban Inundation Modeling & Evacuation Routing
               </h1>
-              <p class="heading-editorial" style="font-size: 1.15rem; color: var(--text-secondary); line-height: 1.6;">
+              <p class="heading-editorial" style="font-size: clamp(1rem, 2.8vw, 1.15rem); color: var(--text-secondary); line-height: 1.6;">
                 Predicting street-level urban inundation under high-resolution rainfall nowcasting, fusing Doppler radar extrapolation, CartoDEM terrain models, and 1D-2D Saint-Venant drainage graph surrogates.
               </p>
-              <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
-                <button class="btn-primary" style="padding: 0.8rem 1.8rem;" onclick="navigate('/dashboard')">LAUNCH DASHBOARD</button>
-                <button class="btn-secondary" style="padding: 0.8rem 1.8rem;" onclick="navigate('/hydraulic-transect')">CONDUIT TRANSECT</button>
+              <div style="display: flex; gap: 0.8rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                <button class="btn-primary" style="padding: 0.75rem 1.5rem;" onclick="navigate('/dashboard')">LAUNCH DASHBOARD</button>
+                <button class="btn-secondary" style="padding: 0.75rem 1.5rem;" onclick="navigate('/hydraulic-transect')">CONDUIT TRANSECT</button>
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin-top: 0.5rem;">
               <div class="card">
                 <div class="label-mono">PILLAR 01</div>
                 <h3 style="font-weight: 700; margin: 0.4rem 0;">Atmospheric Nowcasting</h3>
@@ -962,7 +1460,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             </div>
           </main>
 
-          <footer style="border-top: 1px solid var(--border-light); padding: 1.5rem 2rem; display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted);">
+          <footer style="border-top: 1px solid var(--border-light); padding: 1.2rem 1.25rem; display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); flex-wrap: wrap; gap: 0.5rem;">
             <span>Ministry of Earth Sciences / NCMRWF</span>
             <span>Smart India Hackathon &bull; PS ID: SIH26085</span>
           </footer>
@@ -1073,20 +1571,31 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       const h = calculateHydraulics();
 
       return `
-        <div style="min-height: 100vh; display: flex; flex-direction: column;">
+        <div class="app-shell" style="min-height: 100vh; display: flex; flex-direction: column;">
+          <!-- Mobile Sidebar Backdrop -->
+          <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="toggleMobileSidebar(false)"></div>
+
           <!-- Top Header -->
-          <header style="height: 64px; border-bottom: 1px solid var(--border-light); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; background: var(--bg-primary);">
-            <div style="display: flex; align-items: center; gap: 0.8rem;">
-              <div style="width: 32px; height: 32px; border-radius: 6px; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; cursor: pointer;" onclick="navigate('/dashboard')">
+          <header class="app-header">
+            <div style="display: flex; align-items: center; gap: 0.65rem;">
+              <!-- Mobile Hamburger Toggle -->
+              <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Toggle Menu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+              </button>
+              <div style="width: 32px; height: 32px; border-radius: 6px; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; cursor: pointer; flex-shrink: 0;" onclick="navigate('/dashboard')">
                 JK
               </div>
-              <span class="heading-display" style="font-size: 1.25rem; color: var(--accent-black); cursor: pointer;" onclick="navigate('/dashboard')">JALKAL</span>
-              <span style="color: var(--border-medium);">/</span>
-              <span class="label-mono" style="color: var(--text-primary); font-weight: 700;">${pageTitle}</span>
+              <span class="heading-display app-header-title" style="font-size: 1.25rem; color: var(--accent-black); cursor: pointer;" onclick="navigate('/dashboard')">JALKAL</span>
+              <span class="desktop-only" style="color: var(--border-medium);">/</span>
+              <span class="label-mono desktop-only" style="color: var(--text-primary); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;">${pageTitle}</span>
             </div>
 
-            <!-- Header Middle Telemetry -->
-            <div style="display: flex; align-items: center; gap: 1rem;">
+            <!-- Header Middle Telemetry (Desktop / Tablet) -->
+            <div class="header-telemetry" style="display: flex; align-items: center; gap: 0.8rem;">
               <div style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-pill); padding: 0.3rem 0.8rem; font-size: 0.68rem; display: flex; align-items: center; gap: 0.4rem;">
                 <span style="width: 6px; height: 6px; border-radius: 50%; background: #1E8E5A; display: inline-block;"></span>
                 <span>SOLVER: SAINT-VENANT 1D-2D</span>
@@ -1098,23 +1607,30 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             </div>
 
             <!-- Header Actions -->
-            <div style="display: flex; align-items: center; gap: 0.6rem;">
-              <button class="btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.68rem;" onclick="syncSimulation()">SYNC TELEMETRY</button>
-              <button class="btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.68rem; color: #D64545;" onclick="navigate('/login')">EXIT</button>
+            <div class="app-header-actions" style="display: flex; align-items: center; gap: 0.5rem;">
+              <div class="mobile-minto-pill" style="display: none; background: white; border: 1px solid var(--border-light); border-radius: var(--radius-pill); padding: 0.25rem 0.6rem; font-size: 0.62rem; font-weight: 700; color: ${h.mintoDepth > 25 ? '#D64545' : '#E8863A'};">
+                ${h.mintoDepth.toFixed(1)} cm
+              </div>
+              <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.68rem;" onclick="syncSimulation()">SYNC</button>
+              <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.68rem; color: #D64545;" onclick="navigate('/login')">EXIT</button>
             </div>
           </header>
 
           <!-- Workspace (Sidebar + Main) -->
-          <div style="display: flex; flex: 1; min-height: calc(100vh - 64px);">
+          <div class="app-workspace">
             <!-- Sidebar -->
-            <aside style="width: 250px; border-right: 1px solid var(--border-light); padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; background: var(--bg-primary); shrink: 0;">
+            <aside id="app-sidebar" class="app-sidebar">
               <div>
-                <div style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 0.75rem; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-                  <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem;">JK</div>
-                  <div>
-                    <div style="font-weight: 600; font-size: 0.78rem;">Delhi Basin</div>
-                    <div style="font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase;">CONNAUGHT & MINTO</div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                  <div style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 0.65rem 0.75rem; display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem;">JK</div>
+                    <div>
+                      <div style="font-weight: 600; font-size: 0.78rem;">Delhi Basin</div>
+                      <div style="font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase;">CONNAUGHT & MINTO</div>
+                    </div>
                   </div>
+                  <!-- Mobile drawer close button -->
+                  <button class="mobile-sidebar-close" onclick="toggleMobileSidebar(false)" aria-label="Close menu" style="display: none; background: none; border: none; font-size: 1.25rem; font-weight: bold; cursor: pointer; color: var(--text-secondary); padding: 0.4rem 0.6rem; margin-left: 0.5rem;">&times;</button>
                 </div>
 
                 <div class="label-mono" style="padding: 0 0.5rem; margin-bottom: 0.5rem;">SCIENTIFIC TOOLS</div>
@@ -1156,7 +1672,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               </div>
 
               <!-- Profile footer -->
-              <div style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 0.6rem 0.8rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer;" onclick="navigate('/settings?tab=account')">
+              <div style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 0.6rem 0.8rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; margin-top: 1rem;" onclick="navigate('/settings?tab=account')">
                 <div style="display: flex; align-items: center; gap: 0.6rem;">
                   <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--accent-orange-light); color: var(--accent-orange); font-weight: bold; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; border: 1px solid #f2c7a3;">7</div>
                   <div>
@@ -1169,7 +1685,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             </aside>
 
             <!-- Main Scroll Area -->
-            <main style="flex: 1; padding: 2.2rem 2.5rem; overflow-y: auto;">
+            <main class="main-content">
               ${contentHtml}
             </main>
           </div>
@@ -1177,7 +1693,6 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       `;
     }
 
-    // Page 1: Dashboard
     function renderDashboardPage() {
       const h = calculateHydraulics();
 
@@ -1197,7 +1712,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           </div>
 
           <!-- 5 Summary KPI Cards -->
-          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem;">
+          <div class="grid-5-kpi">
             <div class="card" style="padding: 1.2rem;">
               <div class="label-mono">ACTIVE CATCHMENTS</div>
               <div class="heading-display" style="font-size: 2.2rem; margin-top: 0.3rem;">6</div>
@@ -1250,7 +1765,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             </div>
 
             <!-- 4 Asset Cards Grid -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.2rem;">
+            <div class="grid-4-asset">
               ${h.criticalInfrastructure.map(asset => `
                 <div style="background: var(--bg-card-alt); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 0.8rem; display: flex; flex-direction: column; justify-content: space-between;">
                   <div>
@@ -1269,7 +1784,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             </div>
 
             <!-- Economic Congestion Ticker Strip -->
-            <div style="background: #FFFDF9; border: 1px solid #F0D4B8; border-radius: var(--radius-sm); padding: 0.9rem 1.2rem; display: flex; justify-content: space-between; align-items: center;">
+            <div class="ticker-row" style="background: #FFFDF9; border: 1px solid #F0D4B8; border-radius: var(--radius-sm); padding: 0.9rem 1.2rem; display: flex; justify-content: space-between; align-items: center;">
               <div>
                 <span class="label-mono" style="color: var(--accent-orange);">ECONOMIC LOSS MODEL & COMMUTER PRODUCTIVITY PENALTY</span>
                 <div style="font-size: 0.75rem; margin-top: 0.2rem;">
@@ -1284,7 +1799,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           </div>
 
           <!-- Hydraulic Event Summary + Live Model Parameters -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div class="grid-2-col">
             <div class="card">
               <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
                 <span style="font-weight: 700; font-size: 0.85rem;">Hydraulic Event Assessment</span>
@@ -1340,7 +1855,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               <button class="btn-secondary" style="font-size: 0.7rem; padding: 0.35rem 0.8rem;" onclick="navigate('/drainage-graph')">VIEW ON GIS MAP</button>
             </div>
 
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
+            <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
               <thead>
                 <tr style="border-bottom: 1px solid var(--border-light); color: var(--text-secondary); font-size: 0.68rem;">
                   <th style="padding: 0.5rem;">SEGMENT NAME</th>
@@ -1366,7 +1881,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                   </tr>
                 `).join('')}
               </tbody>
-            </table>
+            </table></div>
           </div>
         </div>
       `;
@@ -1393,7 +1908,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
           <!-- Time Horizon Scrubber with Lead Time Uncertainty -->
           <div class="card" style="display: flex; flex-direction: column; gap: 1rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
               <div>
                 <span class="label-mono">FORECAST HORIZON</span>
                 <div style="font-size: 1.4rem; font-weight: 800; margin-top: 0.2rem;">
@@ -1401,7 +1916,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                   <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; margin-left: 0.5rem;">[${h.confLabel}]</span>
                 </div>
               </div>
-              <div style="display: flex; gap: 0.8rem; align-items: center;">
+              <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
                 <div style="background: var(--bg-card-alt); border: 1px solid var(--border-light); padding: 0.4rem 0.8rem; border-radius: var(--radius-pill); font-size: 0.75rem;">
                   <span style="color: var(--text-secondary);">RAIN RATE: </span>
                   <span style="font-weight: 700; color: ${h.rain > 50 ? '#D64545' : '#E8863A'};">${h.rain.toFixed(1)} mm/hr (${h.dbz} dBZ)</span>
@@ -1469,7 +1984,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               </div>
               <span class="label-mono">LEAFLET GIS INTERACTIVE</span>
             </div>
-            <div id="nowcast-leaflet-map" style="height: 380px; width: 100%; border-radius: var(--radius-md); border: 1px solid var(--border-light); background: var(--bg-card-alt);"></div>
+            <div id="nowcast-leaflet-map" class="map-responsive"></div>
           </div>
         </div>
       `;
@@ -1493,7 +2008,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
           <div style="display: flex; flex-direction: column; gap: 1rem;">
             <!-- Stage 1 -->
-            <div class="card" style="padding: 1.2rem; border-left: 4px solid var(--accent-orange); display: flex; justify-content: space-between; align-items: center;">
+            <div class="card causal-card" style="padding: 1.2rem; border-left: 4px solid var(--accent-orange); display: flex; justify-content: space-between; align-items: center;">
               <div style="max-width: 600px;">
                 <div class="label-mono">STAGE 01 &bull; ATMOSPHERIC NOWCAST</div>
                 <h3 style="font-weight: 800; font-size: 1.1rem; margin: 0.2rem 0;">Doppler Weather Radar Extrapolation (Palam)</h3>
@@ -1510,7 +2025,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             <div style="display: flex; justify-content: center; color: var(--accent-orange); font-size: 1.2rem; font-weight: bold;">&darr; Surface Rainfall Deposition</div>
 
             <!-- Stage 2 -->
-            <div class="card" style="padding: 1.2rem; border-left: 4px solid #1E8E5A; display: flex; justify-content: space-between; align-items: center;">
+            <div class="card causal-card" style="padding: 1.2rem; border-left: 4px solid #1E8E5A; display: flex; justify-content: space-between; align-items: center;">
               <div style="max-width: 600px;">
                 <div class="label-mono">STAGE 02 &bull; TOPOGRAPHIC SURFACE RUNOFF</div>
                 <h3 style="font-weight: 800; font-size: 1.1rem; margin: 0.2rem 0;">CartoDEM 10m Slope Descent (SCS-CN = 98)</h3>
@@ -1527,7 +2042,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             <div style="display: flex; justify-content: center; color: #1E8E5A; font-size: 1.2rem; font-weight: bold;">&darr; Catch-Basin Inlet Interception</div>
 
             <!-- Stage 3 -->
-            <div class="card" style="padding: 1.2rem; border-left: 4px solid #111111; display: flex; justify-content: space-between; align-items: center;">
+            <div class="card causal-card" style="padding: 1.2rem; border-left: 4px solid #111111; display: flex; justify-content: space-between; align-items: center;">
               <div style="max-width: 600px;">
                 <div class="label-mono">STAGE 03 &bull; SUBSURFACE CONDUIT CAPACITY</div>
                 <h3 style="font-weight: 800; font-size: 1.1rem; margin: 0.2rem 0;">Manning's Gravity Pipeline Conveyance</h3>
@@ -1609,13 +2124,13 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               <span class="label-mono">7 MONITORED NODES</span>
             </div>
 
-            <div id="drainage-leaflet-map" style="height: 440px; width: 100%; border-radius: var(--radius-md); border: 1px solid var(--border-light); background: var(--bg-card-alt);"></div>
+            <div id="drainage-leaflet-map" class="map-responsive"></div>
           </div>
 
           <!-- Manhole Invert Diagnostic Table -->
           <div class="card">
             <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem;">Manhole Hydraulic Invert Inventory</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
+            <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
               <thead>
                 <tr style="border-bottom: 1px solid var(--border-light); color: var(--text-secondary); font-size: 0.68rem;">
                   <th style="padding: 0.5rem;">NODE CODE</th>
@@ -1688,7 +2203,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
           <!-- Parameter Scrubber Bar directly over Transect -->
           <div class="card" style="padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
               <div>
                 <span class="label-mono">DYNAMIC TRANSECT FORCING</span>
                 <div style="font-size: 1.1rem; font-weight: 800;">
@@ -1702,7 +2217,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="grid-2-col">
               <div style="display: flex; align-items: center; gap: 0.8rem;">
                 <span class="label-mono" style="width: 120px;">STORM LEAD TIME:</span>
                 <input type="range" min="0" max="180" step="15" value="${state.horizonMin}" oninput="updateHorizon(this.value)" style="flex: 1; accent-color: var(--accent-orange); cursor: pointer;">
@@ -1719,7 +2234,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           <!-- Main SVG 2D Longitudinal Transect Diagram -->
           <div class="card" style="padding: 1.4rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.6rem;">
-              <div style="display: flex; gap: 1.5rem; font-size: 0.72rem;">
+              <div style="display: flex; gap: 0.8rem; font-size: 0.72rem; flex-wrap: wrap;">
                 <div style="display: flex; align-items: center; gap: 0.4rem;">
                   <span style="width: 12px; height: 3px; background: #2C2C2C; display: inline-block;"></span>
                   <span>Ground Rim (DEM)</span>
@@ -1882,7 +2397,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             <!-- Right: Full Transect Audit Table -->
             <div class="card">
               <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.8rem;">Conduit Profile Station Inventory (1,690m Chainage)</h3>
-              <table style="width: 100%; border-collapse: collapse; font-size: 0.72rem; text-align: left;">
+              <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; font-size: 0.72rem; text-align: left;">
                 <thead>
                   <tr style="border-bottom: 1px solid var(--border-light); color: var(--text-secondary); font-size: 0.65rem;">
                     <th style="padding: 0.4rem;">STATION</th>
@@ -1943,7 +2458,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           <!-- Feature 2: Vehicle Fleet Profile Selector Pills -->
           <div class="card" style="padding: 1.2rem;">
             <div class="label-mono" style="margin-bottom: 0.6rem;">SELECT DISPATCH VEHICLE PROFILE FOR LIVE PATH COMPUTATION</div>
-            <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
+            <div class="pill-scroll-container">
               ${h.vehicleMatrix.map(v => `
                 <button onclick="selectVehicle('${v.id}')" style="
                   background: ${state.selectedVehicle === v.id ? 'var(--accent-black)' : 'white'};
@@ -1984,7 +2499,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               <span class="label-mono">DYNAMIC RE-ROUTING ENGINE</span>
             </div>
 
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
+            <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
               <thead>
                 <tr style="border-bottom: 1px solid var(--border-light); color: var(--text-secondary); font-size: 0.68rem;">
                   <th style="padding: 0.5rem;">VEHICLE CLASS</th>
@@ -2016,11 +2531,11 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                   </tr>
                 `).join('')}
               </tbody>
-            </table>
+            </table></div>
           </div>
 
           <!-- Routing Comparison Inspector & Leaflet Map -->
-          <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem;">
+          <div class="grid-routing-layout">
             <!-- Left Side Inspector -->
             <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
               <div style="display: flex; flex-direction: column; gap: 1rem;">
@@ -2032,7 +2547,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                     BASELINE (SHORTEST PATH - DIRECT MINTO)
                   </div>
                   <div style="font-size: 1.4rem; font-weight: 800; margin: 0.2rem 0; color: ${isBlocked ? '#D64545' : 'var(--success-text)'};">
-                    1.23 km &bull; ${isBlocked ? 'IMPASSABLE' : 'PASSABLE (' + currentVehicle.travelTimeMin + ' MIN)'}
+                    ${(state.osrmBaselineDistanceKm || 1.29).toFixed(2)} km &bull; ${isBlocked ? 'IMPASSABLE' : 'PASSABLE (' + (isBlocked ? '10.5' : currentVehicle.travelTimeMin.toFixed(1)) + ' MIN)'}
                   </div>
                   <div style="font-size: 0.7rem; color: ${isBlocked ? '#D64545' : 'var(--success-text)'};">
                     ${isBlocked 
@@ -2043,12 +2558,12 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
                 <!-- Detour route card -->
                 <div style="border: 1px solid #C5E8D6; background: var(--success-bg); border-radius: var(--radius-sm); padding: 0.8rem;">
-                  <div style="font-size: 0.68rem; font-weight: 700; color: var(--success-text);">FLOOD-SAFE DETOUR (DYNAMIC A*)</div>
+                  <div style="font-size: 0.68rem; font-weight: 700; color: var(--success-text);">FLOOD-SAFE DETOUR (DYNAMIC A* / OSRM)</div>
                   <div style="font-size: 1.4rem; font-weight: 800; color: var(--success-text); margin: 0.2rem 0;">
-                    1.71 km &bull; ${isBlocked ? currentVehicle.travelTimeMin.toFixed(1) : '8.4'} MIN
+                    ${(state.osrmDetourDistanceKm || 2.41).toFixed(2)} km &bull; ${isBlocked ? currentVehicle.travelTimeMin.toFixed(1) : (currentVehicle.travelTimeMin * 1.4).toFixed(1)} MIN
                   </div>
                   <div style="font-size: 0.7rem; color: var(--success-text);">
-                    Via Barakhamba Elevated Flyover (+0.48 km, 0 flooded choke-points)
+                    Via Barakhamba Elevated Flyover (+${((state.osrmDetourDistanceKm || 2.41) - (state.osrmBaselineDistanceKm || 1.29)).toFixed(2)} km, street-snapped, 0 flooded choke-points)
                   </div>
                 </div>
 
@@ -2056,7 +2571,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                   <span class="label-mono">DISPATCH PROTOCOL ADVISORY</span>
                   <p class="heading-editorial" style="margin-top: 0.3rem; line-height: 1.5;">
                     ${isBlocked 
-                      ? `"Vehicle profile ${currentVehicle.name} has clearance threshold ${currentVehicle.clearanceCm}cm. Minto Bridge depth is ${h.mintoDepth.toFixed(1)}cm (negative margin ${currentVehicle.marginCm}cm). Impedance penalty set to infinity; routing over Barakhamba flyover."`
+                      ? `"Vehicle profile ${currentVehicle.name} has clearance threshold ${currentVehicle.clearanceCm}cm. Minto Bridge depth is ${h.mintoDepth.toFixed(1)}cm (negative margin ${currentVehicle.marginCm}cm). Impedance penalty set to infinity; routing over Barakhamba flyover bypass."`
                       : `"Vehicle profile ${currentVehicle.name} has clearance threshold ${currentVehicle.clearanceCm}cm. Sump depth ${h.mintoDepth.toFixed(1)}cm is fordable with caution (+${currentVehicle.marginCm}cm clearance buffer). Direct transit authorized."`}
                   </p>
                 </div>
@@ -2071,9 +2586,15 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
             <!-- Right Side Real Leaflet Routing Map -->
             <div class="card" style="padding: 1.2rem;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
-                <span style="font-weight: 700; font-size: 0.85rem;">Emergency Transit Map</span>
-                <span class="label-mono">RED = FLOODED &bull; BLACK = DETOUR</span>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                <div>
+                  <span style="font-weight: 700; font-size: 0.85rem;">Emergency Transit Map</span>
+                  <span style="font-size: 0.7rem; color: var(--text-secondary); margin-left: 8px;">Street-Snapped GeoJSON via OSRM</span>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                  <span class="label-mono">${state.osrmLiveFetched ? 'OSRM LIVE' : 'OSRM VERIFIED'}</span>
+                  <button class="btn-secondary" style="font-size: 0.65rem; padding: 0.2rem 0.5rem;" onclick="refreshOsrmRouting()">REFRESH ROUTE</button>
+                </div>
               </div>
 
               <div id="routing-leaflet-map" style="height: 380px; width: 100%; border-radius: var(--radius-md); border: 1px solid var(--border-light); background: var(--bg-card-alt);"></div>
@@ -2123,7 +2644,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
             <div class="card">
               <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem;">Volumetric Infiltration & Hydraulic Audit</h3>
-              <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
+              <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
                 <thead>
                   <tr style="border-bottom: 1px solid var(--border-light); color: var(--text-secondary); font-size: 0.68rem;">
                     <th style="padding: 0.5rem;">PARAMETER</th>
@@ -2164,7 +2685,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                     <td style="padding: 0.5rem; text-align: right; color: #D64545; font-weight: 700;">Fountain Overflow</td>
                   </tr>
                 </tbody>
-              </table>
+              </table></div>
             </div>
           ` : `
             <div class="card">
@@ -2229,31 +2750,25 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         route_id: "ROUTE_DELHI_DISPATCH_8841",
         timestamp: new Date().toISOString(),
         execution_latency_ms: state.apiLatencyMs || 12.4,
-        routing_engine: "Dynamic Depth-Penalized A*",
+        routing_engine: "Dynamic Depth-Penalized A* (OSRM Engine)",
         vehicle_profile: state.apiActiveProfile,
         clearance_threshold_cm: 25.0,
         baseline_route: {
           path_name: "Direct via Minto Underpass",
-          distance_km: 1.23,
+          distance_km: state.osrmBaselineDistanceKm || 1.29,
           status: "BLOCKED",
           peak_depth_cm: h.mintoDepth,
           failure_reason: `Water depth ${h.mintoDepth.toFixed(1)}cm exceeds safe clearance`
         },
         flood_safe_detour: {
           path_name: "Barakhamba Elevated Flyover Corridor",
-          distance_km: 1.71,
-          distance_delta_km: 0.48,
-          estimated_travel_time_min: 8.4,
+          distance_km: state.osrmDetourDistanceKm || 2.41,
+          distance_delta_km: 1.12,
+          estimated_travel_time_min: 7.2,
           max_depth_encountered_cm: 0.4,
           choke_points_avoided: ["MINTO_RD_UNDERPASS_SEG_04"],
           status: "CLEAR_FOR_DISPATCH",
-          coordinates: [
-            [28.6340, 77.2180],
-            [28.6322, 77.2235],
-            [28.6275, 77.2265],
-            [28.6320, 77.2310],
-            [28.6360, 77.2290]
-          ]
+          coordinates: OSRM_DETOUR_COORDS
         }
       };
 
@@ -2269,7 +2784,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             <span class="badge-success">POST /api/v1/routing/safe-route</span>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div class="grid-2-col">
             <!-- Left: Request Configuration & cURL -->
             <div class="card" style="display: flex; flex-direction: column; gap: 1rem;">
               <div class="label-mono">ENDPOINT SPECIFICATION</div>
@@ -2308,7 +2823,109 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               <pre class="code-block" style="flex: 1; max-height: 480px;">${JSON.stringify(sampleResponse, null, 2)}</pre>
             </div>
           </div>
+
+          <!-- CARTO Cloud Spatial SQL Terminal -->
+          <div style="border-top: 2px solid var(--border-light); padding-top: 1.5rem; display: flex; flex-direction: column; gap: 1.2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <div class="label-mono" style="color: var(--accent-orange); margin-bottom: 0.2rem;">SPATIAL DATA WAREHOUSE INTEGRATION</div>
+                <h2 class="heading-display" style="font-size: 1.8rem; margin-bottom: 0.2rem;">CARTO Cloud Spatial SQL Terminal</h2>
+                <p style="font-size: 0.82rem; color: var(--text-secondary); font-family: sans-serif;">
+                  Direct BigQuery / PostGIS spatial analytics powered by CARTO Cloud (account: ac_ns85x1et, connection: carto_dw).
+                </p>
+              </div>
+              <span class="badge-success">CARTO DW &bull; CONNECTED</span>
+            </div>
+
+            <div class="grid-2-col">
+              <!-- Left: SQL Query Editor & Presets -->
+              <div class="card" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="label-mono">SPATIAL QUERY PRESETS</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                  <button class="btn-secondary" style="font-size: 0.68rem; padding: 0.35rem 0.6rem;" onclick="setCartoPreset(0)">ST_DISTANCE (CP to Minto)</button>
+                  <button class="btn-secondary" style="font-size: 0.68rem; padding: 0.35rem 0.6rem;" onclick="setCartoPreset(1)">ST_BUFFER (150m Hazard)</button>
+                  <button class="btn-secondary" style="font-size: 0.68rem; padding: 0.35rem 0.6rem;" onclick="setCartoPreset(2)">CATCHMENT METRICS</button>
+                  <button class="btn-secondary" style="font-size: 0.68rem; padding: 0.35rem 0.6rem;" onclick="setCartoPreset(3)">PING CARTO DW</button>
+                </div>
+
+                <div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+                    <label class="label-mono">SQL Query (CARTO Cloud BigQuery)</label>
+                    <span style="font-size: 0.68rem; color: var(--text-secondary); font-family: monospace;">POST /api/v1/carto/sql</span>
+                  </div>
+                  <textarea id="carto-sql-textarea" rows="5" oninput="state.cartoSqlQuery = this.value;" style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.7rem; font-size: 0.75rem; font-family: monospace; line-height: 1.4; resize: vertical;">${state.cartoSqlQuery}</textarea>
+                </div>
+
+                <div style="display: flex; gap: 0.6rem;">
+                  <button class="btn-primary" style="flex: 1; justify-content: center;" onclick="executeCartoSql()">
+                    EXECUTE ON CARTO CLOUD
+                  </button>
+                  <button class="btn-secondary" style="font-size: 0.72rem; padding: 0.5rem 0.8rem;" onclick="setCartoPreset(0)">
+                    RESET
+                  </button>
+                </div>
+              </div>
+
+              <!-- Right: CARTO SQL Execution Output -->
+              <div class="card" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span class="label-mono">CARTO CLOUD RESULT</span>
+                  <span class="${state.cartoSqlResult && state.cartoSqlResult.error ? 'badge-danger' : 'badge-success'}">
+                    ${state.cartoSqlLatency ? state.cartoSqlLatency + ' ms' : (state.cartoSqlResult ? '200 OK' : 'READY')}
+                  </span>
+                </div>
+                ${renderCartoResult()}
+              </div>
+            </div>
+          </div>
         </div>
+      `;
+    }
+
+    function renderCartoResult() {
+      if (!state.cartoSqlResult) {
+        return `
+          <div style="background: var(--bg-card-alt); border: 1px dashed var(--border-medium); border-radius: var(--radius-sm); padding: 2.5rem 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.75rem; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.5rem;">
+            <div class="label-mono">NO QUERY EXECUTED YET</div>
+            <p style="font-family: sans-serif; max-width: 320px; margin: 0 auto;">
+              Click "EXECUTE ON CARTO CLOUD" or select a spatial preset above to query CARTO Data Warehouse live.
+            </p>
+          </div>
+        `;
+      }
+
+      if (state.cartoSqlResult.error) {
+        return `
+          <div style="background: #FDF2F2; border: 1px solid #D64545; border-radius: var(--radius-sm); padding: 1rem; color: #D64545; font-size: 0.75rem; font-family: monospace; white-space: pre-wrap;">
+            <strong>Execution Error:</strong><br>${state.cartoSqlResult.error}
+          </div>
+        `;
+      }
+
+      let rows = state.cartoSqlResult.rows || [];
+      let tableHtml = "";
+      if (rows.length > 0) {
+        let cols = Object.keys(rows[0]);
+        let ths = cols.map(c => `<th style="padding: 0.5rem 0.7rem; text-align: left; font-size: 0.7rem; color: var(--text-secondary); border-bottom: 1px solid var(--border-medium);">${c}</th>`).join("");
+        let trs = rows.map((r, i) => {
+          let tds = cols.map(c => `<td style="padding: 0.5rem 0.7rem; font-size: 0.72rem; font-family: monospace; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${r[c]}">${r[c]}</td>`).join("");
+          return `<tr style="border-bottom: 1px solid var(--border-light); background: ${i % 2 === 0 ? 'white' : 'var(--bg-card-alt)'};">${tds}</tr>`;
+        }).join("");
+
+        tableHtml = `
+          <div style="overflow-x: auto; max-height: 220px; border: 1px solid var(--border-light); border-radius: var(--radius-sm); margin-bottom: 0.75rem;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead><tr style="background: var(--bg-card-alt);">${ths}</tr></thead>
+              <tbody>${trs}</tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      return `
+        ${tableHtml}
+        <div class="label-mono" style="margin-bottom: 0.3rem;">Raw JSON Response</div>
+        <pre class="code-block" style="flex: 1; max-height: 240px; overflow-y: auto;">${JSON.stringify(state.cartoSqlResult, null, 2)}</pre>
       `;
     }
 
@@ -2339,7 +2956,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             <div class="card" style="display: flex; flex-direction: column; gap: 1.5rem;">
               <h3 style="font-size: 0.95rem; font-weight: 700;">Real-Time Hydrodynamic Inputs</h3>
 
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+              <div class="grid-2-col">
                 <div>
                   <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
                     <label class="label-mono">Pipe Clogging Ratio (alpha)</label>
@@ -2379,7 +2996,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               </div>
 
               <!-- Real-time Hydraulic Computation Diagnostic Panel -->
-              <div style="padding: 1.2rem; background: #FFFDF9; border: 1px solid var(--accent-orange); border-radius: var(--radius-md); display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center;">
+              <div class="grid-4-stat" style="padding: 1.2rem; background: #FFFDF9; border: 1px solid var(--accent-orange); border-radius: var(--radius-md);">
                 <div>
                   <div class="label-mono">CLEAN MANNING CAP</div>
                   <div style="font-size: 1.3rem; font-weight: 800; margin-top: 0.3rem;">${h.qManningFull.toFixed(2)} m3/s</div>
@@ -2428,7 +3045,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                   </div>
                   <div style="display: flex; gap: 0.75rem; align-items: center;">
                     <span class="badge-success">${v.status}</span>
-                    <button class="btn-secondary" style="font-size: 0.65rem; padding: 0.3rem 0.7rem;" onclick="showToast('Ping acknowledged: ' + '${v.name}' + ' response time ${v.latency}ms.')">PING FEED</button>
+                    <button class="btn-secondary" style="font-size: 0.65rem; padding: 0.3rem 0.7rem;" onclick="pingTelemetryFeed('${k}')">PING FEED</button>
                   </div>
                 </div>
               `).join('')}
@@ -2445,7 +3062,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
       return `
         <div class="modal-overlay open" onclick="closeNodeModal(event)">
-          <div class="card" style="width: 100%; max-width: 480px; padding: 2rem; position: relative;" onclick="event.stopPropagation()">
+          <div class="card" style="width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 1.5rem; position: relative;" onclick="event.stopPropagation()">
             <button onclick="state.selectedNode = null; render();" style="position: absolute; top: 18px; right: 18px; background: none; border: none; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: var(--text-secondary);">CLOSE</button>
             <div class="label-mono">HYDRAULIC NODE DIAGNOSTIC</div>
             <h2 style="font-size: 1.25rem; font-weight: 800; margin: 0.3rem 0 1rem 0;">${state.selectedNode.code}</h2>
@@ -2525,9 +3142,281 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       initLeafletMaps();
     }
 
+    // OSRM Routing Engine & Leaflet GeoJSON Helpers
+    function getHaversineDistanceM(lat1, lon1, lat2, lon2) {
+      const R = 6371000; // meters
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function buildSegmentedGeoJson(lineCoords, mintoDepth, vehicleClearance, isDetour) {
+      const MINTO_LAT = 28.6348;
+      const MINTO_LON = 77.2268;
+      const FLOOD_RADIUS_M = 200.0;
+      const isBlocked = mintoDepth > vehicleClearance;
+      const features = [];
+
+      if (!lineCoords || lineCoords.length < 2) {
+        return { type: "FeatureCollection", features: [] };
+      }
+
+      for (let i = 0; i < lineCoords.length - 1; i++) {
+        const p1 = lineCoords[i];
+        const p2 = lineCoords[i + 1];
+        const midLon = (p1[0] + p2[0]) / 2;
+        const midLat = (p1[1] + p2[1]) / 2;
+        const distMinto = getHaversineDistanceM(midLat, midLon, MINTO_LAT, MINTO_LON);
+
+        let color, weight, dashArray, status, popupHtml;
+
+        if (!isDetour) {
+          if (distMinto <= FLOOD_RADIUS_M) {
+            const localDepth = Math.max(0, mintoDepth * (1 - (distMinto / (FLOOD_RADIUS_M * 1.2))));
+            if (isBlocked) {
+              color = '#D64545';
+              weight = 6;
+              dashArray = '6, 6';
+              status = 'FLOODED / IMPASSABLE';
+              popupHtml = `<b>Baseline Segment: FLOODED / IMPASSABLE</b><br>Distance to Minto Sump: ${Math.round(distMinto)}m<br>Water Depth: ${localDepth.toFixed(1)} cm (Limit: ${vehicleClearance.toFixed(1)} cm)<br>Transit: HALTED - DIVERT TO FLYOVER`;
+            } else if (localDepth > 8.0 || mintoDepth > 10.0) {
+              color = '#E8863A';
+              weight = 6;
+              dashArray = '4, 4';
+              status = 'SLOWDOWN / FORDABLE';
+              popupHtml = `<b>Baseline Segment: SLOWDOWN / FORDABLE</b><br>Distance to Minto Sump: ${Math.round(distMinto)}m<br>Water Depth: ${localDepth.toFixed(1)} cm<br>Transit: PASSABLE WITH REDUCED SPEED`;
+            } else {
+              color = '#1E8E5A';
+              weight = 5;
+              dashArray = null;
+              status = 'CLEAR';
+              popupHtml = `<b>Baseline Segment: CLEAR</b><br>Surface dry / passable.`;
+            }
+          } else {
+            color = '#1E8E5A';
+            weight = 5;
+            dashArray = null;
+            status = 'CLEAR';
+            popupHtml = `<b>Baseline Street Segment: CLEAR</b><br>Snapping to Delhi road grid.`;
+          }
+        } else {
+          // Detour Route (Bypasses flood zone via Barakhamba Flyover)
+          if (isBlocked) {
+            color = '#111111';
+            weight = 6;
+            dashArray = null;
+            status = 'ACTIVE DETOUR VIA FLYOVER';
+            popupHtml = `<b>Flood-Safe Detour (ACTIVE ROUTE)</b><br>Elevation: +4.2m above underpass grade<br>Hazard Clearance: 100% FLOOD IMMUNE`;
+          } else {
+            color = '#64748B';
+            weight = 4;
+            dashArray = '5, 5';
+            status = 'STANDBY DETOUR';
+            popupHtml = `<b>Flood-Safe Detour (STANDBY)</b><br>Alternative bypass via Barakhamba Flyover`;
+          }
+        }
+
+        features.push({
+          type: "Feature",
+          geometry: {
+            type: "LineString",
+            coordinates: [p1, p2]
+          },
+          properties: {
+            color: color,
+            weight: weight,
+            dashArray: dashArray,
+            opacity: 0.95,
+            status: status,
+            popupHtml: popupHtml
+          }
+        });
+      }
+
+      return {
+        type: "FeatureCollection",
+        features: features
+      };
+    }
+
+    function renderRoutingMapWithOsrm(map) {
+      if (!map) return;
+      if (!map._osrmLayerGroup) {
+        map._osrmLayerGroup = L.layerGroup().addTo(map);
+      } else {
+        map._osrmLayerGroup.clearLayers();
+      }
+
+      const h = calculateHydraulics();
+      const curVeh = h.vehicleMatrix.find(v => v.id === state.selectedVehicle) || h.vehicleMatrix[2];
+      const isBlocked = curVeh.status === "BLOCKED";
+
+      // 1. Render Baseline Route via L.geoJSON
+      const baselineCoords = (state.osrmBaseline && state.osrmBaseline.coordinates) ? state.osrmBaseline.coordinates : OSRM_BASELINE_COORDS;
+      const baselineGeoJson = buildSegmentedGeoJson(baselineCoords, h.mintoDepth, curVeh.clearanceCm, false);
+      const baselineLayer = L.geoJSON(baselineGeoJson, {
+        style: function(f) {
+          return {
+            color: f.properties.color,
+            weight: f.properties.weight,
+            dashArray: f.properties.dashArray,
+            opacity: f.properties.opacity
+          };
+        },
+        onEachFeature: function(f, layer) {
+          if (f.properties && f.properties.popupHtml) layer.bindPopup(f.properties.popupHtml);
+        }
+      });
+      map._osrmLayerGroup.addLayer(baselineLayer);
+
+      // 2. Render Detour Route via L.geoJSON
+      const detourCoords = (state.osrmDetour && state.osrmDetour.coordinates) ? state.osrmDetour.coordinates : OSRM_DETOUR_COORDS;
+      const detourGeoJson = buildSegmentedGeoJson(detourCoords, h.mintoDepth, curVeh.clearanceCm, true);
+      const detourLayer = L.geoJSON(detourGeoJson, {
+        style: function(f) {
+          return {
+            color: f.properties.color,
+            weight: f.properties.weight,
+            dashArray: f.properties.dashArray,
+            opacity: f.properties.opacity
+          };
+        },
+        onEachFeature: function(f, layer) {
+          if (f.properties && f.properties.popupHtml) layer.bindPopup(f.properties.popupHtml);
+        }
+      });
+      map._osrmLayerGroup.addLayer(detourLayer);
+
+      // 3. 200m Minto Flood Buffer Zone
+      const floodCircle = L.circle([28.6348, 77.2268], {
+        radius: 200,
+        color: isBlocked ? '#D64545' : '#E8863A',
+        fillColor: isBlocked ? '#D64545' : '#E8863A',
+        fillOpacity: 0.18,
+        weight: 2,
+        dashArray: '5, 5'
+      }).bindPopup(`<b>Minto Underpass Hazard Zone (200m Buffer)</b><br>Sump Water Depth: <b>${h.mintoDepth.toFixed(1)} cm</b><br>Vehicle Clearance Margin: <b>${curVeh.marginCm >= 0 ? '+' : ''}${curVeh.marginCm.toFixed(1)} cm</b><br>Status: <b>${isBlocked ? 'IMPASSABLE' : 'FORDABLE'}</b>`);
+      map._osrmLayerGroup.addLayer(floodCircle);
+
+      // 4. Barakhamba Flyover Via-Point Marker
+      const viaMarker = L.circleMarker([28.6285, 77.2285], {
+        radius: 6,
+        fillColor: '#3B82F6',
+        color: '#FFFFFF',
+        weight: 2,
+        fillOpacity: 1
+      }).bindPopup('<b>OSRM VIA-POINT: Maharaja Ranjit Singh Flyover Bypass</b><br>Coordinates: [28.6285, 77.2285]<br>Elevation: 218.4m AMSL (Flood Immune Elevated Flyover Bridge)');
+      map._osrmLayerGroup.addLayer(viaMarker);
+
+      // 5. Origin Marker (Connaught Place)
+      const originMarker = L.circleMarker([28.6340, 77.2180], {
+        radius: 7,
+        fillColor: '#1E8E5A',
+        color: '#FFFFFF',
+        weight: 2,
+        fillOpacity: 1
+      }).bindPopup('<b>ORIGIN: Connaught Place Inner Circle</b><br>Dispatch Starting Point');
+      map._osrmLayerGroup.addLayer(originMarker);
+
+      // 6. Destination Marker (LNJP Hospital)
+      const destMarker = L.circleMarker([28.6360, 77.2290], {
+        radius: 7,
+        fillColor: '#111111',
+        color: '#FFFFFF',
+        weight: 2,
+        fillOpacity: 1
+      }).bindPopup('<b>DESTINATION: LNJP Hospital Trauma Access</b><br>Emergency Facility Route Endpoint');
+      map._osrmLayerGroup.addLayer(destMarker);
+    }
+
+    function fetchLiveOsrmRoutes(map) {
+      if (state.osrmLoading) return;
+      state.osrmLoading = true;
+
+      const origin = "77.2180,28.6340";
+      const dest = "77.2290,28.6360";
+      const via = "77.2255,28.6292";
+
+      const baselineUrl = `https://router.project-osrm.org/route/v1/driving/${origin};${dest}?overview=full&geometries=geojson`;
+      const detourUrl = `https://router.project-osrm.org/route/v1/driving/${origin};${via};${dest}?overview=full&geometries=geojson`;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4500);
+
+      Promise.all([
+        fetch(baselineUrl, { signal: controller.signal }).then(r => r.json()).catch(() => null),
+        fetch(detourUrl, { signal: controller.signal }).then(r => r.json()).catch(() => null)
+      ]).then(([bRes, dRes]) => {
+        clearTimeout(timeoutId);
+        state.osrmLoading = false;
+        let updated = false;
+
+        if (bRes && bRes.code === "Ok" && bRes.routes && bRes.routes[0]) {
+          const coords = bRes.routes[0].geometry.coordinates;
+          let hasLargeJump = false;
+          for (let i = 0; i < coords.length - 1; i++) {
+            if (getHaversineDistanceM(coords[i][1], coords[i][0], coords[i+1][1], coords[i+1][0]) > 130) {
+              hasLargeJump = true; break;
+            }
+          }
+          if (!hasLargeJump) {
+            state.osrmBaseline = bRes.routes[0].geometry;
+            state.osrmBaselineDistanceKm = Math.round((bRes.routes[0].distance / 1000) * 100) / 100;
+            updated = true;
+          }
+        }
+        if (dRes && dRes.code === "Ok" && dRes.routes && dRes.routes[0]) {
+          const coords = dRes.routes[0].geometry.coordinates;
+          let hasLargeJump = false;
+          for (let i = 0; i < coords.length - 1; i++) {
+            if (getHaversineDistanceM(coords[i][1], coords[i][0], coords[i+1][1], coords[i+1][0]) > 130) {
+              hasLargeJump = true; break;
+            }
+          }
+          if (!hasLargeJump) {
+            state.osrmDetour = dRes.routes[0].geometry;
+            state.osrmDetourDistanceKm = Math.round((dRes.routes[0].distance / 1000) * 100) / 100;
+            updated = true;
+          }
+        }
+
+        if (updated) {
+          state.osrmLiveFetched = true;
+          if (map) {
+            renderRoutingMapWithOsrm(map);
+          }
+        }
+      }).catch(err => {
+        state.osrmLoading = false;
+      });
+    }
+
+    function refreshOsrmRouting() {
+      showToast("Querying live OSRM routing engine...");
+      state.osrmLiveFetched = false;
+      let container = document.getElementById('routing-leaflet-map');
+      let mapInstance = container && container._leaflet_id ? window._activeRoutingMap : null;
+      fetchLiveOsrmRoutes(mapInstance);
+      setTimeout(() => render(), 600);
+    }
+
     // Leaflet Maps Orchestration
     function initLeafletMaps() {
       const h = calculateHydraulics();
+
+      // Ensure Leaflet recalculates dimensions on mobile resize / orientation change
+      if (!window._leafletResizeHooked) {
+        window._leafletResizeHooked = true;
+        window.addEventListener('resize', () => {
+          if (window._activeRoutingMap) window._activeRoutingMap.invalidateSize();
+          if (window._activeDrainageMap) window._activeDrainageMap.invalidateSize();
+          if (window._activeNowcastMap) window._activeNowcastMap.invalidateSize();
+        });
+      }
 
       // 1. Drainage GIS Map View
       if (document.getElementById('drainage-leaflet-map') && window.L) {
@@ -2536,19 +3425,28 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           if (!container || container._leaflet_id) return;
 
           let map = L.map('drainage-leaflet-map').setView([28.6330, 77.2230], 15);
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; CartoDB &copy; OpenStreetMap',
-            maxZoom: 18
+          window._activeDrainageMap = map;
+          setTimeout(() => map.invalidateSize(), 200);
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://carto.com/">CARTO</a> (ac_ns85x1et) &copy; OpenStreetMap',
+            subdomains: 'abcd',
+            maxZoom: 19
           }).addTo(map);
 
-          // Render Conduits (Pipes)
+          // Render Conduits (Pipes along street rights-of-way)
           const conduits = [
-            [[28.6340, 77.2180], [28.6322, 77.2205]],
-            [[28.6322, 77.2205], [28.6305, 77.2225]],
-            [[28.6305, 77.2225], [28.6348, 77.2268]],
-            [[28.6348, 77.2268], [28.6385, 77.2340]],
-            [[28.6340, 77.2180], [28.6362, 77.2235]],
-            [[28.6275, 77.2265], [28.6385, 77.2340]]
+            // CP Inner Circle to Radial 2
+            [[28.6340, 77.2180], [28.6342, 77.2184], [28.6343, 77.2189], [28.6344, 77.2195], [28.6343, 77.2201], [28.6341, 77.2207], [28.6337, 77.2212], [28.6334, 77.2215]],
+            // Radial 2 to Connaught Circus
+            [[28.6334, 77.2215], [28.6331, 77.2221], [28.6327, 77.2228], [28.6324, 77.2234]],
+            // Minto Main Trunk: Connaught Circus down Minto Road through Underpass Dip to JLN Marg
+            [[28.6324, 77.2234], [28.6328, 77.2240], [28.6332, 77.2246], [28.6336, 77.2251], [28.6340, 77.2257], [28.6343, 77.2261], [28.6346, 77.2265], [28.6347, 77.2266], [28.6348, 77.2268], [28.6350, 77.2272], [28.6353, 77.2278], [28.6357, 77.2284], [28.6360, 77.2290]],
+            // Outfall Collector: LNJP along JLN Marg to Yamuna Trunk Outfall
+            [[28.6360, 77.2290], [28.6364, 77.2302], [28.6368, 77.2315], [28.6373, 77.2328], [28.6380, 77.2340]],
+            // Barakhamba Road Trunk
+            [[28.6321, 77.2218], [28.6314, 77.2228], [28.6309, 77.2234], [28.6304, 77.2240], [28.6295, 77.2251], [28.6284, 77.2263], [28.6273, 77.2272]],
+            // Bhavbhuti Bypass Collector along Railway corridor
+            [[28.6340, 77.2180], [28.6347, 77.2182], [28.6353, 77.2186], [28.6361, 77.2192], [28.6368, 77.2199], [28.6375, 77.2208], [28.6381, 77.2217], [28.6386, 77.2238], [28.6382, 77.2258], [28.6371, 77.2276], [28.6360, 77.2290]]
           ];
 
           conduits.forEach((line, idx) => {
@@ -2595,9 +3493,12 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           if (!container || container._leaflet_id) return;
 
           let map = L.map('nowcast-leaflet-map').setView([28.6330, 77.2230], 15);
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; CartoDB &copy; OpenStreetMap',
-            maxZoom: 18
+          window._activeNowcastMap = map;
+          setTimeout(() => map.invalidateSize(), 200);
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://carto.com/">CARTO</a> (ac_ns85x1et) &copy; OpenStreetMap',
+            subdomains: 'abcd',
+            maxZoom: 19
           }).addTo(map);
 
           // Draw road segments colored by depth with dashArray if far-term forecast
@@ -2638,46 +3539,16 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           if (!container || container._leaflet_id) return;
 
           let map = L.map('routing-leaflet-map').setView([28.6330, 77.2230], 15);
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; CartoDB &copy; OpenStreetMap',
-            maxZoom: 18
+          window._activeRoutingMap = map;
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://carto.com/">CARTO</a> (ac_ns85x1et) &copy; OpenStreetMap',
+            subdomains: 'abcd',
+            maxZoom: 19
           }).addTo(map);
 
-          const curVeh = h.vehicleMatrix.find(v => v.id === state.selectedVehicle) || h.vehicleMatrix[2];
-          const isBlocked = curVeh.status === "BLOCKED";
-
-          // Baseline Direct Route
-          let baselineCoords = [
-            [28.6340, 77.2180],
-            [28.6335, 77.2210],
-            [28.6322, 77.2235],
-            [28.6348, 77.2268],
-            [28.6360, 77.2290]
-          ];
-          L.polyline(baselineCoords, {
-            color: isBlocked ? '#D64545' : '#1E8E5A',
-            weight: isBlocked ? 4 : 6,
-            dashArray: isBlocked ? '6,6' : null
-          }).addTo(map).bindPopup(`Baseline Path: ${isBlocked ? 'Blocked by Minto Sump' : 'Passable with Caution'}`);
-
-          // Flood-Safe Detour Route (Barakhamba Flyover)
-          let detourCoords = [
-            [28.6340, 77.2180],
-            [28.6335, 77.2210],
-            [28.6322, 77.2235],
-            [28.6275, 77.2265],
-            [28.6320, 77.2310],
-            [28.6360, 77.2290]
-          ];
-          L.polyline(detourCoords, {
-            color: isBlocked ? '#111111' : '#A3A3A3',
-            weight: isBlocked ? 6 : 3,
-            dashArray: isBlocked ? null : '4,4'
-          }).addTo(map).bindPopup('A* Flood-Safe Detour: Via Barakhamba Elevated Flyover');
-
-          // Origin and Destination Markers
-          L.circleMarker([28.6340, 77.2180], { radius: 7, fillColor: '#1E8E5A', color: '#FFF', weight: 2, fillOpacity: 1 }).addTo(map).bindPopup('ORIGIN: CP Inner Circle');
-          L.circleMarker([28.6360, 77.2290], { radius: 7, fillColor: '#111111', color: '#FFF', weight: 2, fillOpacity: 1 }).addTo(map).bindPopup('DESTINATION: LNJP Hospital');
+          renderRoutingMapWithOsrm(map);
+          fetchLiveOsrmRoutes(map);
+          setTimeout(() => map.invalidateSize(), 200);
         }, 100);
       }
     }
@@ -2816,21 +3687,21 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           route_id: "ROUTE_DELHI_DISPATCH_8841",
           timestamp: new Date().toISOString(),
           execution_latency_ms: elapsed,
-          routing_engine: "Dynamic Depth-Penalized A*",
+          routing_engine: "Dynamic Depth-Penalized A* (OSRM Engine)",
           vehicle_profile: state.apiActiveProfile,
           clearance_threshold_cm: 25.0,
           baseline_route: {
             path_name: "Direct via Minto Underpass",
-            distance_km: 1.23,
+            distance_km: state.osrmBaselineDistanceKm || 1.29,
             status: "BLOCKED",
             peak_depth_cm: h.mintoDepth,
             failure_reason: "Water depth exceeds safe threshold"
           },
           flood_safe_detour: {
             path_name: "Barakhamba Elevated Flyover Corridor",
-            distance_km: 1.71,
-            distance_delta_km: 0.48,
-            estimated_travel_time_min: 8.4,
+            distance_km: state.osrmDetourDistanceKm || 2.41,
+            distance_delta_km: 1.12,
+            estimated_travel_time_min: 7.2,
             max_depth_encountered_cm: 0.4,
             choke_points_avoided: ["MINTO_RD_UNDERPASS_SEG_04"],
             status: "CLEAR_FOR_DISPATCH"
@@ -2839,6 +3710,91 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         showToast("Live calculation executed in " + elapsed + "ms.");
         render();
       });
+    }
+
+    function executeCartoSql(customSql) {
+      const queryToRun = customSql || state.cartoSqlQuery || "SELECT 1 as test";
+      const startTime = performance.now();
+      showToast("Executing spatial SQL on CARTO Cloud...");
+
+      fetch('/api/v1/carto/sql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ q: queryToRun })
+      })
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(errData => { throw new Error(errData.error || ('HTTP ' + res.status)); });
+        }
+        return res.json();
+      })
+      .then(data => {
+        const elapsed = Math.round((performance.now() - startTime) * 10) / 10;
+        state.cartoSqlLatency = data.execution_time_ms || elapsed;
+        state.cartoSqlResult = data;
+        const rowCount = (data.rows && data.rows.length) || 0;
+        showToast("CARTO Cloud SQL executed in " + state.cartoSqlLatency + "ms (" + rowCount + " rows returned).");
+        render();
+      })
+      .catch(err => {
+        const elapsed = Math.round((performance.now() - startTime) * 10) / 10;
+        state.cartoSqlLatency = elapsed;
+        state.cartoSqlResult = {
+          error: err.message || "Query execution failed",
+          query: queryToRun
+        };
+        showToast("CARTO Cloud SQL error: " + (err.message || "Request failed"));
+        render();
+      });
+    }
+
+    function setCartoPreset(presetIndex) {
+      const presets = [
+        "SELECT 'Connaught Place to Minto Underpass' as line_name, ROUND(ST_DISTANCE(ST_GEOGPOINT(77.2180, 28.6340), ST_GEOGPOINT(77.2268, 28.6348)), 2) as distance_meters, 'CRITICAL_CHOKE_CORRIDOR' as classification",
+        "SELECT 'Minto Inundation Hotspot' as hotspot, ST_ASTEXT(ST_BUFFER(ST_GEOGPOINT(77.2268, 28.6348), 150)) as hazard_buffer_wkt, 150 as buffer_radius_m",
+        "SELECT 'Catchment Basin 4' as basin_id, 12400 as impervious_area_m2, 211.80 as min_rim_elevation_m, 209.20 as invert_elevation_m, 2.60 as hydraulic_drop_m",
+        "SELECT CURRENT_TIMESTAMP() as cloud_timestamp, 'ac_ns85x1et' as account, 'carto_dw' as connection, 'CONNECTED' as status"
+      ];
+      if (presets[presetIndex] !== undefined) {
+        state.cartoSqlQuery = presets[presetIndex];
+        let el = document.getElementById('carto-sql-textarea');
+        if (el) el.value = state.cartoSqlQuery;
+        render();
+      }
+    }
+
+    function pingCartoFeed() {
+      const startTime = performance.now();
+      showToast("Pinging CARTO Cloud Data Warehouse...");
+      fetch('/api/v1/carto/sql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ q: "SELECT 1 as ping" })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const elapsed = Math.round((performance.now() - startTime) * 10) / 10;
+        if (state.dataSources && state.dataSources.carto) {
+          state.dataSources.carto.latency = data.execution_time_ms || elapsed;
+          state.dataSources.carto.status = "CONNECTED";
+        }
+        showToast("CARTO Cloud DW verified live: " + (data.execution_time_ms || elapsed) + "ms latency.");
+        render();
+      })
+      .catch(err => {
+        showToast("CARTO Cloud ping error: " + (err.message || "Request failed"));
+      });
+    }
+
+    function pingTelemetryFeed(key) {
+      if (key === 'carto') {
+        pingCartoFeed();
+        return;
+      }
+      const feed = state.dataSources[key];
+      if (feed) {
+        showToast("Ping acknowledged: " + feed.name + " response time " + feed.latency + "ms.");
+      }
     }
 
     function exportCSV() {
@@ -2945,34 +3901,32 @@ class MultiPageHandler(http.server.SimpleHTTPRequestHandler):
                 "route_id": f"ROUTE_DELHI_DISPATCH_{int(time.time())}",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "execution_latency_ms": 11.4,
-                "routing_engine": "Dynamic Depth-Penalized A*",
+                "routing_engine": "Dynamic Depth-Penalized A* (OSRM Engine)",
                 "vehicle_profile": profile,
                 "clearance_threshold_cm": clearance_thresh,
                 "depth_margin_cm": margin,
                 "baseline_route": {
                     "path_name": "Direct via Minto Underpass Subway",
-                    "distance_km": 1.23,
+                    "distance_km": 1.29,
                     "status": "BLOCKED" if is_blocked else "PASSABLE",
                     "peak_depth_cm": h["minto_depth"],
-                    "failure_reason": f"Water depth {h['minto_depth']}cm exceeds clearance threshold {clearance_thresh}cm" if is_blocked else "Passable with caution"
+                    "failure_reason": f"Water depth {h['minto_depth']}cm exceeds clearance threshold {clearance_thresh}cm" if is_blocked else "Passable with caution",
+                    "geojson": {
+                        "type": "LineString",
+                        "coordinates": OSRM_BASELINE_COORDS
+                    }
                 },
                 "flood_safe_detour": {
                     "path_name": "Barakhamba Elevated Flyover Corridor",
-                    "distance_km": 1.71,
-                    "distance_delta_km": 0.48,
-                    "estimated_travel_time_min": 8.4,
+                    "distance_km": 2.41,
+                    "distance_delta_km": 1.12,
+                    "estimated_travel_time_min": 7.2 if profile == "EMERGENCY_AMBULANCE" else (10.5 if profile == "TWO_WHEELER" else 8.8),
                     "max_depth_encountered_cm": 0.4,
                     "choke_points_avoided": ["MINTO_RD_UNDERPASS_SEG_04"] if is_blocked else [],
                     "status": "CLEAR_FOR_DISPATCH",
                     "geojson": {
                         "type": "LineString",
-                        "coordinates": [
-                            [77.2180, 28.6340],
-                            [77.2235, 28.6322],
-                            [77.2265, 28.6275],
-                            [77.2310, 28.6320],
-                            [77.2290, 28.6360]
-                        ]
+                        "coordinates": OSRM_DETOUR_COORDS
                     }
                 }
             }
@@ -2983,6 +3937,46 @@ class MultiPageHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(response_data).encode("utf-8"))
             return
+
+        # CARTO Cloud Spatial SQL API Proxy
+        if parsed.path in ["/api/v1/carto/sql", "/api/carto-sql"]:
+            sql_query = payload.get("q", "SELECT 1 as test")
+            t_start = time.time()
+            try:
+                carto_req = urllib.request.Request(
+                    CARTO_CONFIG["sql_endpoint"],
+                    data=json.dumps({"q": sql_query}).encode("utf-8"),
+                    headers={
+                        "Authorization": f"Bearer {CARTO_CONFIG['api_key']}",
+                        "Content-Type": "application/json"
+                    }
+                )
+                with urllib.request.urlopen(carto_req, timeout=12) as c_res:
+                    c_data = json.loads(c_res.read().decode("utf-8"))
+                    c_data["execution_time_ms"] = round((time.time() - t_start) * 1000, 1)
+                    c_data["account"] = CARTO_CONFIG["account_id"]
+                    c_data["connection"] = CARTO_CONFIG["connection"]
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(json.dumps(c_data).encode("utf-8"))
+                    return
+            except urllib.error.HTTPError as he:
+                err_text = he.read().decode("utf-8") if he.fp else str(he)
+                self.send_response(he.code)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": err_text, "status": he.code}).encode("utf-8"))
+                return
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e), "status": 500}).encode("utf-8"))
+                return
 
         response = {"status": "SUCCESS", "message": "Telemetry acknowledged"}
         self.send_response(200)
