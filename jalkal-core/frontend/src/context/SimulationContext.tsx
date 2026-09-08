@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
+import { getInundationGrid, type InundationResponse } from "@/services/api";
 
 export interface ModelParameters {
   cloggingRatio: number;      // alpha: 0.0 to 1.0
@@ -60,6 +61,8 @@ interface SimulationContextType {
   horizonMin: number;
   setHorizonMin: (h: number) => void;
   rainfallRate: number;
+  rainfallSource: "live_open_meteo" | "simulated_fallback" | null;
+  geojsonData: InundationResponse | null;
   nodes: NodeHydraulics[];
   roads: RoadHydraulics[];
   selectedNode: NodeHydraulics | null;
@@ -95,22 +98,50 @@ const DEFAULT_PARAMS: ModelParameters = {
   curbHeight: 0.15,
 };
 
-const BASE_NODES_DATA = [
-  { id: "node-1", node_code: "MH_CP_INNER_01", name: "CP Inner Circle North", x: 180, y: 140, z_ground: 216.5, z_invert: 214.0, basin_area: 5200 },
-  { id: "node-2", node_code: "MH_CP_INNER_02", name: "CP Radial Node 3", x: 310, y: 190, z_ground: 215.8, z_invert: 213.2, basin_area: 6100 },
-  { id: "node-3", node_code: "MH_CP_OUTER_03", name: "Outer Circle Junction", x: 420, y: 270, z_ground: 214.9, z_invert: 212.1, basin_area: 7800 },
-  { id: "node-4", node_code: "MH_MINTO_BRIDGE_LOW", name: "Minto Railway Underpass Dip", x: 580, y: 130, z_ground: 211.8, z_invert: 209.2, basin_area: 12400 },
-  { id: "node-5", node_code: "MH_BARAKHAMBA_05", name: "Barakhamba Elevated Deck", x: 600, y: 330, z_ground: 217.5, z_invert: 214.8, basin_area: 4900 },
-  { id: "node-6", node_code: "MH_BHAVBHUTI_06", name: "Bhavbhuti Marg Bypass", x: 720, y: 220, z_ground: 216.0, z_invert: 213.5, basin_area: 5800 },
-];
+const numberValue = (value: unknown, fallback = 0): number =>
+  typeof value === "number" && Number.isFinite(value) ? value : fallback;
 
-const BASE_ROADS_DATA = [
-  { id: "road-1", name: "Connaught Circus Inner", base_elevation: 216.2, nominal_speed: 40 },
-  { id: "road-2", name: "Radial Road 3 Connector", base_elevation: 215.4, nominal_speed: 35 },
-  { id: "road-3", name: "Minto Underpass Subway (Choke-Point)", base_elevation: 211.8, nominal_speed: 45 },
-  { id: "road-4", name: "Barakhamba Elevated Flyover (Detour)", base_elevation: 217.5, nominal_speed: 50 },
-  { id: "road-5", name: "Bhavbhuti Marg Bypass Corridor", base_elevation: 216.0, nominal_speed: 40 },
-];
+const stringValue = (value: unknown, fallback = ""): string =>
+  typeof value === "string" ? value : fallback;
+
+function toNode(feature: InundationResponse["features"][number], index: number): NodeHydraulics {
+  const properties = feature.properties;
+  const code = stringValue(properties.node_code, `NODE_${index + 1}`);
+
+  return {
+    id: stringValue(properties.node_id, `node-${index + 1}`),
+    node_code: code,
+    name: code,
+    // The graph panel has its own local canvas coordinates; the map consumes
+    // the actual GeoJSON geometry from the API response.
+    x: 120 + (index % 3) * 250 + (index > 2 ? 70 : 0),
+    y: 110 + Math.floor(index / 3) * 150 + (index % 3) * 35,
+    z_ground: numberValue(properties.z_ground),
+    z_invert: numberValue(properties.z_invert),
+    basin_area: numberValue(properties.basin_area),
+    hgl: numberValue(properties.hgl),
+    surcharge_m3s: numberValue(properties.surcharge_flow_m3s),
+    street_depth_cm: numberValue(properties.street_depth_cm),
+    is_surcharging: properties.is_surcharging === true,
+  };
+}
+
+function toRoad(feature: InundationResponse["features"][number], index: number): RoadHydraulics {
+  const properties = feature.properties;
+  const rawStatus = stringValue(properties.status, "PASSABLE");
+  const status: RoadHydraulics["status"] = ["PASSABLE", "SLOW", "IMPASSABLE"].includes(rawStatus)
+    ? rawStatus as RoadHydraulics["status"]
+    : "PASSABLE";
+
+  return {
+    id: stringValue(properties.road_id, `road-${index + 1}`),
+    name: stringValue(properties.road_name, "Unnamed road"),
+    base_elevation: numberValue(properties.z_elevation),
+    water_depth_cm: numberValue(properties.water_depth_cm),
+    status,
+    speed_kmh: status === "IMPASSABLE" ? 0 : status === "SLOW" ? 14 : 40,
+  };
+}
 
 const SimulationContext = createContext<SimulationContextType | undefined>(undefined);
 
@@ -129,103 +160,57 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
 
   // Time Horizon
   const [horizonMin, setHorizonMin] = useState<number>(45);
+  const [rainfallRate, setRainfallRate] = useState<number>(0);
+  const [rainfallSource, setRainfallSource] = useState<"live_open_meteo" | "simulated_fallback" | null>(null);
+  const [geojsonData, setGeojsonData] = useState<InundationResponse | null>(null);
+  const [nodes, setNodes] = useState<NodeHydraulics[]>([]);
+  const [roads, setRoads] = useState<RoadHydraulics[]>([]);
   const [selectedNode, setSelectedNode] = useState<NodeHydraulics | null>(null);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [hasError, setHasError] = useState<boolean>(false);
+  const [refreshVersion, setRefreshVersion] = useState<number>(0);
 
   // Telemetry Sources
-  const [dataSources, setDataSources] = useState({
+  const [dataSources, setDataSources] = useState<SimulationContextType["dataSources"]>({
     radar: { name: "IMD / NCMRWF Doppler Weather Radar (Palam)", status: "CONNECTED" as const, latency_ms: 18, last_ping: "Just now" },
     dem: { name: "CartoDEM High-Res Topographic Grid (10m)", status: "CONNECTED" as const, latency_ms: 42, last_ping: "3 min ago" },
     shapefile: { name: "MCD Storm Sewer Network Shapefile (v2.4)", status: "CONNECTED" as const, latency_ms: 25, last_ping: "Just now" },
   });
 
-  // Calculate live rainfall rate based on horizon
-  const rainfallRate = useMemo(() => {
-    return Math.max(4.0, Math.round(78.5 * Math.exp(-Math.pow(horizonMin - 45.0, 2) / 1800.0) * 10) / 10);
-  }, [horizonMin]);
+  // Synchronize the dashboard with the FastAPI hydraulic solver whenever the
+  // forecast horizon changes or an operator requests a refresh.
+  useEffect(() => {
+    const controller = new AbortController();
+    setIsSimulating(true);
+    setHasError(false);
 
-  // Reactive Hydraulic Solver: Recomputes node HGL & street inundation whenever
-  // parameters (cloggingRatio, inletCapacity, etc.) or rainfall change!
-  const { nodes, roads } = useMemo(() => {
-    const alpha = parameters.cloggingRatio;
-    const capacityFactor = parameters.inletCapacity / 3.4;
+    getInundationGrid(horizonMin, controller.signal)
+      .then((response) => {
+        setGeojsonData(response);
+        setRainfallRate(response.rainfall_intensity_mm_hr);
+        setRainfallSource(response.rainfall_source);
+        setNodes(response.features
+          .filter((feature) => feature.properties.layer_type === "DRAIN_NODE")
+          .map(toNode));
+        setRoads(response.features
+          .filter((feature) => feature.properties.layer_type === "ROAD_SEGMENT")
+          .map(toRoad));
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        console.error("Unable to load inundation grid", error);
+        setHasError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsSimulating(false);
+      });
 
-    // Compute Minto underpass depth: heavily influenced by alpha (clogging) and capacity
-    let underpassDepth = 3.0;
-    if (rainfallRate > 18.0) {
-      const netInflow = (rainfallRate - 18.0 * capacityFactor);
-      underpassDepth = Math.max(2.0, Math.round((netInflow * 0.72) * (1.0 + alpha * 1.2) * 10) / 10);
-    }
-
-    const radialDepth = Math.max(1.0, Math.round(underpassDepth * 0.42 * (1.0 + alpha * 0.3) * 10) / 10);
-    const innerDepth = Math.max(1.0, Math.round(4.5 * (rainfallRate / 60.0) * 10) / 10);
-    const flyoverDepth = 0.5; // Elevated flyover never accumulates significant water
-    const bhavbhutiDepth = Math.max(1.0, Math.round(2.8 * (rainfallRate / 50.0) * 10) / 10);
-
-    const updatedNodes: NodeHydraulics[] = BASE_NODES_DATA.map((n) => {
-      let streetDepth = 0.0;
-      let hgl = n.z_invert + 1.2;
-
-      if (n.id === "node-4") {
-        streetDepth = underpassDepth;
-        hgl = n.z_ground + streetDepth / 100.0;
-      } else if (n.id === "node-3") {
-        streetDepth = radialDepth;
-        hgl = n.z_ground + (streetDepth > 10 ? (streetDepth - 10) / 100.0 : -0.2);
-      } else if (n.id === "node-2") {
-        streetDepth = innerDepth;
-        hgl = n.z_invert + (n.z_ground - n.z_invert) * 0.7;
-      } else {
-        streetDepth = 2.0;
-        hgl = n.z_invert + 1.5;
-      }
-
-      const isSurcharging = hgl > n.z_ground;
-      const surchargeFlow = isSurcharging
-        ? Math.round(0.62 * (Math.PI * 0.3 * 0.3) * Math.sqrt(2 * 9.81 * Math.max(0.01, hgl - n.z_ground)) * 1000) / 1000
-        : 0.0;
-
-      return {
-        ...n,
-        hgl: Math.round(hgl * 100) / 100,
-        surcharge_m3s: surchargeFlow,
-        street_depth_cm: streetDepth,
-        is_surcharging: isSurcharging,
-      };
-    });
-
-    const depths = [innerDepth, radialDepth, underpassDepth, flyoverDepth, bhavbhutiDepth];
-
-    const updatedRoads: RoadHydraulics[] = BASE_ROADS_DATA.map((r, idx) => {
-      const d = depths[idx];
-      let status: "PASSABLE" | "SLOW" | "IMPASSABLE" = "PASSABLE";
-      let speed = r.nominal_speed;
-
-      if (d > 25.0) {
-        status = "IMPASSABLE";
-        speed = 0;
-      } else if (d >= 10.0) {
-        status = "SLOW";
-        speed = Math.round(r.nominal_speed * 0.35);
-      }
-
-      return {
-        id: r.id,
-        name: r.name,
-        base_elevation: r.base_elevation,
-        water_depth_cm: d,
-        status,
-        speed_kmh: speed,
-      };
-    });
-
-    return { nodes: updatedNodes, roads: updatedRoads };
-  }, [parameters, rainfallRate]);
+    return () => controller.abort();
+  }, [horizonMin, refreshVersion]);
 
   // Aggregate stats
   const peakWaterDepthCm = useMemo(() => {
-    return Math.max(...roads.map((r) => r.water_depth_cm));
+    return Math.max(0, ...roads.map((r) => r.water_depth_cm));
   }, [roads]);
 
   const impassableRoadsCount = useMemo(() => {
@@ -233,8 +218,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   }, [roads]);
 
   const detourFeasibilityRate = useMemo(() => {
-    // 100% if safe elevated route is passable
-    const safeRoad = roads.find((r) => r.id === "road-4");
+    // 100% if the elevated bypass returned by the server remains passable.
+    const safeRoad = roads.find((r) => r.name.includes("Barakhamba"));
     return safeRoad && safeRoad.status === "PASSABLE" ? 100.0 : 0.0;
   }, [roads]);
 
@@ -290,11 +275,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   };
 
   const triggerRefresh = () => {
-    setIsSimulating(true);
-    setHasError(false);
-    setTimeout(() => {
-      setIsSimulating(false);
-    }, 600);
+    setRefreshVersion((version) => version + 1);
   };
 
   return (
@@ -312,6 +293,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
         horizonMin,
         setHorizonMin,
         rainfallRate,
+        rainfallSource,
+        geojsonData,
         nodes,
         roads,
         selectedNode,

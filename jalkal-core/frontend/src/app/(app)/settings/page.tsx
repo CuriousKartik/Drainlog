@@ -1,13 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import { useSimulation } from "@/context/SimulationContext";
 import { LoadingCard, ErrorStateCard } from "@/components/StateFeedback";
 
 export default function SettingsPage() {
-  const searchParams = useSearchParams();
-  const initialTab = searchParams.get("tab") || "parameters";
 
   const {
     parameters,
@@ -23,8 +20,15 @@ export default function SettingsPage() {
     triggerRefresh,
   } = useSimulation();
 
-  const [activeTab, setActiveTab] = useState<string>(initialTab);
-  const [saveToast, setSaveToast] = useState<string | null>(null);
+const [activeTab, setActiveTab] = useState("parameters");
+
+useEffect(() => {
+  const tab = new URLSearchParams(window.location.search).get("tab");
+
+  if (tab === "parameters" || tab === "account" || tab === "datasources") {
+    setActiveTab(tab);
+  }
+}, []);  const [saveToast, setSaveToast] = useState<string | null>(null);
 
   // Account form fields
   const [name, setName] = useState(user.name);

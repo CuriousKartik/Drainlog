@@ -1,17 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useSimulation } from "@/context/SimulationContext";
+import { dispatchRouteAlert, getSafeRoute, type RouteResponse } from "@/services/api";
 import RouteInspector from "@/components/RouteInspector";
 import MapViewport from "@/components/MapViewport";
 import { LoadingCard, ErrorStateCard } from "@/components/StateFeedback";
 
+const WAYPOINTS: Record<string, [number, number]> = {
+  CP_INNER: [77.2185, 28.6328],
+  BARAKHAMBA: [77.2260, 28.6280],
+  KG_MARG: [77.2210, 28.6255],
+  LNJP_HOSPITAL: [77.2245, 28.6360],
+  NEW_DELHI_RLY: [77.2245, 28.6360],
+  RAM_MANOHAR: [77.2245, 28.6360],
+};
+
 export default function RoutingPage() {
   const {
-    roads,
-    nodes,
+    horizonMin,
+    geojsonData,
     peakWaterDepthCm,
-    detourFeasibilityRate,
     isSimulating,
     hasError,
     triggerRefresh,
@@ -20,6 +29,45 @@ export default function RoutingPage() {
   const [origin, setOrigin] = useState<string>("CP_INNER");
   const [destination, setDestination] = useState<string>("LNJP_HOSPITAL");
   const [vehicleType, setVehicleType] = useState<string>("AMBULANCE");
+  const [routeData, setRouteData] = useState<RouteResponse | null>(null);
+  const [isRouting, setIsRouting] = useState<boolean>(true);
+  const [routeError, setRouteError] = useState<string | null>(null);
+
+  const loadRoute = useCallback(async () => {
+    const [startLon, startLat] = WAYPOINTS[origin];
+    const [endLon, endLat] = WAYPOINTS[destination];
+    setIsRouting(true);
+    setRouteError(null);
+
+    try {
+      setRouteData(await getSafeRoute({
+        start_lon: startLon,
+        start_lat: startLat,
+        end_lon: endLon,
+        end_lat: endLat,
+        horizon_min: horizonMin,
+        vehicle_type: vehicleType,
+      }));
+    } catch (error) {
+      console.error("Unable to calculate safe route", error);
+      setRouteError("The server could not calculate a flood-safe route for these points.");
+    } finally {
+      setIsRouting(false);
+    }
+  }, [destination, horizonMin, origin, vehicleType]);
+
+  useEffect(() => {
+    void loadRoute();
+  }, [loadRoute]);
+
+  const handleDispatch = async (phone: string) => {
+    if (!routeData) throw new Error("Calculate a route before dispatching it.");
+    await dispatchRouteAlert({
+      route_id: `route-${horizonMin}-${origin}-${destination}`,
+      recipient_phone: phone,
+      message: routeData.metadata.summary,
+    });
+  };
 
   if (isSimulating) {
     return <LoadingCard message="Evaluating depth-penalized A* edge costs across road topology..." />;
@@ -35,100 +83,9 @@ export default function RoutingPage() {
     );
   }
 
-  // Construct dual-route GeoJSON for map display
-  const routeData = {
-    type: "FeatureCollection",
-    metadata: {
-      safe_route_found: detourFeasibilityRate > 0,
-      baseline_distance_km: 1.23,
-      safe_distance_km: 1.70,
-      distance_delta_km: 0.47,
-      baseline_est_time_min: 2.1,
-      safe_est_time_min: 2.8,
-      hazards_avoided_count: 1,
-      max_avoided_flood_depth_cm: peakWaterDepthCm,
-      summary: `Safe detour route avoids ${peakWaterDepthCm.toFixed(1)}cm deep flood at Minto Underpass via Barakhamba Flyover.`,
-    },
-    features: [
-      {
-        type: "Feature",
-        properties: {
-          route_type: "BASELINE_UNPROTECTED",
-          stroke_color: "#D64545",
-          dash_array: [4, 4],
-          distance_m: 1230,
-        },
-        geometry: {
-          type: "LineString",
-          coordinates: [
-            [77.2185, 28.6328],
-            [77.2205, 28.6315],
-            [77.2225, 28.6295],
-            [77.2245, 28.636],
-          ],
-        },
-      },
-      {
-        type: "Feature",
-        properties: {
-          route_type: "FLOOD_SAFE_RECOMMENDED",
-          stroke_color: "#111111",
-          distance_m: 1700,
-        },
-        geometry: {
-          type: "LineString",
-          coordinates: [
-            [77.2185, 28.6328],
-            [77.2205, 28.6315],
-            [77.2225, 28.6295],
-            [77.226, 28.628],
-            [77.2245, 28.636],
-          ],
-        },
-      },
-      {
-        type: "Feature",
-        properties: {
-          feature_type: "FLOOD_CHOKEPOINT",
-          road_name: "Minto Underpass Subway",
-          water_depth_cm: peakWaterDepthCm,
-          status: peakWaterDepthCm > 25 ? "IMPASSABLE" : "SLOW",
-        },
-        geometry: {
-          type: "Point",
-          coordinates: [77.2235, 28.6328],
-        },
-      },
-    ],
-  };
-
-  const geojsonData = {
-    type: "FeatureCollection",
-    features: roads.map((r, idx) => ({
-      type: "Feature",
-      properties: {
-        layer_type: "ROAD_SEGMENT",
-        road_id: r.id,
-        road_name: r.name,
-        water_depth_cm: r.water_depth_cm,
-        status: r.status,
-        color:
-          r.water_depth_cm > 25
-            ? [214, 69, 69, 240]
-            : r.water_depth_cm > 10
-            ? [232, 134, 58, 230]
-            : [30, 142, 90, 220],
-      },
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [77.2185 + idx * 0.0015, 28.6328 - idx * 0.001],
-          [77.2205 + idx * 0.0015, 28.6315 - idx * 0.001],
-          [77.2245 + idx * 0.0015, 28.636 - idx * 0.001],
-        ],
-      },
-    })),
-  };
+  if (routeError && !routeData) {
+    return <ErrorStateCard title="Route Calculation Failed" description={routeError} onRetry={loadRoute} />;
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -144,7 +101,9 @@ export default function RoutingPage() {
         </div>
 
         <div className="flex items-center gap-2 font-mono text-xs">
-          <span className="badge-success">CLEARANCE: 100.0%</span>
+          <span className="badge-success">
+            CLEARANCE: {routeData?.metadata.safe_route_found ? "100.0%" : "UNAVAILABLE"}
+          </span>
           <span className="badge-warning">MAX INUNDATION: {peakWaterDepthCm.toFixed(1)} CM</span>
         </div>
       </div>
@@ -199,8 +158,9 @@ export default function RoutingPage() {
         <div className="lg:col-span-1">
           <RouteInspector
             routeData={routeData}
-            onRecalculateRoute={() => triggerRefresh()}
-            isLoading={isSimulating}
+            onRecalculateRoute={loadRoute}
+            onDispatchRoute={handleDispatch}
+            isLoading={isRouting}
           />
         </div>
 

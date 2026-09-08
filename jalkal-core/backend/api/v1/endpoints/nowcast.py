@@ -257,6 +257,7 @@ def get_nowcast_inundation_grid(
                 "hgl": n_state["hgl"],
                 "z_ground": node["z_ground"],
                 "z_invert": node["z_invert"],
+                "basin_area": node["basin_area_m2"],
                 "surcharge_flow_m3s": n_state["surcharge_flow_m3s"],
                 "street_depth_cm": depth_cm,
                 "is_surcharging": n_state["is_surcharging"],
