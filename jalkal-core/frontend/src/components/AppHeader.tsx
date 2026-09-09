@@ -23,7 +23,7 @@ export default function AppHeader() {
     <header className="h-16 border-b border-border-light px-8 flex items-center justify-between bg-cream shrink-0">
       {/* Brand & Breadcrumbs */}
       <div className="flex items-center gap-4">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-md bg-accent-black flex items-center justify-center text-white font-bold text-xs font-mono">
             JK
           </div>

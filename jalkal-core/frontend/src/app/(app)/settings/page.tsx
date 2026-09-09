@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSimulation } from "@/context/SimulationContext";
 import { LoadingCard, ErrorStateCard } from "@/components/StateFeedback";
 
-export default function SettingsPage() {
+function SettingsContent() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") || "parameters";
 
@@ -418,4 +418,13 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<LoadingCard message="Loading settings..." />}>
+      <SettingsContent />
+    </Suspense>
+  );
+}
+
 

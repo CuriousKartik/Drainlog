@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "JalKal (जलकाल) — Urban Flood Nowcasting & Safe Navigation Engine",
@@ -26,7 +27,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-cream text-text-primary min-h-screen antialiased selection:bg-accent-orange-light selection:text-accent-black font-mono">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

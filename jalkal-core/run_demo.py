@@ -4021,8 +4021,12 @@ class MultiPageHandler(http.server.SimpleHTTPRequestHandler):
 
 def run():
     socketserver.TCPServer.allow_reuse_address = True
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
     print(f"======================================================================")
-    print(f"  JalKal (जलकाल) - Scientific Multi-Page Urban Flood Nowcasting App")
+    print(f"  JalKal - Scientific Multi-Page Urban Flood Nowcasting App")
     print(f"  Ministry of Earth Sciences / NCMRWF (SIH PS ID: SIH26085)")
     print(f"======================================================================")
     print(f"[+] Scientific Multi-Page Server running at http://localhost:{PORT}")

@@ -12,11 +12,9 @@ export default function AppSidebar() {
   const navItems = [
     { label: "Dashboard", href: "/dashboard", badge: null },
     { label: "Radar Nowcast", href: "/nowcast", badge: "0-3H" },
-    { label: "Causal Pipeline", href: "/causal-chain", badge: "CHAIN" },
     { label: "Drainage GIS Map", href: "/drainage-graph", badge: `${activeNodesCount} MH` },
     { label: "Safe Routing", href: "/routing", badge: null },
     { label: "Reports & History", href: "/reports", badge: null },
-    { label: "Navigation API", href: "/api-docs", badge: "DEV" },
     { label: "Model Parameters", href: "/settings", badge: null },
   ];
 

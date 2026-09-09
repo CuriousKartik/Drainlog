@@ -22,16 +22,14 @@ export default function TimeScrubber({
     let interval: NodeJS.Timeout | null = null;
     if (isPlaying) {
       interval = setInterval(() => {
-        onChangeHorizon((prev) => {
-          const next = prev + 15;
-          return next > 180 ? 0 : next;
-        });
+        const next = currentHorizon + 15;
+        onChangeHorizon(next > 180 ? 0 : next);
       }, 1800);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isPlaying, onChangeHorizon]);
+  }, [isPlaying, currentHorizon, onChangeHorizon]);
 
   return (
     <div className="bg-white border border-border-light rounded-lg p-4 shadow-sm flex flex-col gap-3 font-mono">

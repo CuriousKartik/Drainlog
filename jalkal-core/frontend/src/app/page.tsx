@@ -8,7 +8,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-cream text-text-primary font-mono flex flex-col selection:bg-accent-orange-light selection:text-accent-black">
       {/* 1. Navigation Header */}
       <header className="h-20 border-b border-border-light px-8 md:px-16 flex items-center justify-between bg-cream shrink-0">
-        <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3 hover:opacity-85 transition-opacity">
           <div className="w-9 h-9 rounded-md bg-accent-black flex items-center justify-center text-white font-bold text-xs font-mono">
             JK
           </div>
@@ -20,7 +20,7 @@ export default function LandingPage() {
               / SIH26085 • MoES / NCMRWF
             </span>
           </div>
-        </div>
+        </Link>
 
         <nav className="flex items-center gap-3">
           <Link href="/login" className="btn-secondary text-xs py-2 px-5">
