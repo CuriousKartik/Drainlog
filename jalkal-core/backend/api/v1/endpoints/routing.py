@@ -28,6 +28,7 @@ class RouteRequest(BaseModel):
     end_lat: float = Field(28.6360, description="Destination latitude")
     horizon_min: int = Field(45, ge=0, le=180, description="Forecast horizon minutes (0-180)")
     vehicle_type: str = Field("AMBULANCE", description="Vehicle type: AMBULANCE, CIV_CAR, RESCUE_TRUCK")
+    simulate: bool = Field(False, description="Use the scripted cloudburst instead of live weather (demo mode)")
 
 
 class DispatchAlertRequest(BaseModel):
@@ -43,7 +44,7 @@ def calculate_flood_safe_route(payload: RouteRequest):
     and the flood-safe path, reporting avoided depth hazards and travel times.
     """
     # 1. Compute inundation state at the requested horizon
-    rainfall = get_rainfall_intensity_for_horizon(payload.horizon_min)
+    rainfall = get_rainfall_intensity_for_horizon(payload.horizon_min, simulate=payload.simulate)
     hydraulic_res = hydraulic_solver.solve_drainage_network(
         nodes=SAMPLE_NODES,
         conduits=SAMPLE_CONDUITS,
@@ -76,7 +77,10 @@ def calculate_flood_safe_route(payload: RouteRequest):
 
 
 @router.get("/demo-route")
-def get_demo_emergency_route(horizon_min: int = Query(45, ge=0, le=180)):
+def get_demo_emergency_route(
+    horizon_min: int = Query(45, ge=0, le=180),
+    simulate: bool = Query(False),
+):
     """
     Convenience endpoint returning the default Connaught Place to Minto Road emergency run.
     """
@@ -86,6 +90,7 @@ def get_demo_emergency_route(horizon_min: int = Query(45, ge=0, le=180)):
         end_lon=77.2245,
         end_lat=28.6360,
         horizon_min=horizon_min,
+        simulate=simulate,
     )
     return calculate_flood_safe_route(req)
 

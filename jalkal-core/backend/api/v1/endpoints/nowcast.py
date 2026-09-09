@@ -153,13 +153,20 @@ def _fetch_live_precipitation_series() -> Optional[List[Dict[str, Any]]]:
         return None
 
 
-def get_rainfall_intensity_for_horizon(horizon_min: int) -> Dict[str, Any]:
+def get_rainfall_intensity_for_horizon(horizon_min: int, simulate: bool = False) -> Dict[str, Any]:
     """
     Returns real rainfall intensity (mm/hr) for T+horizon_min from a live
     weather API when available; otherwise falls back to a scripted curve.
     Always reports which source was actually used, so the app never silently
     presents simulated numbers as if they were live.
+
+    With simulate=True the scripted cloudburst curve is used regardless of
+    live weather, so the flood scenario can be demonstrated on a dry day.
+    The source is reported as "simulated_storm" so the UI can label it.
     """
+    if simulate:
+        return {"rainfall_mm_hr": _scripted_fallback_rainfall(horizon_min), "source": "simulated_storm"}
+
     series = _fetch_live_precipitation_series()
 
     if series:
@@ -177,13 +184,16 @@ def get_rainfall_intensity_for_horizon(horizon_min: int) -> Dict[str, Any]:
 def get_nowcast_inundation_grid(
     horizon_min: int = Query(
         0, ge=0, le=180, description="Forecast horizon minutes (0, 15, 30, ..., 180)"
-    )
+    ),
+    simulate: bool = Query(
+        False, description="Use the scripted cloudburst instead of live weather (demo mode)"
+    ),
 ):
     """
     Returns time-scrubbed street inundation and drainage surcharge states as GeoJSON.
     Includes extruded manhole columns (ColumnLayer) and color-coded road paths (PathLayer).
     """
-    rainfall_result = get_rainfall_intensity_for_horizon(horizon_min)
+    rainfall_result = get_rainfall_intensity_for_horizon(horizon_min, simulate=simulate)
     rain_mm_hr = rainfall_result["rainfall_mm_hr"]
     rainfall_source = rainfall_result["source"]
     hydraulic_res = hydraulic_solver.solve_drainage_network(
@@ -288,13 +298,17 @@ def get_nowcast_inundation_grid(
 
 
 @router.get("/summary-stats")
-def get_nowcast_summary():
+def get_nowcast_summary(
+    simulate: bool = Query(
+        False, description="Use the scripted cloudburst instead of live weather (demo mode)"
+    ),
+):
     """
     Returns time-series curve of peak rainfall and flood severity over the 3-hour forecast horizon.
     """
     timeline = []
     for t in range(0, 195, 15):
-        rainfall_result = get_rainfall_intensity_for_horizon(t)
+        rainfall_result = get_rainfall_intensity_for_horizon(t, simulate=simulate)
         rain = rainfall_result["rainfall_mm_hr"]
 
         # Run the same hydraulic solver as the inundation grid so the
