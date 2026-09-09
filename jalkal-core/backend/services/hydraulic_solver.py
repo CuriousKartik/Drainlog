@@ -5,12 +5,12 @@ Module: backend/services/hydraulic_solver.py
 Coordinates high-speed urban inundation simulation across forecast horizons (T+0 to T+180 min).
 Uses:
 1. Primary: Fast GNN Hydraulic Surrogate (PyTorch Geometric GCN/GAT, <50ms execution)
-2. Deterministic Fallback: Directed Acyclic Graph (DAG) Manning Gravity Conveyance Solver
+2. Deterministic Fallback: Topologically-routed Manning Gravity Conveyance Solver
+   (accumulates upstream flow into downstream nodes and surcharges overloaded conduits)
 """
 
 from typing import List, Dict, Any, Optional, Tuple
 import math
-import numpy as np
 
 from backend.services.hydrology_service import hydrology_service
 from backend.core.config import settings
@@ -185,46 +185,88 @@ class HydraulicSolver:
         self, nodes: List[Dict[str, Any]], conduits: List[Dict[str, Any]]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """
-        Deterministic hydraulic conveyance calculation using Manning's equation.
+        Deterministic gravity conveyance solver using Manning's equation.
+
+        Nodes are processed in topological order so each one receives the
+        accumulated flow of everything upstream, not just its own local
+        catchment inflow. A node surcharges when its total arriving flow
+        exceeds the combined effective capacity of ALL of its outgoing
+        conduits; conveyed flow is split between parallel conduits in
+        proportion to their capacity. Terminal nodes (no outgoing conduit)
+        act as free outfalls where flow leaves the modelled network.
         """
-        conduit_map = {}
+        node_by_id = {n["id"]: n for n in nodes}
+        outgoing: Dict[Any, List[Dict[str, Any]]] = {n["id"]: [] for n in nodes}
+        in_degree: Dict[Any, int] = {n["id"]: 0 for n in nodes}
         for c in conduits:
-            src = c["source_node"]
-            conduit_map[src] = c
+            src, dst = c["source_node"], c["target_node"]
+            if src in outgoing and dst in in_degree:
+                outgoing[src].append(c)
+                in_degree[dst] += 1
 
-        node_results = {}
-        conduit_results = {}
+        # Kahn topological ordering; any nodes left inside a cycle are
+        # appended in input order and solved with whatever flow has arrived.
+        queue = [n["id"] for n in nodes if in_degree[n["id"]] == 0]
+        topo_order: List[Any] = []
+        remaining = dict(in_degree)
+        qi = 0
+        while qi < len(queue):
+            nid = queue[qi]
+            qi += 1
+            topo_order.append(nid)
+            for c in outgoing[nid]:
+                remaining[c["target_node"]] -= 1
+                if remaining[c["target_node"]] == 0:
+                    queue.append(c["target_node"])
+        if len(topo_order) < len(nodes):
+            seen = set(topo_order)
+            topo_order.extend(n["id"] for n in nodes if n["id"] not in seen)
 
-        for n in nodes:
-            nid = str(n["id"])
+        arrived: Dict[Any, float] = {n["id"]: 0.0 for n in nodes}
+        node_results: Dict[str, Any] = {}
+        conduit_results: Dict[str, Any] = {}
+
+        for nid in topo_order:
+            n = node_by_id[nid]
             zg = float(n.get("z_ground", 12.0))
             zi = float(n.get("z_invert", 10.0))
-            q_in = float(n.get("current_q_inflow", 0.3))
+            q_local = float(n.get("current_q_inflow", 0.0))
+            q_total = q_local + arrived[nid]
 
-            # Find downstream pipe
-            downstream_pipe = conduit_map.get(n["id"])
-            if downstream_pipe:
-                cap = hydrology_service.compute_manning_full_conduit_capacity(
-                    diameter_m=float(downstream_pipe.get("diameter_m", 0.8)),
-                    slope=float(downstream_pipe.get("slope", 0.005)),
-                    manning_n=float(downstream_pipe.get("manning_n", 0.014)),
-                    clogging_ratio=float(downstream_pipe.get("clogging_ratio", 0.0)),
-                )
-                cid = str(downstream_pipe["id"])
-                actual_flow = min(q_in, cap)
-                conduit_results[cid] = {
-                    "flow_rate_m3s": round(actual_flow, 4),
-                    "capacity_m3s": round(cap, 4),
-                    "clogging_ratio": float(downstream_pipe.get("clogging_ratio", 0.0)),
-                }
+            pipes = outgoing[nid]
+            if pipes:
+                caps = [
+                    hydrology_service.compute_manning_full_conduit_capacity(
+                        diameter_m=float(p.get("diameter_m", 0.8)),
+                        slope=float(p.get("slope", 0.005)),
+                        manning_n=float(p.get("manning_n", 0.014)),
+                        clogging_ratio=float(p.get("clogging_ratio", 0.0)),
+                    )
+                    for p in pipes
+                ]
+                total_cap = sum(caps)
+                q_conveyed = min(q_total, total_cap)
+                for pipe, cap in zip(pipes, caps):
+                    share = q_conveyed * (cap / total_cap) if total_cap > 0.0 else 0.0
+                    arrived[pipe["target_node"]] += share
+                    conduit_results[str(pipe["id"])] = {
+                        "flow_rate_m3s": round(share, 4),
+                        "capacity_m3s": round(cap, 4),
+                        "utilization": round(share / cap, 3) if cap > 0.0 else 1.0,
+                        "clogging_ratio": float(pipe.get("clogging_ratio", 0.0)),
+                    }
 
-                # If inflow exceeds pipe gravity capacity -> Surcharge overflow
-                q_excess = max(0.0, q_in - cap)
+                # Accumulated inflow beyond combined conveyance -> surcharge
+                q_excess = max(0.0, q_total - total_cap)
                 depth_cm = hydrology_service.compute_manhole_surcharge_depth(
                     q_surcharge_m3s=q_excess, street_storage_area_m2=450.0
                 )
-                hgl = zg + (depth_cm / 100.0) if q_excess > 0.0 else zi + (zg - zi) * 0.75
-                node_results[nid] = {
+                if q_excess > 0.0:
+                    hgl = zg + (depth_cm / 100.0)
+                else:
+                    fill_ratio = min(1.0, q_total / total_cap) if total_cap > 0.0 else 1.0
+                    hgl = zi + (zg - zi) * fill_ratio
+                node_results[str(nid)] = {
                     "hgl": round(hgl, 3),
                     "z_ground": zg,
                     "surcharge_flow_m3s": round(q_excess, 4),
@@ -232,16 +274,29 @@ class HydraulicSolver:
                     "is_surcharging": bool(q_excess > 0.0),
                 }
             else:
-                # Terminal outfall
-                node_results[nid] = {
+                # Terminal outfall: accumulated flow discharges out of the
+                # modelled network instead of ponding.
+                node_results[str(nid)] = {
                     "hgl": zi,
                     "z_ground": zg,
                     "surcharge_flow_m3s": 0.0,
                     "street_depth_cm": 0.0,
                     "is_surcharging": False,
+                    "outfall_discharge_m3s": round(q_total, 4),
                 }
 
         return node_results, conduit_results
+
+    @staticmethod
+    def _distance_m(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
+        """Approximate equirectangular ground distance in metres."""
+        dx = (lon1 - lon2) * 111320.0 * math.cos(math.radians((lat1 + lat2) / 2.0))
+        dy = (lat1 - lat2) * 110540.0
+        return math.hypot(dx, dy)
+
+    # Radius around a surcharging manhole within which its ponded water can
+    # reach an adjacent street segment.
+    POOLING_RADIUS_M = 250.0
 
     def map_node_depths_to_roads(
         self,
@@ -254,53 +309,47 @@ class HydraulicSolver:
         Maps nodal surcharges to nearby street segments, computing road water depth
         and routing traversal statuses ('PASSABLE', 'SLOW', 'IMPASSABLE').
 
-        Each road inherits its depth from its NEAREST drainage node (by coordinates),
-        not a network-wide average, so a road next to a badly surcharging manhole
-        actually floods more than a road next to a dry one. The elevation adjustment
-        is now relative to the network's own average ground level instead of a
-        hardcoded constant, so it works regardless of what elevation datum/range
-        the input data uses.
+        Uses ponded water-surface elevations: a surcharging node ponds water up
+        to (z_ground + street depth). A road within POOLING_RADIUS_M of such a
+        node is inundated by however far that water surface stands above the
+        road's own elevation. A road higher than the pond surface stays dry, so
+        an elevated flyover no longer inherits depth from the sump below it,
+        while a low underpass floods deeper than the manhole rim itself.
         """
         road_inundations = []
 
-        # Build (lon, lat, computed_depth) for every node that has a result,
-        # plus track ground elevations to compute a dataset-relative baseline.
-        node_points = []
-        z_grounds = []
+        # (lon, lat, water surface elevation, ground elevation) for every
+        # surcharging node with ponded water.
+        ponds = []
         for n in nodes:
-            nid = str(n["id"])
-            result = node_results.get(nid)
-            if result is None:
+            result = node_results.get(str(n["id"]))
+            if result is None or result["street_depth_cm"] <= 0.0:
                 continue
             lon, lat = n["coords"]
-            node_points.append((lon, lat, result["street_depth_cm"]))
-            z_grounds.append(float(n.get("z_ground", 12.0)))
-
-        avg_z_ground = float(np.mean(z_grounds)) if z_grounds else 12.0
+            z_ground = float(n.get("z_ground", 12.0))
+            surface = z_ground + result["street_depth_cm"] / 100.0
+            ponds.append((lon, lat, surface, z_ground))
 
         for r in roads:
             rid = r["id"]
-
-            # Find the nearest drainage node to this road's midpoint, and use
-            # THAT node's actual computed depth (instead of a network-wide average).
             coords = r.get("coordinates", [])
-            road_lon, road_lat = coords[len(coords) // 2] if coords else (0.0, 0.0)
+            z_road = r.get("z_elevation")
 
-            nearest_depth = 0.0
-            min_dist_sq = float("inf")
-            for lon, lat, depth in node_points:
-                dist_sq = (lon - road_lon) ** 2 + (lat - road_lat) ** 2
-                if dist_sq < min_dist_sq:
-                    min_dist_sq = dist_sq
-                    nearest_depth = depth
+            depth_cm = 0.0
+            for lon, lat, surface, z_ground in ponds:
+                if not coords:
+                    continue
+                dist_m = min(
+                    self._distance_m(lon, lat, cx, cy) for cx, cy in coords
+                )
+                if dist_m > self.POOLING_RADIUS_M:
+                    continue
+                # Without road elevation data, assume the road sits at the
+                # manhole rim level and inherits the full ponded depth.
+                z_eff = float(z_road) if z_road is not None else z_ground
+                depth_cm = max(depth_cm, (surface - z_eff) * 100.0)
 
-            # Relative elevation adjustment: roads BELOW the network's average
-            # ground elevation pool extra water; roads at/above it don't get a
-            # penalty. This replaces the old hardcoded "11.5" threshold, which
-            # never matched real elevation data (always evaluated to zero).
-            z_road = float(r.get("z_elevation", avg_z_ground))
-            elevation_delta = max(0.0, avg_z_ground - z_road)
-            depth_cm = round(nearest_depth * (1.0 + 0.3 * elevation_delta), 1)
+            depth_cm = round(max(0.0, depth_cm), 1)
 
             # Inundation safety thresholding
             if depth_cm < settings.SLOWDOWN_DEPTH_CM:
