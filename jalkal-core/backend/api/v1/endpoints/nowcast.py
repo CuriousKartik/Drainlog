@@ -27,6 +27,8 @@ SAMPLE_NODES = [
     {"id": "node-4", "node_code": "MH_MINTO_BRIDGE", "coords": [77.2245, 28.6360], "z_ground": 212.2, "z_invert": 209.5, "basin_area_m2": 12000.0, "curb_length_m": 6.0},
     {"id": "node-5", "node_code": "MH_BARAKHAMBA_05", "coords": [77.2260, 28.6280], "z_ground": 215.2, "z_invert": 212.8, "basin_area_m2": 4900.0, "curb_length_m": 3.5},
     {"id": "node-6", "node_code": "MH_KG_MARG_06", "coords": [77.2210, 28.6255], "z_ground": 215.6, "z_invert": 213.0, "basin_area_m2": 5500.0, "curb_length_m": 3.8},
+    # Terminal outfall of the trunk drain into the Yamuna (no tributary catchment).
+    {"id": "node-7", "node_code": "OUTFALL_YAMUNA_01", "coords": [77.2340, 28.6385], "z_ground": 209.5, "z_invert": 206.8, "basin_area_m2": 0.0, "curb_length_m": 0.0},
 ]
 
 SAMPLE_CONDUITS = [
@@ -35,6 +37,10 @@ SAMPLE_CONDUITS = [
     {"id": "cond-3", "conduit_code": "COND_MINTO_CULVERT", "source_node": "node-3", "target_node": "node-4", "coords": [[77.2225, 28.6295], [77.2245, 28.6360]], "diameter_m": 1.20, "length_m": 650.0, "slope": 0.004, "clogging_ratio": 0.45},
     {"id": "cond-4", "conduit_code": "COND_BARA_04", "source_node": "node-3", "target_node": "node-5", "coords": [[77.2225, 28.6295], [77.2260, 28.6280]], "diameter_m": 0.90, "length_m": 380.0, "slope": 0.005, "clogging_ratio": 0.0},
     {"id": "cond-5", "conduit_code": "COND_KG_05", "source_node": "node-2", "target_node": "node-6", "coords": [[77.2205, 28.6315], [77.2210, 28.6255]], "diameter_m": 0.85, "length_m": 320.0, "slope": 0.005, "clogging_ratio": 0.0},
+    # Silted trunk drain out of the Minto sump towards the Yamuna outfall: the
+    # network's hydraulic choke point. Its constrained effective capacity is
+    # what backs stormwater up into the underpass during heavy rainfall.
+    {"id": "cond-6", "conduit_code": "COND_MINTO_TRUNK", "source_node": "node-4", "target_node": "node-7", "coords": [[77.2245, 28.6360], [77.2340, 28.6385]], "diameter_m": 0.80, "length_m": 620.0, "slope": 0.002, "clogging_ratio": 0.55},
 ]
 
 SAMPLE_ROADS = [
