@@ -31,6 +31,12 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timezone
 
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 PORT = 3000
 
 # Global Mutable Simulation State
