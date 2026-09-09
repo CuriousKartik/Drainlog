@@ -13,6 +13,7 @@ import logging
 from datetime import datetime, timezone, timedelta
 import httpx
 from fastapi import APIRouter, Query, HTTPException
+from backend.core.config import settings
 from backend.services.hydrology_service import hydrology_service
 from backend.services.hydraulic_solver import hydraulic_solver
 
@@ -295,14 +296,36 @@ def get_nowcast_summary():
     for t in range(0, 195, 15):
         rainfall_result = get_rainfall_intensity_for_horizon(t)
         rain = rainfall_result["rainfall_mm_hr"]
-        # Surcharge begins when rain exceeds typical pipe capacity (~35 mm/hr)
-        max_flood = max(0.0, round((rain - 32.0) * 0.9, 1)) if rain > 32.0 else 2.5
+
+        # Run the same hydraulic solver as the inundation grid so the
+        # timeline chart and the map can never contradict each other.
+        hydraulic_res = hydraulic_solver.solve_drainage_network(
+            nodes=SAMPLE_NODES,
+            conduits=SAMPLE_CONDUITS,
+            rainfall_intensity_mm_hr=rain,
+            horizon_min=t,
+        )
+        road_inundations = hydraulic_solver.map_node_depths_to_roads(
+            roads=SAMPLE_ROADS,
+            nodes=SAMPLE_NODES,
+            node_results=hydraulic_res["nodes"],
+            horizon_min=t,
+        )
+        max_flood = max((r["water_depth_cm"] for r in road_inundations), default=0.0)
+
+        if max_flood > settings.MAX_PASSABLE_DEPTH_CM:
+            status = "IMPASSABLE"
+        elif max_flood >= settings.SLOWDOWN_DEPTH_CM:
+            status = "SLOW"
+        else:
+            status = "CLEAR"
+
         timeline.append({
             "horizon_min": t,
             "rainfall_mm_hr": rain,
             "rainfall_source": rainfall_result["source"],
             "max_flood_depth_cm": max_flood,
-            "status": "IMPASSABLE" if max_flood > 25.0 else ("SLOW" if max_flood > 10.0 else "CLEAR"),
+            "status": status,
         })
 
     return {
