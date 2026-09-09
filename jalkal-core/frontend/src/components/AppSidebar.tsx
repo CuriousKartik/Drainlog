@@ -8,19 +8,54 @@ import { useSimulation } from "@/context/SimulationContext";
 export default function AppSidebar() {
   const pathname = usePathname();
   const { user, triggerRefresh } = useSimulation();
-  const [isOpen, setIsOpen] = useState(false);
-  const [toolsOpen, setToolsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [toolsOpen, setToolsOpen] = useState<boolean>(true);
+
+  // Restore persistent state from localStorage on client mount
+  useEffect(() => {
+    try {
+      const savedOpen = localStorage.getItem("jk_sidebar_open");
+      if (savedOpen === "true") setIsOpen(true);
+      const savedTools = localStorage.getItem("jk_tools_open");
+      if (savedTools !== null) setToolsOpen(savedTools === "true");
+    } catch (e) {}
+  }, []);
+
+  const handleSetOpen = (open: boolean) => {
+    setIsOpen(open);
+    try {
+      localStorage.setItem("jk_sidebar_open", String(open));
+    } catch (e) {}
+  };
+
+  const handleToggleTools = () => {
+    setToolsOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("jk_tools_open", String(next));
+      } catch (e) {}
+      return next;
+    });
+  };
 
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const sidebarRef = useRef<HTMLElement>(null);
   const isInitialMount = useRef(true);
 
-  // Close sidebar on Escape key press
+  // Close sidebar on Escape key press, or toggle with F key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
-        setIsOpen(false);
+        handleSetOpen(false);
+      } else if (
+        (e.key === "f" || e.key === "F") &&
+        !["INPUT", "TEXTAREA", "SELECT"].includes(
+          (document.activeElement as HTMLElement)?.tagName
+        )
+      ) {
+        e.preventDefault();
+        handleSetOpen(!isOpen);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -58,7 +93,7 @@ export default function AppSidebar() {
       {!isOpen && (
         <button
           ref={toggleButtonRef}
-          onClick={() => setIsOpen(true)}
+          onClick={() => handleSetOpen(true)}
           aria-label="Open sidebar"
           aria-expanded={false}
           title="Open Navigation"
@@ -84,7 +119,7 @@ export default function AppSidebar() {
       {/* Semi-transparent Overlay Backdrop */}
       {isOpen && (
         <div
-          onClick={() => setIsOpen(false)}
+          onClick={() => handleSetOpen(false)}
           className="fixed inset-0 bg-black/40 z-[2000] transition-opacity backdrop-blur-[1px]"
           style={{
             position: "fixed",
@@ -131,7 +166,7 @@ export default function AppSidebar() {
             </div>
             <button
               ref={closeButtonRef}
-              onClick={() => setIsOpen(false)}
+              onClick={() => handleSetOpen(false)}
               aria-label="Close sidebar"
               title="Close sidebar"
               className="w-8 h-8 rounded-md bg-white border border-border-light hover:bg-cream-alt text-text-secondary hover:text-text-primary flex items-center justify-center transition-colors cursor-pointer shrink-0 focus:outline-none focus:ring-2 focus:ring-accent-black"
@@ -166,7 +201,7 @@ export default function AppSidebar() {
           {/* Navigation Menu under Single Collapsible Button */}
           <div className="pt-1">
             <button
-              onClick={() => setToolsOpen(!toolsOpen)}
+              onClick={handleToggleTools}
               className={`w-full flex items-center justify-between p-2.5 rounded-md border text-xs font-bold font-mono transition-all whitespace-nowrap bg-white text-text-primary shadow-sm hover:bg-cream-alt ${
                 toolsOpen ? "border-accent-black" : "border-border-light hover:border-border-medium"
               }`}
@@ -203,7 +238,11 @@ export default function AppSidebar() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      onClick={() => setIsOpen(false)}
+                      onClick={() => {
+                        if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                          handleSetOpen(false);
+                        }
+                      }}
                       className={`sidebar-item flex items-center justify-between py-1.5 px-2 rounded text-xs ${isActive ? "active font-bold bg-white" : "hover:bg-cream-alt"}`}
                     >
                       <span>{item.label}</span>
@@ -222,7 +261,11 @@ export default function AppSidebar() {
         <div className="pt-4 border-t border-border-light flex items-center justify-between bg-white border border-border-light rounded-md p-2.5">
           <Link
             href="/settings?tab=account"
-            onClick={() => setIsOpen(false)}
+            onClick={() => {
+              if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                handleSetOpen(false);
+              }
+            }}
             className="flex items-center gap-2.5 overflow-hidden hover:opacity-80 transition-opacity"
           >
             <div className="w-6 h-6 rounded-full bg-accent-orange-light text-accent-orange flex items-center justify-center font-bold text-xs border border-accent-orange/30 shrink-0">
@@ -239,7 +282,11 @@ export default function AppSidebar() {
           </Link>
           <Link
             href="/settings"
-            onClick={() => setIsOpen(false)}
+            onClick={() => {
+              if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                handleSetOpen(false);
+              }
+            }}
             className="label-mono text-[10px] hover:text-text-primary cursor-pointer shrink-0"
           >
             CFG

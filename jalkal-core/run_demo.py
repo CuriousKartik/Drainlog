@@ -93,85 +93,54 @@ OSRM_DETOUR_COORDS = [
     [77.2304, 28.6356], [77.2299, 28.6358], [77.2295, 28.6359], [77.2290, 28.6360]
 ]
 
-# Real Delhi Coordinates: Connaught Place & Minto Bridge Catchment Nodes
+# Real Delhi Coordinates: Connaught Place & Minto Bridge Catchment Nodes (All 35 Monitored Nodes)
 DELHI_NODES = [
-    {
-        "id": "node-1",
-        "code": "MH_CP_INNER_01",
-        "name": "CP Inner Circle North",
-        "lat": 28.6340,
-        "lon": 77.2180,
-        "z_ground": 216.50,
-        "z_invert": 214.00,
-        "basin_area_m2": 5200,
-        "orifice_area_m2": 0.283
-    },
-    {
-        "id": "node-2",
-        "code": "MH_CP_RADIAL_02",
-        "name": "CP Radial Node 3",
-        "lat": 28.6322,
-        "lon": 77.2205,
-        "z_ground": 215.80,
-        "z_invert": 213.20,
-        "basin_area_m2": 6100,
-        "orifice_area_m2": 0.283
-    },
-    {
-        "id": "node-3",
-        "code": "MH_CP_OUTER_03",
-        "name": "Outer Circle Junction",
-        "lat": 28.6305,
-        "lon": 77.2225,
-        "z_ground": 214.90,
-        "z_invert": 212.10,
-        "basin_area_m2": 7800,
-        "orifice_area_m2": 0.283
-    },
-    {
-        "id": "node-4",
-        "code": "MH_MINTO_BRIDGE_LOW",
-        "name": "Minto Railway Underpass Dip",
-        "lat": 28.6348,
-        "lon": 77.2268,
-        "z_ground": 211.80,
-        "z_invert": 209.20,
-        "basin_area_m2": 12400,
-        "orifice_area_m2": 0.380
-    },
-    {
-        "id": "node-5",
-        "code": "MH_BARAKHAMBA_05",
-        "name": "Barakhamba Elevated Deck",
-        "lat": 28.6275,
-        "lon": 77.2265,
-        "z_ground": 217.50,
-        "z_invert": 214.80,
-        "basin_area_m2": 4900,
-        "orifice_area_m2": 0.283
-    },
-    {
-        "id": "node-6",
-        "code": "MH_BHAVBHUTI_06",
-        "name": "Bhavbhuti Marg Bypass",
-        "lat": 28.6362,
-        "lon": 77.2235,
-        "z_ground": 216.00,
-        "z_invert": 213.50,
-        "basin_area_m2": 5800,
-        "orifice_area_m2": 0.283
-    },
-    {
-        "id": "node-7",
-        "code": "OUTFALL_YAMUNA_01",
-        "name": "Trunk Drain Outfall to Yamuna",
-        "lat": 28.6385,
-        "lon": 77.2340,
-        "z_ground": 209.50,
-        "z_invert": 206.80,
-        "basin_area_m2": 18500,
-        "orifice_area_m2": 0.500
-    }
+    # Central & Inner Circle Ring
+    {"id": "node-1", "code": "MH_CP_INNER_01", "name": "CP Inner Circle North (Radial 1)", "lat": 28.6340, "lon": 77.2180, "z_ground": 216.50, "z_invert": 214.00, "basin_area_m2": 5200, "orifice_area_m2": 0.283},
+    {"id": "node-2", "code": "MH_CP_INNER_02", "name": "CP Inner Circle North-East (Block B)", "lat": 28.6338, "lon": 77.2202, "z_ground": 216.20, "z_invert": 213.70, "basin_area_m2": 4800, "orifice_area_m2": 0.283},
+    {"id": "node-3", "code": "MH_CP_RADIAL_02", "name": "CP Radial Node 3 (Block C/D)", "lat": 28.6322, "lon": 77.2205, "z_ground": 215.80, "z_invert": 213.20, "basin_area_m2": 6100, "orifice_area_m2": 0.283},
+    {"id": "node-4", "code": "MH_CP_INNER_04", "name": "CP Inner Circle South-East (Block E)", "lat": 28.6312, "lon": 77.2198, "z_ground": 215.60, "z_invert": 213.00, "basin_area_m2": 5500, "orifice_area_m2": 0.283},
+    {"id": "node-5", "code": "MH_CP_INNER_05", "name": "CP Inner Circle South (Janpath Entry)", "lat": 28.6308, "lon": 77.2185, "z_ground": 215.70, "z_invert": 213.10, "basin_area_m2": 5300, "orifice_area_m2": 0.283},
+    {"id": "node-6", "code": "MH_CP_INNER_06", "name": "CP Inner Circle South-West (Block F/G)", "lat": 28.6315, "lon": 77.2170, "z_ground": 215.90, "z_invert": 213.30, "basin_area_m2": 5100, "orifice_area_m2": 0.283},
+    {"id": "node-7", "code": "MH_CP_INNER_07", "name": "CP Inner Circle West (Block H)", "lat": 28.6328, "lon": 77.2164, "z_ground": 216.30, "z_invert": 213.70, "basin_area_m2": 4900, "orifice_area_m2": 0.283},
+    {"id": "node-8", "code": "MH_CP_INNER_08", "name": "CP Inner Circle North-West (Block A)", "lat": 28.6339, "lon": 77.2169, "z_ground": 216.60, "z_invert": 214.10, "basin_area_m2": 5000, "orifice_area_m2": 0.283},
+    {"id": "node-9", "code": "MH_RAJIV_CHOWK_CTR", "name": "Rajiv Chowk Central Park Hub", "lat": 28.6328, "lon": 77.2185, "z_ground": 216.80, "z_invert": 214.20, "basin_area_m2": 7200, "orifice_area_m2": 0.283},
+
+    # Middle Circle Concentric Arteries
+    {"id": "node-10", "code": "MH_CP_MID_NORTH", "name": "Middle Circle North Collector", "lat": 28.6348, "lon": 77.2185, "z_ground": 216.30, "z_invert": 213.80, "basin_area_m2": 4600, "orifice_area_m2": 0.283},
+    {"id": "node-11", "code": "MH_CP_MID_EAST", "name": "Middle Circle East Collector", "lat": 28.6328, "lon": 77.2215, "z_ground": 215.70, "z_invert": 213.10, "basin_area_m2": 4900, "orifice_area_m2": 0.283},
+    {"id": "node-12", "code": "MH_CP_MID_SOUTH", "name": "Middle Circle South Collector", "lat": 28.6300, "lon": 77.2185, "z_ground": 215.40, "z_invert": 212.80, "basin_area_m2": 5100, "orifice_area_m2": 0.283},
+    {"id": "node-13", "code": "MH_CP_MID_WEST", "name": "Middle Circle West Collector", "lat": 28.6328, "lon": 77.2155, "z_ground": 216.10, "z_invert": 213.50, "basin_area_m2": 4700, "orifice_area_m2": 0.283},
+
+    # Connaught Circus Outer Ring (All 8 Radial Junctions)
+    {"id": "node-14", "code": "MH_CP_OUTER_03", "name": "Outer Circle Junction East (Barakhamba)", "lat": 28.6305, "lon": 77.2225, "z_ground": 214.90, "z_invert": 212.10, "basin_area_m2": 7800, "orifice_area_m2": 0.283},
+    {"id": "node-15", "code": "MH_CP_OUTER_MINTO", "name": "Outer Circle at Minto Road Jct", "lat": 28.6352, "lon": 77.2228, "z_ground": 215.20, "z_invert": 212.60, "basin_area_m2": 8200, "orifice_area_m2": 0.283},
+    {"id": "node-16", "code": "MH_CP_OUTER_CHELM", "name": "Outer Circle at Chelmsford Road", "lat": 28.6360, "lon": 77.2182, "z_ground": 215.90, "z_invert": 213.30, "basin_area_m2": 6900, "orifice_area_m2": 0.283},
+    {"id": "node-17", "code": "MH_CP_OUTER_PANCH", "name": "Outer Circle at Panchkuian Road", "lat": 28.6351, "lon": 77.2145, "z_ground": 216.40, "z_invert": 213.80, "basin_area_m2": 6400, "orifice_area_m2": 0.283},
+    {"id": "node-18", "code": "MH_CP_OUTER_BKS", "name": "Outer Circle at Baba Kharak Singh Marg", "lat": 28.6328, "lon": 77.2135, "z_ground": 216.20, "z_invert": 213.60, "basin_area_m2": 6600, "orifice_area_m2": 0.283},
+    {"id": "node-19", "code": "MH_CP_OUTER_SANSAD", "name": "Outer Circle at Sansad Marg", "lat": 28.6298, "lon": 77.2148, "z_ground": 215.60, "z_invert": 213.00, "basin_area_m2": 7100, "orifice_area_m2": 0.283},
+    {"id": "node-20", "code": "MH_CP_OUTER_JANPATH", "name": "Outer Circle at Janpath", "lat": 28.6288, "lon": 77.2185, "z_ground": 215.00, "z_invert": 212.30, "basin_area_m2": 7500, "orifice_area_m2": 0.283},
+    {"id": "node-21", "code": "MH_CP_OUTER_KG", "name": "Outer Circle at Kasturba Gandhi Marg", "lat": 28.6295, "lon": 77.2215, "z_ground": 214.80, "z_invert": 212.00, "basin_area_m2": 7700, "orifice_area_m2": 0.283},
+
+    # Minto Road Low-Lying Sump & Surcharge Corridor
+    {"id": "node-22", "code": "MH_MINTO_APPROACH_01", "name": "Minto Road Mid-Descent Chamber", "lat": 28.6338, "lon": 77.2248, "z_ground": 213.40, "z_invert": 210.60, "basin_area_m2": 9100, "orifice_area_m2": 0.283},
+    {"id": "node-23", "code": "MH_MINTO_BRIDGE_LOW", "name": "Minto Railway Underpass Dip Sump", "lat": 28.6348, "lon": 77.2268, "z_ground": 211.80, "z_invert": 209.20, "basin_area_m2": 12400, "orifice_area_m2": 0.380},
+    {"id": "node-24", "code": "MH_MINTO_EAST_PUMP", "name": "Minto Railway Storm Pumping Well", "lat": 28.6353, "lon": 77.2274, "z_ground": 212.10, "z_invert": 208.90, "basin_area_m2": 8600, "orifice_area_m2": 0.283},
+    {"id": "node-25", "code": "MH_BHAVBHUTI_06", "name": "Bhavbhuti Marg Railway Bypass", "lat": 28.6362, "lon": 77.2235, "z_ground": 216.00, "z_invert": 213.50, "basin_area_m2": 5800, "orifice_area_m2": 0.283},
+    {"id": "node-26", "code": "MH_DDU_MARG_01", "name": "Deen Dayal Upadhyay Marg West", "lat": 28.6342, "lon": 77.2285, "z_ground": 213.80, "z_invert": 211.00, "basin_area_m2": 8200, "orifice_area_m2": 0.283},
+    {"id": "node-27", "code": "MH_DDU_MARG_02", "name": "DDU Marg Cross-Drain Junction", "lat": 28.6338, "lon": 77.2312, "z_ground": 213.00, "z_invert": 210.20, "basin_area_m2": 8900, "orifice_area_m2": 0.283},
+
+    # Radial Corridors, Arterials & Cross-Feeders
+    {"id": "node-28", "code": "MH_BARAKHAMBA_05", "name": "Barakhamba Elevated Deck Collector", "lat": 28.6275, "lon": 77.2265, "z_ground": 217.50, "z_invert": 214.80, "basin_area_m2": 4900, "orifice_area_m2": 0.283},
+    {"id": "node-29", "code": "MH_TOLSTOY_BARAKHAMBA", "name": "Tolstoy Marg at Barakhamba Cross", "lat": 28.6292, "lon": 77.2252, "z_ground": 216.00, "z_invert": 213.20, "basin_area_m2": 5400, "orifice_area_m2": 0.283},
+    {"id": "node-30", "code": "MH_TOLSTOY_KG", "name": "Tolstoy Marg at KG Marg Cross", "lat": 28.6275, "lon": 77.2225, "z_ground": 215.60, "z_invert": 212.80, "basin_area_m2": 5600, "orifice_area_m2": 0.283},
+    {"id": "node-31", "code": "MH_TOLSTOY_JANPATH", "name": "Tolstoy Marg at Janpath Cross", "lat": 28.6262, "lon": 77.2185, "z_ground": 215.30, "z_invert": 212.50, "basin_area_m2": 5800, "orifice_area_m2": 0.283},
+    {"id": "node-32", "code": "MH_SHIVAJI_STADIUM", "name": "Shivaji Stadium Terminal Collector", "lat": 28.6322, "lon": 77.2115, "z_ground": 216.80, "z_invert": 214.00, "basin_area_m2": 6300, "orifice_area_m2": 0.283},
+
+    # Outfall Trunk Corridors
+    {"id": "node-33", "code": "MH_JLN_MARG_LNJP", "name": "JLN Marg Collector at LNJP Gate", "lat": 28.6360, "lon": 77.2290, "z_ground": 211.20, "z_invert": 208.50, "basin_area_m2": 11200, "orifice_area_m2": 0.380},
+    {"id": "node-34", "code": "MH_DELHI_GATE_TRUNK", "name": "Delhi Gate Interceptor Main", "lat": 28.6372, "lon": 77.2320, "z_ground": 210.50, "z_invert": 207.60, "basin_area_m2": 14500, "orifice_area_m2": 0.380},
+    {"id": "node-35", "code": "OUTFALL_YAMUNA_01", "name": "Trunk Drain Outfall to Yamuna River", "lat": 28.6385, "lon": 77.2340, "z_ground": 209.50, "z_invert": 206.80, "basin_area_m2": 18500, "orifice_area_m2": 0.500},
 ]
 
 # Longitudinal Profile Stations along CP -> Minto -> Yamuna (1690m trunk conduit)
@@ -494,6 +463,8 @@ APP_SHELL_HTML = """<!DOCTYPE html>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JalKal - Scientific Urban Flood Nowcasting & Safe Navigation Engine</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="shortcut icon" type="image/png" href="/favicon.png">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -678,6 +649,44 @@ APP_SHELL_HTML = """<!DOCTYPE html>
     }
     .leaflet-popup-tip { background: #FFFFFF !important; }
 
+    /* Leaflet Layer Control Hover Tooltip */
+    .leaflet-control-layers-toggle {
+      position: relative !important;
+    }
+    .leaflet-control-layers-toggle:hover::after {
+      content: "Map Layers";
+      position: absolute;
+      right: 48px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--accent-black);
+      color: #FFFFFF;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+      pointer-events: none;
+      z-index: 2000;
+    }
+
+    /* Fixed-Position GIS Map Legend Card */
+    .map-legend-card {
+      background: rgba(255, 255, 255, 0.96) !important;
+      backdrop-filter: blur(8px) !important;
+      border: 1px solid var(--border-light) !important;
+      border-radius: 12px !important;
+      padding: 0.75rem 0.95rem !important;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12) !important;
+      line-height: 1.35 !important;
+      pointer-events: auto !important;
+      z-index: 1000 !important;
+      max-width: 320px;
+    }
+
     /* Map Stacking Context Isolation (prevents Leaflet panes from bleeding above off-canvas sidebar) */
     .map-responsive,
     .leaflet-container,
@@ -706,7 +715,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
     .app-header {
       height: 64px;
       border-bottom: 1px solid var(--border-light);
-      padding: 0 2rem 0 4.5rem;
+      padding: 0 2rem 0 9.2rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -714,6 +723,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       position: sticky;
       top: 0;
       z-index: 30;
+      transition: all 0.2s ease;
     }
 
     .app-workspace {
@@ -754,33 +764,119 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       max-width: 100%;
     }
 
-    /* Fixed Toggle Button (~44px, top-left corner, z-index: 1500) */
+    /* Fixed Floating Toggle Button [F] (top-left corner, z-index: 2050) */
     .sidebar-toggle-btn {
       position: fixed;
       top: 10px;
       left: 12px;
-      width: 44px;
       height: 44px;
-      z-index: 1500;
-      background: white;
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
+      padding: 0 14px 0 12px;
+      z-index: 2050;
+      background: #FFFFFF;
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-pill, 9999px);
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 7px;
       cursor: pointer;
       color: var(--text-primary);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-      transition: background 0.15s ease, border-color 0.15s ease;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      transition: all 0.18s ease;
       touch-action: manipulation;
     }
     .sidebar-toggle-btn:hover {
       background: var(--bg-card-alt);
-      border-color: var(--border-medium);
+      border-color: var(--accent-black);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.18);
     }
     .sidebar-toggle-btn:focus-visible {
       outline: 2px solid var(--accent-black);
       outline-offset: 2px;
+    }
+    .btn-f-badge {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 800;
+      background: var(--accent-black);
+      color: white;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+      line-height: 1.2;
+    }
+
+    /* Map & Fullscreen Layout Engine */
+    .map-card-wrapper {
+      width: 100%;
+      position: relative;
+    }
+    .map-header-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 0.95rem 1.4rem;
+      margin-bottom: 0.9rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+    .map-responsive-fullscreen {
+      height: calc(100vh - 210px);
+      min-height: 560px;
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--border-light);
+      background: #e5e3df;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.06);
+    }
+
+    /* Fullscreen Map Mode (Toggled via button F or Shift+F) */
+    body.fullscreen-map-mode .app-header {
+      display: none !important;
+    }
+    body.fullscreen-map-mode .main-content {
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: 100% !important;
+      height: 100vh !important;
+      overflow: hidden !important;
+    }
+    body.fullscreen-map-mode .map-page-container {
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: 100% !important;
+      height: 100vh !important;
+    }
+    body.fullscreen-map-mode .map-card-wrapper {
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      border: none !important;
+      height: 100vh !important;
+      padding: 0 !important;
+    }
+    body.fullscreen-map-mode .map-responsive-fullscreen {
+      height: 100vh !important;
+      width: 100vw !important;
+      border-radius: 0 !important;
+      border: none !important;
+    }
+    body.fullscreen-map-mode .map-header-card {
+      position: absolute !important;
+      top: 12px !important;
+      left: 175px !important;
+      right: 18px !important;
+      z-index: 1200 !important;
+      background: rgba(255, 255, 255, 0.94) !important;
+      backdrop-filter: blur(10px) !important;
+      border-radius: 14px !important;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.12) !important;
+    }
+    body.fullscreen-map-mode .table-section-collapsible {
+      display: none !important;
     }
 
     /* Semi-transparent Overlay Backdrop (z-index: 2000) */
@@ -1014,10 +1110,12 @@ APP_SHELL_HTML = """<!DOCTYPE html>
     // Reactive Hydraulic State
     let state = {
       route: window.location.pathname || "/",
-      isLoggedIn: false,
-      sidebarOpen: false,
-      toolsMenuOpen: false,
+      isLoggedIn: (typeof localStorage !== 'undefined' && localStorage.getItem('jk_logged_in') === 'false') ? false : true,
+      sidebarOpen: (typeof localStorage !== 'undefined' && localStorage.getItem('jk_sidebar_open') === 'true') ? true : false,
+      toolsMenuOpen: true,
+      fullScreenMode: false,
       authModal: null,
+      floodMapMode: "current",
       horizonMin: 45,
       cloggingRatio: 0.45,
       inletCapacity: 3.4,
@@ -1129,6 +1227,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
     function toggleSidebar(forceState) {
       const next = typeof forceState === 'boolean' ? forceState : !state.sidebarOpen;
       state.sidebarOpen = next;
+      try { localStorage.setItem('jk_sidebar_open', String(next)); } catch(e) {}
       const sidebar = document.getElementById('app-sidebar');
       const backdrop = document.getElementById('sidebar-backdrop');
       const toggleBtn = document.getElementById('sidebar-toggle-btn');
@@ -1148,8 +1247,6 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             toggleBtn.focus();
           }
         }
-      } else {
-        render();
       }
     }
 
@@ -1157,12 +1254,43 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       toggleSidebar(forceState);
     }
 
+    function toggleFullScreenMap(force) {
+      const next = typeof force === 'boolean' ? force : !state.fullScreenMode;
+      state.fullScreenMode = next;
+      if (state.fullScreenMode) {
+        document.body.classList.add('fullscreen-map-mode');
+      } else {
+        document.body.classList.remove('fullscreen-map-mode');
+      }
+      const btns = document.querySelectorAll('.fullscreen-btn-label');
+      btns.forEach(b => {
+        b.textContent = state.fullScreenMode ? "EXIT FULL SCREEN [F]" : "FULL SCREEN [F]";
+      });
+      setTimeout(() => {
+        if (window._activeDrainageMap) window._activeDrainageMap.invalidateSize();
+        if (window._activeNowcastMap) window._activeNowcastMap.invalidateSize();
+        if (window._activeRoutingMap) window._activeRoutingMap.invalidateSize();
+      }, 150);
+    }
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         if (state.sidebarOpen) {
           toggleSidebar(false);
+        } else if (state.fullScreenMode) {
+          toggleFullScreenMap(false);
         } else if (state.authModal) {
           closeAuthModal();
+        } else if (state.selectedNode) {
+          state.selectedNode = null;
+          render();
+        }
+      } else if ((e.key === 'f' || e.key === 'F') && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          toggleFullScreenMap();
+        } else {
+          toggleSidebar();
         }
       }
     });
@@ -1170,7 +1298,9 @@ APP_SHELL_HTML = """<!DOCTYPE html>
     function navigate(path) {
       state.route = path;
       window.history.pushState({}, "", path);
-      toggleSidebar(false);
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        toggleSidebar(false);
+      }
       render();
       window.scrollTo(0, 0);
     }
@@ -1238,10 +1368,19 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         mintoHgl = Math.round((zInvertMinto + diam * Math.pow(ratio, 0.6)) * 100) / 100;
       }
 
-      // 6. Street Ponding Depth (Minto Basin)
+      // 6. Street Ponding Depth (Minto Basin with Hydrograph Storage & Recession)
       const qFloodTotal = qOverflow + qSurcharge;
       const pondArea = 1120.0;
-      const mintoDepth = Math.min(135.0, Math.max(1.5, Math.round((qFloodTotal * 620.0 / pondArea) * 1000) / 10));
+      const peakDepth = Math.min(135.0, 74.2 * (1.0 + (alpha - 0.45) * 0.85));
+      let hydroDepth = 1.5;
+      if (t <= 45) {
+        const f = Math.exp(-Math.pow(t - 45, 2) / (2 * Math.pow(20, 2)));
+        hydroDepth = 1.5 + (peakDepth - 1.5) * f;
+      } else {
+        const f = Math.exp(-Math.pow(t - 45, 1.4) / 120);
+        hydroDepth = 1.5 + (peakDepth - 1.5) * f;
+      }
+      const mintoDepth = Math.min(135.0, Math.max(1.5, Math.round(hydroDepth * 10) / 10));
 
       const radialDepth = Math.max(1.0, Math.round(mintoDepth * 0.38 * (1.0 + alpha * 0.3) * 10) / 10);
       const innerDepth = Math.max(1.0, Math.round(4.6 * (rain / 60.0) * 10) / 10);
@@ -1580,13 +1719,15 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
       return `
         <div class="app-shell" style="min-height: 100vh; display: flex; flex-direction: column;">
-          <!-- Fixed Toggle Button (~44px, top-left corner, z-index: 60) -->
-          <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" onclick="toggleSidebar(true)" aria-label="Open sidebar" title="Open Navigation" style="${state.sidebarOpen ? 'display: none;' : 'display: flex;'}">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Fixed Floating Button [F] (top-left corner, z-index: 2050) -->
+          <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" onclick="toggleSidebar(true)" aria-label="Open Pages Menu (Press F)" title="Pages & Navigation (Press F)" style="${state.sidebarOpen ? 'display: none;' : 'display: flex;'}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="3" y1="6" x2="21" y2="6"></line>
               <line x1="3" y1="12" x2="21" y2="12"></line>
               <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
+            <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-primary); letter-spacing: 0.04em;">PAGES</span>
+            <span class="btn-f-badge">F</span>
           </button>
 
           <!-- Semi-transparent Overlay Backdrop (z-index: 40) -->
@@ -1603,7 +1744,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                 <span class="heading-display app-header-title" style="font-size: 1.25rem; color: var(--accent-black);">JALKAL</span>
               </div>
               <span class="desktop-only" style="color: var(--border-medium);">/</span>
-              <span class="label-mono desktop-only" style="color: var(--text-primary); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;">${pageTitle}</span>
+              <span id="app-header-page-title" class="label-mono desktop-only" style="color: var(--text-primary); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;">${pageTitle}</span>
             </div>
 
             <!-- Header Middle Telemetry (Desktop / Tablet) -->
@@ -1614,7 +1755,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               </div>
               <div style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-pill); padding: 0.3rem 0.8rem; font-size: 0.68rem;">
                 <span style="color: var(--text-secondary);">PEAK MINTO PONDING: </span>
-                <span style="font-weight: 700; color: ${h.mintoDepth > 25 ? '#D64545' : '#E8863A'};">${h.mintoDepth.toFixed(1)} cm</span>
+                <span id="header-telemetry-minto" style="font-weight: 700; color: ${h.mintoDepth > 25 ? '#D64545' : '#E8863A'};">${h.mintoDepth.toFixed(1)} cm</span>
               </div>
             </div>
 
@@ -1633,16 +1774,16 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             <!-- Sidebar -->
             <aside id="app-sidebar" class="app-sidebar ${state.sidebarOpen ? 'open' : ''}" role="dialog" aria-modal="true" aria-label="Navigation Menu">
               <div>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; gap: 0.5rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; gap: 0.5rem;">
                   <div style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 0.65rem 0.75rem; display: flex; align-items: center; gap: 0.75rem; flex: 1; overflow: hidden;">
-                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; flex-shrink: 0;">JK</div>
+                    <div style="width: 32px; height: 32px; border-radius: 6px; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; flex-shrink: 0;">JK</div>
                     <div style="overflow: hidden;">
-                      <div style="font-weight: 600; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Delhi Basin</div>
+                      <div style="font-weight: 700; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Delhi Basin GIS</div>
                       <div style="font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">CONNAUGHT & MINTO</div>
                     </div>
                   </div>
                   <!-- Close (X) icon inside sidebar header -->
-                  <button id="sidebar-close-btn" class="sidebar-close-btn" onclick="toggleSidebar(false)" aria-label="Close sidebar" title="Close sidebar" style="width: 36px; height: 36px; background: white; border: 1px solid var(--border-light); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-secondary); transition: all 0.15s ease; flex-shrink: 0;">
+                  <button id="sidebar-close-btn" class="sidebar-close-btn" onclick="toggleSidebar(false)" aria-label="Close sidebar" title="Close sidebar (Esc or F)" style="width: 36px; height: 36px; background: white; border: 1px solid var(--border-light); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-secondary); transition: all 0.15s ease; flex-shrink: 0;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
                       <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1650,57 +1791,97 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                   </button>
                 </div>
 
-                <!-- Single button for Scientific Tools (collapsible menu) -->
-                <button id="scientific-tools-btn" class="scientific-tools-btn" onclick="toggleScientificTools()" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.8rem; background: white; color: var(--text-primary); border: 1px solid ${state.toolsMenuOpen ? 'var(--accent-black)' : 'var(--border-light)'}; border-radius: var(--radius-md); cursor: pointer; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.04); white-space: nowrap; box-sizing: border-box;">
-                  <div style="display: flex; align-items: center; gap: 0.5rem; min-width: 0; white-space: nowrap;">
-                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #1E8E5A; flex-shrink: 0; display: inline-block;"></span>
-                    <span style="white-space: nowrap; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; color: var(--text-primary);">SCIENTIFIC TOOLS</span>
+                <!-- Comprehensive Pages Directory -->
+                <div style="display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; max-height: calc(100vh - 180px); padding-right: 2px;">
+                  
+                  <!-- Group 1: GIS Workstation & Maps -->
+                  <div>
+                    <div style="font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.45rem; padding: 0 0.4rem;">
+                      GIS WORKSTATION & MAPS
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                      <div class="sidebar-item ${state.route === '/drainage-graph' ? 'active' : ''}" data-route="/drainage-graph" onclick="navigate('/drainage-graph')" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer;">
+                        <div style="display: flex; flex-direction: column;">
+                          <span style="font-weight: 700; font-size: 0.8rem;">Drainage GIS Network</span>
+                          <span style="font-size: 0.62rem; color: var(--text-secondary);">Connaught 35 Monitored Nodes</span>
+                        </div>
+                        <span class="badge-success" style="font-size: 0.6rem; padding: 0.12rem 0.45rem; font-weight: 700;">35 NODES</span>
+                      </div>
+                      <div class="sidebar-item ${state.route === '/nowcast' ? 'active' : ''}" data-route="/nowcast" onclick="navigate('/nowcast')" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer;">
+                        <div style="display: flex; flex-direction: column;">
+                          <span style="font-weight: 700; font-size: 0.8rem;">Radar Nowcast Map</span>
+                          <span style="font-size: 0.62rem; color: var(--text-secondary);">Spatial Inundation Geometry</span>
+                        </div>
+                        <span class="badge-success" style="font-size: 0.6rem; padding: 0.12rem 0.45rem; font-weight: 700;">0-3H RADAR</span>
+                      </div>
+                      <div class="sidebar-item ${state.route === '/dashboard' ? 'active' : ''}" data-route="/dashboard" onclick="navigate('/dashboard')" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer;">
+                        <div style="display: flex; flex-direction: column;">
+                          <span style="font-weight: 700; font-size: 0.8rem;">Catchment Dashboard</span>
+                          <span style="font-size: 0.62rem; color: var(--text-secondary);">Live Street Depths & Inundation</span>
+                        </div>
+                        <span class="badge-success" style="font-size: 0.6rem; padding: 0.12rem 0.45rem; font-weight: 700;">LIVE KPI</span>
+                      </div>
+                    </div>
                   </div>
-                  <div style="display: flex; align-items: center; gap: 0.45rem; flex-shrink: 0; white-space: nowrap;">
-                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.12rem 0.45rem; font-weight: 700; white-space: nowrap;">9 LIVE</span>
-                    <svg class="tools-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); transition: transform 0.2s ease; transform: ${state.toolsMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)'}; flex-shrink: 0;">
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  </div>
-                </button>
 
-                <!-- Collapsible tools list that opens up when clicked -->
-                <div id="scientific-tools-menu" style="display: ${state.toolsMenuOpen ? 'flex' : 'none'}; flex-direction: column; gap: 0.25rem; margin-top: 0.5rem; padding: 0.35rem 0.3rem; background: rgba(0,0,0,0.015); border: 1px solid var(--border-light); border-radius: var(--radius-md);">
-                  <div class="sidebar-item ${state.route === '/dashboard' ? 'active' : ''}" onclick="navigate('/dashboard')">
-                    <span>Dashboard</span>
-                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
+                  <!-- Group 2: Scientific Hydrodynamics -->
+                  <div>
+                    <div style="font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.45rem; padding: 0 0.4rem;">
+                      PHYSICAL HYDRODYNAMICS
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                      <div class="sidebar-item ${state.route === '/hydraulic-transect' ? 'active' : ''}" data-route="/hydraulic-transect" onclick="navigate('/hydraulic-transect')" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer;">
+                        <div style="display: flex; flex-direction: column;">
+                          <span style="font-weight: 700; font-size: 0.8rem;">Conduit Transect</span>
+                          <span style="font-size: 0.62rem; color: var(--text-secondary);">2D Subsurface HGL/EGL Profile</span>
+                        </div>
+                        <span class="badge-success" style="font-size: 0.6rem; padding: 0.12rem 0.45rem; font-weight: 700;">2D SLICE</span>
+                      </div>
+                      <div class="sidebar-item ${state.route === '/causal-chain' ? 'active' : ''}" data-route="/causal-chain" onclick="navigate('/causal-chain')" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer;">
+                        <div style="display: flex; flex-direction: column;">
+                          <span style="font-weight: 700; font-size: 0.8rem;">Causal Pipeline</span>
+                          <span style="font-size: 0.62rem; color: var(--text-secondary);">5-Stage Hydrodynamic Cascade</span>
+                        </div>
+                        <span class="badge-success" style="font-size: 0.6rem; padding: 0.12rem 0.45rem; font-weight: 700;">COUPLED</span>
+                      </div>
+                      <div class="sidebar-item ${state.route === '/routing' ? 'active' : ''}" data-route="/routing" onclick="navigate('/routing')" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer;">
+                        <div style="display: flex; flex-direction: column;">
+                          <span style="font-weight: 700; font-size: 0.8rem;">Safe Detour Routing</span>
+                          <span style="font-size: 0.62rem; color: var(--text-secondary);">A* Multi-Modal Fleet Clearance</span>
+                        </div>
+                        <span class="badge-success" style="font-size: 0.6rem; padding: 0.12rem 0.45rem; font-weight: 700;">5 FLEETS</span>
+                      </div>
+                    </div>
                   </div>
-                  <div class="sidebar-item ${state.route === '/nowcast' ? 'active' : ''}" onclick="navigate('/nowcast')">
-                    <span>Radar Nowcast</span>
-                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
-                  </div>
-                  <div class="sidebar-item ${state.route === '/causal-chain' ? 'active' : ''}" onclick="navigate('/causal-chain')">
-                    <span>Causal Pipeline</span>
-                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
-                  </div>
-                  <div class="sidebar-item ${state.route === '/drainage-graph' ? 'active' : ''}" onclick="navigate('/drainage-graph')">
-                    <span>Drainage GIS Map</span>
-                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
-                  </div>
-                  <div class="sidebar-item ${state.route === '/hydraulic-transect' ? 'active' : ''}" onclick="navigate('/hydraulic-transect')">
-                    <span>Conduit Transect</span>
-                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
-                  </div>
-                  <div class="sidebar-item ${state.route === '/routing' ? 'active' : ''}" onclick="navigate('/routing')">
-                    <span>Safe Detour Routing</span>
-                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
-                  </div>
-                  <div class="sidebar-item ${state.route === '/reports' ? 'active' : ''}" onclick="navigate('/reports')">
-                    <span>Reports & History</span>
-                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
-                  </div>
-                  <div class="sidebar-item ${state.route === '/api-docs' ? 'active' : ''}" onclick="navigate('/api-docs')">
-                    <span>Navigation API</span>
-                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
-                  </div>
-                  <div class="sidebar-item ${state.route === '/settings' ? 'active' : ''}" onclick="navigate('/settings')">
-                    <span>Model Parameters</span>
-                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
+
+                  <!-- Group 3: Operations & Platform -->
+                  <div>
+                    <div style="font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.45rem; padding: 0 0.4rem;">
+                      OPERATIONS & PLATFORM
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                      <div class="sidebar-item ${state.route === '/reports' ? 'active' : ''}" data-route="/reports" onclick="navigate('/reports')" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer;">
+                        <div style="display: flex; flex-direction: column;">
+                          <span style="font-weight: 700; font-size: 0.8rem;">Reports & History</span>
+                          <span style="font-size: 0.62rem; color: var(--text-secondary);">Municipal Storm Archive</span>
+                        </div>
+                        <span class="badge-success" style="font-size: 0.6rem; padding: 0.12rem 0.45rem; font-weight: 700;">ARCHIVE</span>
+                      </div>
+                      <div class="sidebar-item ${state.route === '/api-docs' ? 'active' : ''}" data-route="/api-docs" onclick="navigate('/api-docs')" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer;">
+                        <div style="display: flex; flex-direction: column;">
+                          <span style="font-weight: 700; font-size: 0.8rem;">Navigation API & CARTO</span>
+                          <span style="font-size: 0.62rem; color: var(--text-secondary);">REST Engine & Cloud DW</span>
+                        </div>
+                        <span class="badge-success" style="font-size: 0.6rem; padding: 0.12rem 0.45rem; font-weight: 700;">REST/SQL</span>
+                      </div>
+                      <div class="sidebar-item ${state.route === '/settings' ? 'active' : ''}" data-route="/settings" onclick="navigate('/settings')" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer;">
+                        <div style="display: flex; flex-direction: column;">
+                          <span style="font-weight: 700; font-size: 0.8rem;">Model Parameters</span>
+                          <span style="font-size: 0.62rem; color: var(--text-secondary);">Infiltration, Clogging & Inverts</span>
+                        </div>
+                        <span class="badge-success" style="font-size: 0.6rem; padding: 0.12rem 0.45rem; font-weight: 700;">CONFIG</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1719,7 +1900,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             </aside>
 
             <!-- Main Scroll Area -->
-            <main class="main-content">
+            <main id="app-main-content" class="main-content">
               ${contentHtml}
             </main>
           </div>
@@ -1944,7 +2125,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             </div>
             <div style="display: flex; gap: 0.5rem;">
               <span class="badge-success">DWR PALAM (15-MIN SCAN)</span>
-              <span class="${h.confPct > 70 ? 'badge-success' : h.confPct > 50 ? 'badge-warning' : 'badge-error'}">CONFIDENCE: ${h.confPct}%</span>
+              <span id="conf-badge-text" class="${h.confPct > 70 ? 'badge-success' : h.confPct > 50 ? 'badge-warning' : 'badge-error'}">CONFIDENCE: ${h.confPct}%</span>
             </div>
           </div>
 
@@ -1953,17 +2134,17 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
               <div>
                 <span class="label-mono">FORECAST HORIZON</span>
-                <div style="font-size: 1.4rem; font-weight: 800; margin-top: 0.2rem;">
+                <div id="horizon-display-text" style="font-size: 1.4rem; font-weight: 800; margin-top: 0.2rem;">
                   T + ${state.horizonMin} MIN
                   <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; margin-left: 0.5rem;">[${h.confLabel}]</span>
                 </div>
               </div>
               <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
-                <div style="background: var(--bg-card-alt); border: 1px solid var(--border-light); padding: 0.4rem 0.8rem; border-radius: var(--radius-pill); font-size: 0.75rem;">
+                <div id="rain-display-text" style="background: var(--bg-card-alt); border: 1px solid var(--border-light); padding: 0.4rem 0.8rem; border-radius: var(--radius-pill); font-size: 0.75rem;">
                   <span style="color: var(--text-secondary);">RAIN RATE: </span>
                   <span style="font-weight: 700; color: ${h.rain > 50 ? '#D64545' : '#E8863A'};">${h.rain.toFixed(1)} mm/hr (${h.dbz} dBZ)</span>
                 </div>
-                <div style="background: var(--bg-card-alt); border: 1px solid var(--border-light); padding: 0.4rem 0.8rem; border-radius: var(--radius-pill); font-size: 0.75rem;">
+                <div id="minto-display-text" style="background: var(--bg-card-alt); border: 1px solid var(--border-light); padding: 0.4rem 0.8rem; border-radius: var(--radius-pill); font-size: 0.75rem;">
                   <span style="color: var(--text-secondary);">MINTO DEPTH: </span>
                   <span style="font-weight: 700;">${h.mintoDepth.toFixed(1)} &plusmn; ${h.uncertaintyCm} cm</span>
                 </div>
@@ -1972,7 +2153,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
             <div style="display: flex; align-items: center; gap: 1rem;">
               <button class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick="toggleAutoPlay()" id="play-btn">PLAY</button>
-              <input type="range" min="0" max="180" step="15" value="${state.horizonMin}" oninput="updateHorizon(this.value)" style="flex: 1; accent-color: var(--accent-orange); cursor: pointer;">
+              <input id="horizon-slider-input" type="range" min="0" max="180" step="15" value="${state.horizonMin}" oninput="updateHorizon(this.value)" style="flex: 1; accent-color: var(--accent-orange); cursor: pointer;">
             </div>
 
             <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--text-muted); padding-top: 0.2rem;">
@@ -2047,12 +2228,12 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                 <circle cx="220" cy="45" r="12" fill="#4F46E5" fill-opacity="0.14" stroke="#4F46E5" stroke-opacity="0.3" stroke-width="1.2" />
                 <circle cx="220" cy="45" r="5.5" fill="#4F46E5" stroke="#FFFFFF" stroke-width="2" />
 
-                <!-- Dynamic Horizon Marker (if user moves slider from 45m) -->
-                ${state.horizonMin !== 45 ? `
-                  <line x1="${40 + (state.horizonMin / 180) * 720}" y1="18" x2="${40 + (state.horizonMin / 180) * 720}" y2="152" stroke="rgba(79,70,229,0.3)" stroke-width="1.2" stroke-dasharray="3,3" />
+                <!-- Dynamic Horizon Marker -->
+                <g id="hydro-slider-marker" style="${state.horizonMin === 45 ? 'display: none;' : ''}">
+                  <line x1="${40 + (state.horizonMin / 180) * 720}" y1="18" x2="${40 + (state.horizonMin / 180) * 720}" y2="152" stroke="rgba(79,70,229,0.4)" stroke-width="1.2" stroke-dasharray="3,3" />
                   <circle cx="${40 + (state.horizonMin / 180) * 720}" cy="${Math.max(25, 148 - (h.mintoDepth / 74.2) * 103)}" r="10" fill="#6366F1" fill-opacity="0.14" stroke="#6366F1" stroke-opacity="0.3" stroke-width="1" />
                   <circle cx="${40 + (state.horizonMin / 180) * 720}" cy="${Math.max(25, 148 - (h.mintoDepth / 74.2) * 103)}" r="4.5" fill="#4F46E5" stroke="#FFFFFF" stroke-width="2" />
-                ` : ''}
+                </g>
 
                 <!-- Interactive hover crosshair line (starts at dot center, ends at x-axis) and blue dot with white border -->
                 <line id="hydro-hover-line" x1="0" y1="0" x2="0" y2="148" stroke="#4F46E5" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="3,3" style="display: none; pointer-events: none;" />
@@ -2079,16 +2260,43 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Real Leaflet Spatial Map -->
-          <div class="card" style="padding: 1.2rem;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+          <!-- Real Leaflet Spatial Map with Single Dynamic Footprint and View Toggle -->
+          <div class="card map-header-card">
+            <div style="display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap;">
               <div>
-                <span style="font-weight: 700; font-size: 0.85rem;">Spatial Inundation Heat & Depth Geometry</span>
-                <span style="font-size: 0.7rem; color: var(--text-secondary); margin-left: 0.5rem;">Forecast confidence style: ${h.confidence_style || h.confStyle}</span>
+                <div style="font-family: var(--font-display); font-size: 1.22rem; font-weight: 800; color: var(--accent-black); line-height: 1.2;">
+                  Spatial Street Inundation Network
+                </div>
+                <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.15rem;">
+                  Live Street-Level Depths &bull; Coupled 1D-2D Saint-Venant (Zero Polygon Overlay)
+                </div>
               </div>
-              <span class="label-mono">LEAFLET GIS INTERACTIVE</span>
+
+              <!-- View Mode Toggle: Single Current Inundation Extent vs 95% Confidence Envelope -->
+              <div style="display: flex; gap: 0.35rem; background: var(--bg-card-alt); padding: 3px; border-radius: 8px; border: 1px solid var(--border-light); margin-left: auto;">
+                <button id="toggle-flood-current" onclick="setFloodMapMode('current')" style="padding: 0.32rem 0.75rem; font-size: 0.68rem; font-weight: 700; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; ${state.floodMapMode !== 'envelope' ? 'background: var(--accent-orange); color: white;' : 'background: transparent; color: var(--text-secondary);'}">
+                  CURRENT STREET DEPTHS
+                </button>
+                <button id="toggle-flood-envelope" onclick="setFloodMapMode('envelope')" style="padding: 0.32rem 0.75rem; font-size: 0.68rem; font-weight: 700; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; ${state.floodMapMode === 'envelope' ? 'background: var(--accent-orange); color: white;' : 'background: transparent; color: var(--text-secondary);'}">
+                  95% CONFIDENCE ENVELOPE
+                </button>
+              </div>
             </div>
-            <div id="nowcast-leaflet-map" class="map-responsive"></div>
+
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span class="label-mono" style="font-size: 0.75rem; font-weight: 700;">LEAFLET GIS INTERACTIVE</span>
+              <button class="btn-secondary" style="font-size: 0.7rem; padding: 0.4rem 0.8rem; display: flex; align-items: center; gap: 6px;" onclick="toggleFullScreenMap()" title="Toggle Fullscreen Mode (Press Shift+F or click)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                </svg>
+                <span class="fullscreen-btn-label">${state.fullScreenMode ? 'EXIT FULL SCREEN [F]' : 'FULL SCREEN [F]'}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Real Leaflet Full-Screen Map Container -->
+          <div class="card map-card-wrapper" style="padding: 0.5rem; border-radius: 18px; box-shadow: 0 8px 28px rgba(0,0,0,0.06);">
+            <div id="nowcast-leaflet-map" class="map-responsive-fullscreen"></div>
           </div>
         </div>
       `;
@@ -2205,35 +2413,52 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       const h = calculateHydraulics();
 
       return `
-        <div style="max-width: 1050px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.8rem;">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div>
-              <h1 class="heading-display" style="font-size: 2.4rem; margin-bottom: 0.2rem;">Drainage GIS Map & HGL Inspector</h1>
-              <p style="font-size: 0.85rem; color: var(--text-secondary); font-family: sans-serif;">
-                Real Leaflet GIS map with Connaught Place / Minto Bridge coordinates, manholes, conduits, and click diagnostics.
-              </p>
-            </div>
-            <div style="display: flex; gap: 0.5rem;">
-              <button class="btn-primary" style="font-size: 0.7rem;" onclick="navigate('/hydraulic-transect')">OPEN 2D TRANSECT SLICE</button>
-            </div>
-          </div>
-
-          <!-- Real Leaflet Map Container -->
-          <div class="card" style="padding: 1.2rem;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.6rem;">
+        <div class="map-page-container" style="width: 100%; display: flex; flex-direction: column; gap: 1rem;">
+          
+          <!-- Map Header Card matching Screenshot 4 -->
+          <div class="card map-header-card">
+            <div style="display: flex; align-items: baseline; gap: 1.2rem; flex-wrap: wrap;">
               <div>
-                <span style="font-weight: 700; font-size: 0.85rem;">Connaught Place Drainage Network (Delhi GIS)</span>
-                <span style="font-size: 0.7rem; color: var(--text-secondary); margin-left: 0.5rem;">Click any manhole circle to inspect invert diagnostics</span>
+                <div style="font-family: var(--font-display); font-size: 1.22rem; font-weight: 800; color: var(--accent-black); line-height: 1.2;">
+                  Connaught Place Drainage Network (Delhi GIS)
+                </div>
+                <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.15rem;">
+                  to inspect invert diagnostics
+                </div>
               </div>
-              <span class="label-mono">${DELHI_NODES.length} MONITORED NODES</span>
+              <div style="font-family: sans-serif; font-size: 0.8rem; color: var(--text-secondary); padding-left: 0.6rem; border-left: 2px solid var(--border-light);">
+                Click any manhole circle
+              </div>
             </div>
 
-            <div id="drainage-leaflet-map" class="map-responsive"></div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span class="label-mono" style="font-size: 0.75rem; font-weight: 700;">${DELHI_NODES.length} MONITORED NODES</span>
+              <button class="btn-secondary" style="font-size: 0.7rem; padding: 0.4rem 0.8rem; display: flex; align-items: center; gap: 6px;" onclick="toggleFullScreenMap()" title="Toggle Fullscreen Mode (Press Shift+F or click)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                </svg>
+                <span class="fullscreen-btn-label">${state.fullScreenMode ? 'EXIT FULL SCREEN [F]' : 'FULL SCREEN [F]'}</span>
+              </button>
+              <button class="btn-primary desktop-only" style="font-size: 0.7rem; padding: 0.4rem 0.8rem;" onclick="navigate('/hydraulic-transect')">
+                2D TRANSECT
+              </button>
+            </div>
           </div>
 
-          <!-- Manhole Invert Diagnostic Table -->
-          <div class="card">
-            <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem;">Manhole Hydraulic Invert Inventory</h3>
+          <!-- Real Leaflet Full-Screen Map Container -->
+          <div class="card map-card-wrapper" style="padding: 0.5rem; border-radius: 18px; box-shadow: 0 8px 28px rgba(0,0,0,0.06);">
+            <div id="drainage-leaflet-map" class="map-responsive-fullscreen"></div>
+          </div>
+
+          <!-- Manhole Invert Diagnostic Table (Collapsible in Fullscreen) -->
+          <div class="card table-section-collapsible" style="border-radius: 16px; margin-top: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <div>
+                <h3 style="font-size: 0.95rem; font-weight: 700;">Manhole Hydraulic Invert Inventory (${DELHI_NODES.length} Monitored Catchment Nodes)</h3>
+                <p style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.1rem;">Full municipal invert schedule, rim elevations, and Saint-Venant continuity evaluations.</p>
+              </div>
+              <span class="label-mono" style="font-size: 0.65rem;">SAINT-VENANT HGL ENGINE</span>
+            </div>
             <div class="table-responsive"><table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: left;">
               <thead>
                 <tr style="border-bottom: 1px solid var(--border-light); color: var(--text-secondary); font-size: 0.68rem;">
@@ -2262,13 +2487,13 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                   </tr>
                 `).join('')}
               </tbody>
-            </table>
+            </table></div>
           </div>
         </div>
       `;
     }
 
-    // Page 5: Hydraulic Cross-Section Transect Viewer (2D Subsurface Profile) - FEATURE 1
+        // Page 5: Hydraulic Cross-Section Transect Viewer (2D Subsurface Profile) - FEATURE 1
     function renderHydraulicTransectPage() {
       const h = calculateHydraulics();
       const activeSt = h.computedTransect.find(s => s.code === state.selectedStationCode) || h.computedTransect[3];
@@ -3310,46 +3535,82 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       `;
     }
 
-    // Main Router
+    function getPageInfo(path) {
+      if (path === "/nowcast") {
+        return { title: "Radar Nowcast & Timeline", html: renderNowcastPage() };
+      } else if (path === "/causal-chain") {
+        return { title: "Causal Pipeline Architecture", html: renderCausalChainPage() };
+      } else if (path === "/drainage-graph") {
+        return { title: "Drainage GIS Map & HGL Inspector", html: renderDrainageGraphPage() };
+      } else if (path === "/hydraulic-transect") {
+        return { title: "Hydraulic Conduit Transect", html: renderHydraulicTransectPage() };
+      } else if (path === "/routing") {
+        return { title: "Multi-Modal Safe Routing", html: renderRoutingPage() };
+      } else if (path === "/reports") {
+        return { title: "Reports & Historical Log", html: renderReportsPage() };
+      } else if (path === "/api-docs") {
+        return { title: "Navigation API Panel", html: renderApiDocsPage() };
+      } else if (path === "/settings") {
+        return { title: "Model Parameters & Settings", html: renderSettingsPage() };
+      } else {
+        return { title: "Dashboard Overview", html: renderDashboardPage() };
+      }
+    }
+
+    // Main Router with Persistent Shell & Stable Sidebar
     function render() {
-      let content = "";
       const path = state.route;
 
       if (!state.isLoggedIn && path !== "/" && path !== "/landing") {
         state.route = "/";
         window.history.replaceState({}, "", "/");
-        document.getElementById('app-root').innerHTML = renderLanding() + renderModal();
+        document.getElementById('app-root').innerHTML = renderLanding() + `<div id="modal-container">${renderModal()}</div>`;
         return;
       }
 
       if (path === "/" || path === "/landing") {
-        content = renderLanding();
-      } else if (path === "/login" || path === "/signup") {
-        content = renderAppShell(renderDashboardPage(), "Dashboard Overview");
-      } else if (path === "/nowcast") {
-        content = renderAppShell(renderNowcastPage(), "Radar Nowcast & Timeline");
-      } else if (path === "/causal-chain") {
-        content = renderAppShell(renderCausalChainPage(), "Causal Pipeline Architecture");
-      } else if (path === "/drainage-graph") {
-        content = renderAppShell(renderDrainageGraphPage(), "Drainage GIS Map & HGL Inspector");
-      } else if (path === "/hydraulic-transect") {
-        content = renderAppShell(renderHydraulicTransectPage(), "Hydraulic Conduit Transect");
-      } else if (path === "/routing") {
-        content = renderAppShell(renderRoutingPage(), "Multi-Modal Safe Routing");
-      } else if (path === "/reports") {
-        content = renderAppShell(renderReportsPage(), "Reports & Historical Log");
-      } else if (path === "/api-docs") {
-        content = renderAppShell(renderApiDocsPage(), "Navigation API Panel");
-      } else if (path === "/settings") {
-        content = renderAppShell(renderSettingsPage(), "Model Parameters & Settings");
-      } else {
-        content = renderAppShell(renderDashboardPage(), "Dashboard Overview");
+        document.getElementById('app-root').innerHTML = renderLanding() + `<div id="modal-container">${renderModal()}</div>`;
+        return;
       }
 
-      document.getElementById('app-root').innerHTML = content + renderModal();
+      const info = getPageInfo(path);
+      const h = calculateHydraulics();
+      const existingShell = document.querySelector('.app-shell');
+      const existingMain = document.getElementById('app-main-content');
+      const existingSidebar = document.getElementById('app-sidebar');
 
-      // Post-render Leaflet Map initialization
-      initLeafletMaps();
+      if (existingShell && existingMain && existingSidebar) {
+        // Persistent Shell Architecture: NEVER destroy or reset the sidebar!
+        existingMain.innerHTML = info.html;
+
+        const titleEl = document.getElementById('app-header-page-title');
+        if (titleEl) titleEl.textContent = info.title;
+
+        const mintoPill = document.getElementById('header-telemetry-minto');
+        if (mintoPill) {
+          mintoPill.textContent = `${h.mintoDepth.toFixed(1)} cm`;
+          mintoPill.style.color = h.mintoDepth > 25 ? '#D64545' : '#E8863A';
+        }
+
+        // Update active class on sidebar items without resetting sidebar scroll or state
+        const items = existingSidebar.querySelectorAll('.sidebar-item');
+        items.forEach(it => {
+          const itemRoute = it.getAttribute('data-route');
+          if (itemRoute) {
+            it.classList.toggle('active', itemRoute === path);
+          }
+        });
+
+        // Update modal container in place
+        const modalContainer = document.getElementById('modal-container');
+        if (modalContainer) modalContainer.innerHTML = renderModal();
+
+        initLeafletMaps();
+      } else {
+        // Initial load: render app shell with persistent sidebar and modal container
+        document.getElementById('app-root').innerHTML = renderAppShell(info.html, info.title) + `<div id="modal-container">${renderModal()}</div>`;
+        initLeafletMaps();
+      }
     }
 
     // OSRM Routing Engine & Leaflet GeoJSON Helpers
@@ -3615,6 +3876,520 @@ APP_SHELL_HTML = """<!DOCTYPE html>
     }
 
     // Leaflet Maps Orchestration
+// -------------------------------------------------------------
+      // GEOMETRIC ENGINES: DOUGLAS-PEUCKER SIMPLIFICATION & CLUSTERED ZONES
+      // -------------------------------------------------------------
+
+      // 1. Validates and ensures coordinates are strictly sequential (start -> end) without duplicate jumps
+      function validateAndOrderRouteCoords(coords) {
+        if (!coords || !Array.isArray(coords)) return [];
+        const clean = [];
+        for (let i = 0; i < coords.length; i++) {
+          const pt = coords[i];
+          if (!pt || pt.length < 2) continue;
+          const lat = Number(pt[0]);
+          const lon = Number(pt[1]);
+          if (isNaN(lat) || isNaN(lon)) continue;
+          if (clean.length > 0) {
+            const last = clean[clean.length - 1];
+            if (Math.abs(last[0] - lat) < 1e-6 && Math.abs(last[1] - lon) < 1e-6) continue;
+          }
+          clean.push([lat, lon]);
+        }
+        return clean;
+      }
+
+      // 2. Andrew's Monotone Chain 2D Convex Hull: guaranteed O(N log N), strictly ordered perimeter, ZERO self-intersections
+      function computeConvexHull(pts) {
+        if (!pts || pts.length < 3) return pts || [];
+        const seen = new Set();
+        const unique = [];
+        for (let i = 0; i < pts.length; i++) {
+          const p = pts[i];
+          if (!p || p.length < 2) continue;
+          const key = Number(p[0]).toFixed(5) + "," + Number(p[1]).toFixed(5);
+          if (!seen.has(key)) {
+            seen.add(key);
+            unique.push([Number(p[0]), Number(p[1])]);
+          }
+        }
+        if (unique.length <= 3) return unique;
+
+        unique.sort((a, b) => a[0] === b[0] ? a[1] - b[1] : a[0] - b[0]);
+
+        function cross(o, a, b) {
+          return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+        }
+
+        const lower = [];
+        for (let i = 0; i < unique.length; i++) {
+          while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], unique[i]) <= 0) {
+            lower.pop();
+          }
+          lower.push(unique[i]);
+        }
+
+        const upper = [];
+        for (let i = unique.length - 1; i >= 0; i--) {
+          while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], unique[i]) <= 0) {
+            upper.pop();
+          }
+          upper.push(unique[i]);
+        }
+
+        lower.pop();
+        upper.pop();
+        return lower.concat(upper);
+      }
+
+      // 3. Client-Side Douglas-Peucker Polygon Simplification (Adaptive to Zoom Level)
+      function perpendicularDistance(pt, lineStart, lineEnd) {
+        const dx = lineEnd[1] - lineStart[1];
+        const dy = lineEnd[0] - lineStart[0];
+        const mag = Math.hypot(dx, dy);
+        if (mag === 0) return Math.hypot(pt[0] - lineStart[0], pt[1] - lineStart[1]);
+        return Math.abs(dy * (lineStart[1] - pt[1]) - dx * (lineStart[0] - pt[0])) / mag;
+      }
+
+      function douglasPeucker(points, tolerance) {
+        if (!points || points.length <= 2) return points || [];
+        let maxD = 0;
+        let index = 0;
+        const start = points[0];
+        const end = points[points.length - 1];
+
+        for (let i = 1; i < points.length - 1; i++) {
+          const d = perpendicularDistance(points[i], start, end);
+          if (d > maxD) {
+            maxD = d;
+            index = i;
+          }
+        }
+
+        if (maxD > tolerance) {
+          const left = douglasPeucker(points.slice(0, index + 1), tolerance);
+          const right = douglasPeucker(points.slice(index), tolerance);
+          return left.slice(0, -1).concat(right);
+        } else {
+          return [start, end];
+        }
+      }
+
+      function simplifyClosedRing(ring, tolerance) {
+        if (!ring || ring.length <= 4 || !tolerance || tolerance <= 0) return ring || [];
+        const pts = ring.slice();
+        if (Math.abs(pts[0][0] - pts[pts.length - 1][0]) > 1e-6 || Math.abs(pts[0][1] - pts[pts.length - 1][1]) > 1e-6) {
+          pts.push(pts[0]);
+        }
+        const half = Math.floor(pts.length / 2);
+        const chain1 = douglasPeucker(pts.slice(0, half + 1), tolerance);
+        const chain2 = douglasPeucker(pts.slice(half), tolerance);
+        const joined = chain1.slice(0, -1).concat(chain2);
+
+        const res = [];
+        for (let i = 0; i < joined.length; i++) {
+          const p = joined[i];
+          if (res.length === 0 || Math.abs(res[res.length - 1][0] - p[0]) > 1e-6 || Math.abs(res[res.length - 1][1] - p[1]) > 1e-6) {
+            res.push(p);
+          }
+        }
+        return res;
+      }
+
+      // Continuous Depth Color Scale (Interpolates 0cm -> 15cm -> 30cm -> 50cm -> 75cm)
+      function depthColorScale(depth) {
+        const stops = [
+          { d: 0, r: 30, g: 142, b: 90 },     // #1E8E5A Forest Green (Passable)
+          { d: 15, r: 160, g: 185, b: 40 },   // Lime Yellow (Shallow Runoff)
+          { d: 30, r: 234, g: 160, b: 20 },   // Amber Yellow (Moderate Ponding)
+          { d: 50, r: 234, g: 88, b: 12 },    // Red Orange (Significant Depth)
+          { d: 75, r: 185, g: 28, b: 28 }     // Deep Crimson Red (Critical Surcharge)
+        ];
+        let c = stops[0];
+        if (depth <= 0) c = stops[0];
+        else if (depth >= 75) c = stops[stops.length - 1];
+        else {
+          for (let i = 0; i < stops.length - 1; i++) {
+            if (depth >= stops[i].d && depth <= stops[i+1].d) {
+              const f = (depth - stops[i].d) / (stops[i+1].d - stops[i].d);
+              c = {
+                r: Math.round(stops[i].r + f * (stops[i+1].r - stops[i].r)),
+                g: Math.round(stops[i].g + f * (stops[i+1].g - stops[i].g)),
+                b: Math.round(stops[i].b + f * (stops[i+1].b - stops[i].b))
+              };
+              break;
+            }
+          }
+        }
+        const hex = '#' + [c.r, c.g, c.b].map(x => x.toString(16).padStart(2, '0')).join('');
+        const fillOpacity = Math.max(0.14, Math.min(0.48, 0.14 + (depth / 75.0) * 0.34));
+        return { hex, fillOpacity };
+      }
+
+      function getTierForZoom(zoom) {
+        if (zoom < 14) return 'tier_out';
+        if (zoom <= 15) return 'tier_mid';
+        return 'tier_in';
+      }
+
+      // Street Network Inundation Layer Updater (Streets Only - Zero Polygon Overlay)
+      function updateNowcastMapLayers(h, horizonMin) {
+        if (!window._activeNowcastMap || !window._nowcastRoadLayerGroup) return;
+        const map = window._activeNowcastMap;
+        const depth = h.mintoDepth;
+        const isEnvelope = (state.floodMapMode === 'envelope');
+
+        // Remove any residual polygon from map if present
+        if (window._nowcastFloodPolygon) {
+          try { map.removeLayer(window._nowcastFloodPolygon); } catch(e) {}
+          window._nowcastFloodPolygon = null;
+        }
+
+        // Comprehensive Delhi Connaught Place & Minto Inundation Street Network
+        const DELHI_STREET_NETWORK = [
+          {
+            id: 'minto_underpass',
+            name: 'Minto Road Railway Subway (Choke Sump)',
+            coords: [
+              [28.6332, 77.2246], [28.6336, 77.2251], [28.6340, 77.2257], [28.6343, 77.2261],
+              [28.6346, 77.2265], [28.6348, 77.2268], [28.6350, 77.2272], [28.6353, 77.2276],
+              [28.6357, 77.2284], [28.6360, 77.2290]
+            ],
+            baseElev: 211.8,
+            getDepth: (h, isEnv) => isEnv ? h.mintoDepth + h.uncertaintyCm : h.mintoDepth,
+            nominalSpeed: 40
+          },
+          {
+            id: 'ddu_marg',
+            name: 'Deen Dayal Upadhyay (DDU) Marg',
+            coords: [
+              [28.6348, 77.2268], [28.6344, 77.2278], [28.6342, 77.2285], [28.6340, 77.2298],
+              [28.6338, 77.2312], [28.6335, 77.2330]
+            ],
+            baseElev: 213.2,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(1.2, Math.round(h.mintoDepth * 0.42 * (1.0 + state.cloggingRatio * 0.25) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.42 * 10) / 10 : base;
+            },
+            nominalSpeed: 45
+          },
+          {
+            id: 'minto_radial_approach',
+            name: 'Radial Road 2 & Minto Radial Approach',
+            coords: [
+              [28.6338, 77.2202], [28.6344, 77.2215], [28.6345, 77.2238], [28.6348, 77.2268]
+            ],
+            baseElev: 215.4,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(1.0, Math.round(h.mintoDepth * 0.38 * (1.0 + state.cloggingRatio * 0.3) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.38 * 10) / 10 : base;
+            },
+            nominalSpeed: 40
+          },
+          {
+            id: 'outer_circle_east',
+            name: 'Connaught Circus Outer Circle (East / Shivaji Bridge)',
+            coords: [
+              [28.6360, 77.2182], [28.6358, 77.2205], [28.6352, 77.2228], [28.6335, 77.2235],
+              [28.6328, 77.2238], [28.6315, 77.2234], [28.6305, 77.2225]
+            ],
+            baseElev: 215.8,
+            getDepth: (h, isEnv) => {
+              const extra = (h.mintoDepth > 35) ? (h.mintoDepth - 35) * 0.22 : 0;
+              const base = Math.max(1.5, Math.round((5.8 * (h.rain / 55.0) + extra) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.25 * 10) / 10 : base;
+            },
+            nominalSpeed: 40
+          },
+          {
+            id: 'outer_circle_west',
+            name: 'Connaught Circus Outer Circle (West / Regal)',
+            coords: [
+              [28.6305, 77.2225], [28.6295, 77.2215], [28.6288, 77.2185], [28.6292, 77.2162],
+              [28.6298, 77.2148], [28.6312, 77.2138], [28.6328, 77.2135], [28.6342, 77.2138],
+              [28.6351, 77.2145], [28.6358, 77.2165], [28.6360, 77.2182]
+            ],
+            baseElev: 216.9,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.8, Math.round(3.4 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.12 * 10) / 10 : base;
+            },
+            nominalSpeed: 45
+          },
+          {
+            id: 'inner_circle',
+            name: 'Connaught Circus Inner Circle (Full Ring)',
+            coords: [
+              [28.6340, 77.2180], [28.6342, 77.2190], [28.6338, 77.2202], [28.6330, 77.2207],
+              [28.6322, 77.2205], [28.6315, 77.2202], [28.6312, 77.2198], [28.6308, 77.2185],
+              [28.6312, 77.2174], [28.6315, 77.2170], [28.6322, 77.2166], [28.6328, 77.2164],
+              [28.6335, 77.2166], [28.6339, 77.2169], [28.6340, 77.2180]
+            ],
+            baseElev: 216.2,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(1.0, Math.round(4.6 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.15 * 10) / 10 : base;
+            },
+            nominalSpeed: 40
+          },
+          {
+            id: 'middle_circle',
+            name: 'Connaught Circus Middle Circle Collector',
+            coords: [
+              [28.6348, 77.2185], [28.6344, 77.2208], [28.6328, 77.2215], [28.6306, 77.2208],
+              [28.6300, 77.2185], [28.6306, 77.2162], [28.6328, 77.2155], [28.6344, 77.2162],
+              [28.6348, 77.2185]
+            ],
+            baseElev: 216.4,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.9, Math.round(4.1 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.14 * 10) / 10 : base;
+            },
+            nominalSpeed: 35
+          },
+          {
+            id: 'barakhamba_flyover',
+            name: 'Barakhamba Road & Ranjit Singh Flyover (Detour Route)',
+            coords: [
+              [28.6340, 77.2180], [28.6333, 77.2192], [28.6325, 77.2210], [28.6318, 77.2223],
+              [28.6309, 77.2234], [28.6300, 77.2246], [28.6290, 77.2257], [28.6278, 77.2268],
+              [28.6276, 77.2278], [28.6282, 77.2284], [28.6294, 77.2293], [28.6307, 77.2301],
+              [28.6322, 77.2308], [28.6337, 77.2314], [28.6350, 77.2311], [28.6358, 77.2299],
+              [28.6360, 77.2290]
+            ],
+            baseElev: 217.5,
+            getDepth: (h, isEnv) => 0.4,
+            nominalSpeed: 50
+          },
+          {
+            id: 'bhavbhuti_marg',
+            name: 'Bhavbhuti Marg (Railway Bypass Corridor)',
+            coords: [
+              [28.6340, 77.2180], [28.6347, 77.2182], [28.6353, 77.2186], [28.6361, 77.2192],
+              [28.6368, 77.2199], [28.6375, 77.2208], [28.6381, 77.2217], [28.6384, 77.2226],
+              [28.6386, 77.2238], [28.6385, 77.2248], [28.6382, 77.2258], [28.6377, 77.2268],
+              [28.6371, 77.2276], [28.6365, 77.2284], [28.6360, 77.2290]
+            ],
+            baseElev: 216.0,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.6, Math.round(2.2 * (h.rain / 50.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.1 * 10) / 10 : base;
+            },
+            nominalSpeed: 40
+          },
+          {
+            id: 'kg_marg',
+            name: 'Kasturba Gandhi (KG) Marg Arterial',
+            coords: [
+              [28.6312, 77.2198], [28.6304, 77.2208], [28.6295, 77.2215], [28.6285, 77.2220],
+              [28.6275, 77.2225], [28.6258, 77.2235]
+            ],
+            baseElev: 216.8,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.5, Math.round(2.8 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.1 * 10) / 10 : base;
+            },
+            nominalSpeed: 45
+          },
+          {
+            id: 'janpath',
+            name: 'Janpath Road Corridor',
+            coords: [
+              [28.6308, 77.2185], [28.6298, 77.2185], [28.6288, 77.2185], [28.6275, 77.2185],
+              [28.6262, 77.2185], [28.6248, 77.2188], [28.6235, 77.2195]
+            ],
+            baseElev: 217.0,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.5, Math.round(2.5 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.08 * 10) / 10 : base;
+            },
+            nominalSpeed: 45
+          },
+          {
+            id: 'chelmsford_road',
+            name: 'Chelmsford Road (Paharganj / NDLS Connector)',
+            coords: [
+              [28.6340, 77.2180], [28.6348, 77.2182], [28.6360, 77.2182], [28.6375, 77.2186],
+              [28.6392, 77.2195], [28.6410, 77.2215]
+            ],
+            baseElev: 215.8,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.8, Math.round(3.6 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.12 * 10) / 10 : base;
+            },
+            nominalSpeed: 35
+          },
+          {
+            id: 'tolstoy_marg',
+            name: 'Tolstoy Marg Transverse Interceptor',
+            coords: [
+              [28.6292, 77.2252], [28.6282, 77.2238], [28.6275, 77.2225], [28.6268, 77.2205],
+              [28.6262, 77.2185]
+            ],
+            baseElev: 217.2,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.4, Math.round(1.8 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.08 * 10) / 10 : base;
+            },
+            nominalSpeed: 45
+          },
+          {
+            id: 'sansad_marg',
+            name: 'Sansad Marg (Parliament Street)',
+            coords: [
+              [28.6315, 77.2170], [28.6308, 77.2160], [28.6298, 77.2148], [28.6285, 77.2135],
+              [28.6268, 77.2118]
+            ],
+            baseElev: 217.6,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.3, Math.round(1.5 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.06 * 10) / 10 : base;
+            },
+            nominalSpeed: 50
+          },
+          {
+            id: 'bks_marg',
+            name: 'Baba Kharak Singh (BKS) Marg',
+            coords: [
+              [28.6328, 77.2164], [28.6328, 77.2150], [28.6328, 77.2135], [28.6325, 77.2125],
+              [28.6322, 77.2115]
+            ],
+            baseElev: 217.8,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.3, Math.round(1.4 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.05 * 10) / 10 : base;
+            },
+            nominalSpeed: 45
+          },
+          {
+            id: 'shaheed_bhagat_singh',
+            name: 'Shaheed Bhagat Singh Road',
+            coords: [
+              [28.6339, 77.2169], [28.6345, 77.2158], [28.6351, 77.2145], [28.6360, 77.2128],
+              [28.6370, 77.2105]
+            ],
+            baseElev: 217.4,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.4, Math.round(1.7 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.06 * 10) / 10 : base;
+            },
+            nominalSpeed: 40
+          }
+        ];
+
+        // Clear existing street layers
+        window._nowcastRoadLayerGroup.clearLayers();
+
+        let blockedStreetsCount = 0;
+        let cautionStreetsCount = 0;
+        let passableStreetsCount = 0;
+
+        // Render each street corridor dynamically styled by water depth
+        DELHI_STREET_NETWORK.forEach(st => {
+          const streetDepth = st.getDepth(h, isEnvelope);
+          const isBlocked = streetDepth > 25.0;
+          const isCaution = streetDepth > 10.0 && streetDepth <= 25.0;
+
+          if (isBlocked) blockedStreetsCount++;
+          else if (isCaution) cautionStreetsCount++;
+          else passableStreetsCount++;
+
+          // Superform Palette: Impassable Brick Red #D64545 | Caution Amber #E8863A | Passable Green #1E8E5A
+          const strokeColor = isBlocked ? '#D64545' : (isCaution ? '#E8863A' : '#1E8E5A');
+          const strokeWidth = isBlocked ? 6.5 : (isCaution ? 5.0 : 3.5);
+          const strokeOpacity = streetDepth > 10.0 ? 0.96 : 0.82;
+          const dashStyle = isEnvelope ? '8, 6' : null;
+
+          const statusText = isBlocked ? 'IMPASSABLE / SURCHARGED' : (isCaution ? 'CAUTION / SLOW' : 'PASSABLE / CLEAR');
+          const currentSpeed = isBlocked ? 0 : Math.max(10, Math.round(st.nominalSpeed * Math.max(0.2, 1.0 - (streetDepth / 30.0))));
+
+          const polyline = L.polyline(st.coords, {
+            color: strokeColor,
+            weight: strokeWidth,
+            opacity: strokeOpacity,
+            dashArray: dashStyle,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(window._nowcastRoadLayerGroup);
+
+          // Rich interactive popup on click
+          polyline.bindPopup(`
+            <div style="font-family: var(--font-mono); font-size: 0.74rem; line-height: 1.6; min-width: 220px;">
+              <div style="font-weight: 800; font-size: 0.85rem; color: ${strokeColor}; border-bottom: 1px solid var(--border-light); padding-bottom: 0.25rem; margin-bottom: 0.35rem;">
+                ${st.name}
+              </div>
+              Water Depth: <b style="color: ${strokeColor}; font-size: 0.82rem;">${streetDepth.toFixed(1)} cm</b>${isEnvelope ? ' <span style="font-size:0.64rem; color:var(--text-secondary);">[95% CI Upper Bound]</span>' : ''}<br>
+              Status: <b style="color: ${strokeColor};">${statusText}</b><br>
+              Safe Vehicle Speed: <b>${currentSpeed} km/h</b> (Nominal ${st.nominalSpeed} km/h)<br>
+              Street Base Elevation: <b>${st.baseElev} m AMSL</b><br>
+              Lead Time: <b>T + ${horizonMin} Min</b><br>
+              Coupled Model: <b>1D Conduit + 2D Street Overland</b>
+            </div>
+          `);
+
+          // Quick glance hover tooltip
+          polyline.bindTooltip(`<b>${st.name}</b>: ${streetDepth.toFixed(1)} cm (${statusText})`, {
+            sticky: true,
+            className: 'street-tooltip'
+          });
+        });
+
+        // Update Minto Underpass Sump node marker
+        const sumpColor = depth > 25 ? '#D64545' : (depth > 10 ? '#E8863A' : '#1E8E5A');
+        const sumpRadius = Math.max(9, Math.min(16, 9 + (depth / 75.0) * 7));
+        if (window._nowcastSumpMarker) {
+          window._nowcastSumpMarker.setRadius(sumpRadius);
+          window._nowcastSumpMarker.setStyle({
+            fillColor: sumpColor,
+            color: '#FFFFFF',
+            weight: 2.5,
+            fillOpacity: 0.9
+          });
+          window._nowcastSumpMarker.bindPopup(`
+            <div style="font-family: var(--font-mono); font-size: 0.74rem; line-height: 1.55;">
+              <b style="color: ${sumpColor}; font-size: 0.84rem;">MINTO RAILWAY UNDERPASS SUMP</b><br>
+              Depression Water Depth: <b style="color: ${sumpColor}; font-size: 0.82rem;">${depth.toFixed(1)} cm</b> (&plusmn;${h.uncertaintyCm} cm)<br>
+              Invert Elevation: <b>209.20 m</b> | Rim Elevation: <b>211.80 m</b><br>
+              Lead Time: <b>T + ${horizonMin}M</b><br>
+              Status: <b style="color: ${sumpColor};">${depth > 25 ? 'ALERT: CRITICAL SUMP SURCHARGE' : (depth > 10 ? 'WARNING: PONDING / SLOW' : 'GRAVITY DRAINAGE ACTIVE')}</b>
+            </div>
+          `);
+        }
+
+        // Update Legend HTML for Street Inundation Only
+        if (window._nowcastLegendDiv) {
+          window._nowcastLegendDiv.innerHTML = `
+            <div style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 800; color: var(--accent-black); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.45rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.35rem;">
+              <span>STREET INUNDATION GIS LEGEND</span>
+              <span class="label-mono" style="font-size: 0.62rem; color: var(--accent-orange); font-weight: 700;">T+${horizonMin}M ${isEnvelope ? '(95% CI)' : ''}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.45rem; font-family: sans-serif; font-size: 0.72rem; color: var(--text-primary);">
+              ${blockedStreetsCount > 0 ? `
+              <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <span style="display: inline-block; width: 22px; height: 5px; background: #D64545; border-radius: 2.5px; flex-shrink: 0;"></span>
+                <span style="color: #D64545; font-weight: 700;">Red: Surcharged / Blocked (>25 cm) [${blockedStreetsCount} streets]</span>
+              </div>` : ''}
+              ${cautionStreetsCount > 0 ? `
+              <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <span style="display: inline-block; width: 22px; height: 4px; background: #E8863A; border-radius: 2px; flex-shrink: 0;"></span>
+                <span style="color: #E8863A; font-weight: 700;">Orange: Caution / Ponding (10-25 cm) [${cautionStreetsCount} streets]</span>
+              </div>` : ''}
+              <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <span style="display: inline-block; width: 22px; height: 3.5px; background: #1E8E5A; border-radius: 2px; flex-shrink: 0;"></span>
+                <span style="color: #1E8E5A; font-weight: 600;">Green: Passable Corridor (<10 cm) [${passableStreetsCount} streets]</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: ${sumpColor}; border: 2px solid white; box-shadow: 0 0 0 1.5px ${sumpColor}; flex-shrink: 0;"></span>
+                <span>Sump Alert Node: <b>${depth.toFixed(1)} cm</b> (${depth > 25 ? 'Critical Surcharge' : (depth > 10 ? 'Caution' : 'Normal')})</span>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); border-top: 1px dashed var(--border-light); padding-top: 0.25rem; margin-top: 0.15rem;">
+                Coupled 1D-2D Street Overland Flow (Streets Only)
+              </div>
+            </div>
+          `;
+        }
+      }
+      
     function initLeafletMaps() {
       const h = calculateHydraulics();
 
@@ -3628,23 +4403,52 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         });
       }
 
-      // 1. Drainage GIS Map View
+      // Common Basemap Layer Factory using CARTO Cloud Maps API Key & OpenStreetMap Standard
+      const CARTO_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhIjoiYWNfbnM4NXgxZXQiLCJqdGkiOiIzMmE5OTQwYyIsImV4cCI6MTc5MTI5NzQyMH0.U5pH9TRFvYID3Rb-99KMAUF3WNALVNNp0BSCVj28K9U";
+
+      function createBasemapLayers() {
+        const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19
+        });
+        const cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=' + CARTO_API_KEY, {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          subdomains: 'abcd',
+          maxZoom: 20
+        });
+        const cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=' + CARTO_API_KEY, {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          subdomains: 'abcd',
+          maxZoom: 20
+        });
+        return { osmStandard, cartoVoyager, cartoDark };
+      }
+
+      // 1. Drainage GIS Map View (Screenshot 4 Fidelity)
       if (document.getElementById('drainage-leaflet-map') && window.L) {
         setTimeout(() => {
           let container = document.getElementById('drainage-leaflet-map');
           if (!container || container._leaflet_id) return;
 
-          let map = L.map('drainage-leaflet-map').setView([28.6330, 77.2230], 15);
+          let map = L.map('drainage-leaflet-map', {
+            zoomControl: true
+          }).setView([28.6335, 77.2230], 15);
           window._activeDrainageMap = map;
-          setTimeout(() => map.invalidateSize(), 200);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19
-          }).addTo(map);
+          setTimeout(() => map.invalidateSize(), 150);
 
-          // Comprehensive Connaught Place Storm Drainage Network (Pipes, Collectors & Trunks)
+          const { osmStandard, cartoVoyager, cartoDark } = createBasemapLayers();
+          osmStandard.addTo(map);
+
+          // Add Layer Control for Operator to toggle CARTO Voyager vs OSM Standard
+          L.control.layers({
+            "OpenStreetMap Standard": osmStandard,
+            "CARTO Voyager (Cloud API)": cartoVoyager,
+            "CARTO Dark Matter": cartoDark
+          }, null, { position: 'topright' }).addTo(map);
+
+          // Comprehensive Connaught Place Storm Drainage Network
           const conduits = [
-            // 1. Full Inner Circle Conduit Loop (Blocks A through H)
+            // 1. Full Inner Circle Conduit Loop
             [
               [28.6340, 77.2180], [28.6342, 77.2190], [28.6338, 77.2202],
               [28.6330, 77.2207], [28.6322, 77.2205], [28.6315, 77.2202],
@@ -3652,7 +4456,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               [28.6315, 77.2170], [28.6322, 77.2166], [28.6328, 77.2164],
               [28.6335, 77.2166], [28.6339, 77.2169], [28.6340, 77.2180]
             ],
-            // 2. Full Outer Circle (Connaught Circus) Trunk Loop
+            // 2. Full Outer Circle (Connaught Circus) Trunk Loop (Blue conduit matching Screenshot 4)
             [
               [28.6360, 77.2182], [28.6358, 77.2205], [28.6352, 77.2228],
               [28.6335, 77.2235], [28.6328, 77.2238], [28.6315, 77.2234],
@@ -3663,14 +4467,14 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             ],
             // 3. Middle Circle Collector Ring
             [[28.6348, 77.2185], [28.6344, 77.2208], [28.6328, 77.2215], [28.6306, 77.2208], [28.6300, 77.2185], [28.6306, 77.2162], [28.6328, 77.2155], [28.6344, 77.2162], [28.6348, 77.2185]],
-            // 4. Central Hub Spoke Feeders (Rajiv Chowk to Inner Ring)
+            // 4. Central Hub Spoke Feeders
             [[28.6328, 77.2185], [28.6340, 77.2180]],
             [[28.6328, 77.2185], [28.6322, 77.2205]],
             [[28.6328, 77.2185], [28.6308, 77.2185]],
             [[28.6328, 77.2185], [28.6328, 77.2164]],
             // 5. Radial 1: Chelmsford Road Arterial Conduit
             [[28.6340, 77.2180], [28.6348, 77.2182], [28.6360, 77.2182], [28.6375, 77.2186], [28.6392, 77.2195], [28.6410, 77.2215]],
-            // 6. Radial 2: Minto Main Storm Trunk (Connaught Circus down Minto Road through Underpass Dip to JLN Marg)
+            // 6. Radial 2: Minto Main Storm Trunk
             [[28.6338, 77.2202], [28.6344, 77.2215], [28.6352, 77.2228], [28.6345, 77.2238], [28.6338, 77.2248], [28.6344, 77.2258], [28.6348, 77.2268], [28.6353, 77.2274], [28.6357, 77.2284], [28.6360, 77.2290]],
             // 7. Radial 3: Barakhamba Road Trunk Corridor
             [[28.6328, 77.2218], [28.6328, 77.2238], [28.6315, 77.2244], [28.6300, 77.2250], [28.6292, 77.2252], [28.6275, 77.2265]],
@@ -3678,39 +4482,43 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             [[28.6312, 77.2198], [28.6304, 77.2208], [28.6295, 77.2215], [28.6285, 77.2220], [28.6275, 77.2225], [28.6258, 77.2235]],
             // 9. Radial 5: Janpath Main Storm Drain Corridor
             [[28.6308, 77.2185], [28.6298, 77.2185], [28.6288, 77.2185], [28.6275, 77.2185], [28.6262, 77.2185], [28.6248, 77.2188], [28.6235, 77.2195]],
-            // 10. Radial 6: Sansad Marg (Parliament Street) Collector
+            // 10. Radial 6: Sansad Marg Collector
             [[28.6315, 77.2170], [28.6308, 77.2160], [28.6298, 77.2148], [28.6285, 77.2135], [28.6268, 77.2118]],
-            // 11. Radial 7: Baba Kharak Singh Marg to Shivaji Stadium
+            // 11. Radial 7: Baba Kharak Singh Marg
             [[28.6328, 77.2164], [28.6328, 77.2150], [28.6328, 77.2135], [28.6325, 77.2125], [28.6322, 77.2115]],
-            // 12. Radial 8: Shaheed Bhagat Singh / Panchkuian Road Drain
+            // 12. Radial 8: Shaheed Bhagat Singh Road Drain
             [[28.6339, 77.2169], [28.6345, 77.2158], [28.6351, 77.2145], [28.6360, 77.2128], [28.6370, 77.2105]],
             // 13. Bhavbhuti Marg Railway Bypass Collector
             [[28.6360, 77.2182], [28.6365, 77.2195], [28.6368, 77.2210], [28.6365, 77.2225], [28.6362, 77.2235], [28.6360, 77.2255], [28.6355, 77.2272], [28.6360, 77.2290]],
             // 14. Deen Dayal Upadhyay (DDU) Marg Interceptor Trunk
             [[28.6348, 77.2268], [28.6344, 77.2278], [28.6342, 77.2285], [28.6340, 77.2298], [28.6338, 77.2312], [28.6335, 77.2330]],
-            // 15. Tolstoy Marg Transverse Interceptor (Cross-Connecting Radials 3, 4, and 5)
+            // 15. Tolstoy Marg Transverse Interceptor
             [[28.6292, 77.2252], [28.6282, 77.2238], [28.6275, 77.2225], [28.6268, 77.2205], [28.6262, 77.2185]],
-            // 16. Outfall Trunk Main: JLN Marg from LNJP Hospital to Yamuna River Outfall
+            // 16. Outfall Trunk Main to Yamuna River
             [[28.6360, 77.2290], [28.6364, 77.2302], [28.6368, 77.2315], [28.6372, 77.2320], [28.6378, 77.2332], [28.6385, 77.2340]]
           ];
 
           conduits.forEach((line, idx) => {
+            let isOuterLoop = idx === 1; // Outer Circle Loop - Blue in Screenshot 4
             let isMintoMain = idx === 5; // Minto Underpass Trunk
-            let isTrunk = idx === 1 || idx === 15; // Outer circle & Yamuna Main
+            
+            let strokeColor = isOuterLoop ? '#2B4C7E' : (isMintoMain && state.cloggingRatio > 0.3 ? '#D64545' : '#111111');
+            let strokeWidth = isOuterLoop ? 4.2 : (isMintoMain ? 4.8 : 2.8);
+
             L.polyline(line, {
-              color: isMintoMain && state.cloggingRatio > 0.3 ? '#D64545' : (isTrunk ? '#1E3A8A' : '#111111'),
-              weight: isMintoMain ? 5 : (isTrunk ? 4 : 2.8),
+              color: strokeColor,
+              weight: strokeWidth,
               dashArray: isMintoMain && h.qSurcharge > 0 ? '6,6' : null,
-              opacity: 0.9
+              opacity: 0.92
             }).addTo(map);
           });
 
-          // Render Manhole Markers for all network nodes
+          // Render 35 Manhole Markers (Black circles with white stroke matching Screenshot 4)
           DELHI_NODES.forEach(n => {
             let isMinto = n.code === 'MH_MINTO_BRIDGE_LOW';
             let isOutfall = n.code === 'OUTFALL_YAMUNA_01';
-            let color = isMinto && h.mintoDepth > 25 ? '#D64545' : (isOutfall ? '#2563EB' : '#111111');
-            let radius = isMinto ? 9 : (isOutfall ? 8 : 5.5);
+            let color = isMinto ? '#D64545' : (isOutfall ? '#2563EB' : '#111111');
+            let radius = isMinto ? 9.5 : (isOutfall ? 8 : 5.5);
 
             let marker = L.circleMarker([n.lat, n.lon], {
               radius: radius,
@@ -3720,12 +4528,25 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               fillOpacity: 0.95
             }).addTo(map);
 
+            if (isMinto) {
+              // Outer warning ring for Minto bridge depression sump (Screenshot 4)
+              L.circleMarker([n.lat, n.lon], {
+                radius: 16,
+                fill: false,
+                color: '#D64545',
+                weight: 2.2,
+                opacity: 0.85
+              }).addTo(map);
+            }
+
             marker.bindPopup(`
-              <b>${n.code}</b><br>
-              ${n.name}<br>
-              Rim: ${n.z_ground.toFixed(2)}m | Invert: ${n.z_invert.toFixed(2)}m<br>
-              Subcatchment: ${n.basin_area.toLocaleString()} m&sup2;<br>
-              <a href="javascript:void(0)" onclick="openNodeModal('${n.code}', ${n.z_ground}, ${n.z_invert})">Inspect HGL Diagnostic</a>
+              <div style="font-family: var(--font-mono); font-size: 0.72rem; line-height: 1.5;">
+                <b style="font-size: 0.8rem;">${n.code}</b><br>
+                <span style="color: var(--text-secondary);">${n.name}</span><br>
+                Rim: <b>${n.z_ground.toFixed(2)}m</b> | Invert: <b>${n.z_invert.toFixed(2)}m</b><br>
+                Subcatchment: <b>${n.basin_area.toLocaleString()} m&sup2;</b><br>
+                <a href="javascript:void(0)" onclick="openNodeModal('${n.code}', ${n.z_ground}, ${n.z_invert})" style="color: #2563EB; font-weight: 700; text-decoration: underline; margin-top: 4px; display: inline-block;">Inspect HGL Diagnostic</a>
+              </div>
             `);
 
             marker.on('click', () => {
@@ -3733,60 +4554,134 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             });
           });
 
+          // Attach hover tooltip to the layer control toggle icon
+          setTimeout(() => {
+            const toggleBtn = container.querySelector('.leaflet-control-layers-toggle');
+            if (toggleBtn) {
+              toggleBtn.setAttribute('title', 'Map Layers: Toggle CARTO Voyager / OSM Standard / Dark Matter');
+              toggleBtn.setAttribute('aria-label', 'Toggle Map Layers');
+            }
+          }, 100);
+
+          // Fixed-Position GIS Map Legend Card (bottom-left)
+          const drainageLegend = L.control({ position: 'bottomleft' });
+          drainageLegend.onAdd = function() {
+            const div = L.DomUtil.create('div', 'map-legend-card');
+            div.innerHTML = `
+              <div style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 800; color: var(--accent-black); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-light); padding-bottom: 0.35rem;">
+                <span>DRAINAGE NETWORK LEGEND</span>
+                <span class="label-mono" style="font-size: 0.58rem; color: var(--text-muted);">${DELHI_NODES.length} NODES</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 0.45rem; font-family: sans-serif; font-size: 0.72rem; color: var(--text-primary);">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                  <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #111111; border: 2px solid white; box-shadow: 0 0 0 1px #888; flex-shrink: 0;"></span>
+                  <span>Black node: Manhole node (click to inspect)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                  <span style="display: inline-block; width: 13px; height: 13px; border-radius: 50%; background: #D64545; border: 2px solid white; box-shadow: 0 0 0 1.5px #D64545; flex-shrink: 0;"></span>
+                  <span>Red circle: Alert node (Minto underpass sump)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                  <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #2563EB; border: 2px solid white; box-shadow: 0 0 0 1px #2563EB; flex-shrink: 0;"></span>
+                  <span>Blue circle: Outfall node (Yamuna river)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                  <span style="display: inline-block; width: 22px; height: 4px; background: #2B4C7E; border-radius: 2px; flex-shrink: 0;"></span>
+                  <span>Blue line: Outer ring trunk conduit</span>
+                </div>
+              </div>
+            `;
+            return div;
+          };
+          drainageLegend.addTo(map);
+
           // Dynamic Minto depression sump inundation pool on GIS map
           if (h.mintoDepth > 10) {
             L.circle([28.6348, 77.2268], {
               radius: Math.min(90, h.mintoDepth * 1.5),
-              color: h.mintoDepth > 25 ? '#D64545' : '#E8863A',
-              fillColor: h.mintoDepth > 25 ? '#D64545' : '#E8863A',
-              fillOpacity: 0.35
-            }).addTo(map).bindPopup(`<b>Minto Depression Inundation Pool</b><br>Water Depth: <b>${h.mintoDepth.toFixed(1)} cm</b> (&plusmn;${h.uncertaintyCm} cm)<br>Status: <b>${h.mintoDepth > 25 ? 'CRITICAL SURCHARGE' : 'ELEVATED PONDING'}</b>`);
+              color: '#D64545',
+              fillColor: '#D64545',
+              fillOpacity: 0.35,
+              weight: 2
+            }).addTo(map).bindPopup(`<b>Minto Sump Inundation</b><br>Depth: <b>${h.mintoDepth.toFixed(1)} cm</b>`);
           }
         }, 100);
       }
 
-      // 2. Nowcast Precipitation & Street Depth Map
+      // 2. Nowcast Precipitation & Spatial Inundation Geometry Map (Screenshot 5 Fidelity)
       if (document.getElementById('nowcast-leaflet-map') && window.L) {
         setTimeout(() => {
           let container = document.getElementById('nowcast-leaflet-map');
-          if (!container || container._leaflet_id) return;
+          if (!container) return;
 
-          let map = L.map('nowcast-leaflet-map').setView([28.6330, 77.2230], 15);
+          if (container._leaflet_id && window._activeNowcastMap) {
+            updateNowcastMapLayers(h, state.horizonMin);
+            return;
+          }
+
+          if (window._activeNowcastMap) {
+            try { window._activeNowcastMap.remove(); } catch(e) {}
+            window._activeNowcastMap = null;
+          }
+
+          let map = L.map('nowcast-leaflet-map', {
+            zoomControl: true
+          }).setView([28.6335, 77.2230], 15);
           window._activeNowcastMap = map;
-          setTimeout(() => map.invalidateSize(), 200);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19
+          setTimeout(() => map.invalidateSize(), 150);
+
+          const { osmStandard, cartoVoyager, cartoDark } = createBasemapLayers();
+          osmStandard.addTo(map);
+
+          // Layer Control
+          const layerControl = L.control.layers({
+            "OpenStreetMap Standard": osmStandard,
+            "CARTO Voyager (Cloud API)": cartoVoyager,
+            "CARTO Dark Matter": cartoDark
+          }, null, { position: 'topright' }).addTo(map);
+
+          setTimeout(() => {
+            const toggleBtn = container.querySelector('.leaflet-control-layers-toggle');
+            if (toggleBtn) {
+              toggleBtn.setAttribute('title', 'Map Layers: Toggle CARTO Voyager / OSM Standard / Dark Matter');
+              toggleBtn.setAttribute('aria-label', 'Toggle Map Layers');
+            }
+          }, 100);
+
+          // Sump Marker
+          window._nowcastSumpMarker = L.circleMarker([28.6348, 77.2268], {
+            radius: 12,
+            fillColor: '#D64545',
+            color: '#FFFFFF',
+            weight: 2.5,
+            fillOpacity: 0.85
           }).addTo(map);
 
-          // Draw road segments colored by depth with dashArray if far-term forecast
-          h.roads.forEach(r => {
-            let color = r.depth > 25 ? '#D64545' : r.depth > 10 ? '#E8863A' : '#1E8E5A';
-            let dash = h.confStyle === 'dashed' ? '8, 8' : null;
+          // Road Layer Group (All street corridors rendered here)
+          window._nowcastRoadLayerGroup = L.layerGroup().addTo(map);
 
-            let line = L.polyline(r.coords, {
-              color: color,
-              weight: r.depth > 25 ? 7 : 5,
-              dashArray: dash,
-              opacity: h.confStyle === 'dashed' ? 0.75 : 0.95
-            }).addTo(map);
+          // Ensure any legacy polygon is cleared - streets only mode
+          if (window._nowcastFloodPolygon) {
+            try { map.removeLayer(window._nowcastFloodPolygon); } catch(e) {}
+            window._nowcastFloodPolygon = null;
+          }
 
-            line.bindPopup(`
-              <b>${r.name}</b><br>
-              Projected Depth: <b>${r.depth.toFixed(1)} cm</b> (&plusmn;${h.uncertaintyCm} cm)<br>
-              Status: ${r.status} | Speed: ${r.speed} km/h
-            `);
+          // Fixed-Position GIS Map Legend Card (bottom-left)
+          const legendControl = L.control({ position: 'bottomleft' });
+          legendControl.onAdd = function() {
+            const div = L.DomUtil.create('div', 'map-legend-card');
+            window._nowcastLegendDiv = div;
+            return div;
+          };
+          legendControl.addTo(map);
+
+          // Re-simplify polygon when user zooms in or out
+          map.on('zoomend', () => {
+            updateNowcastMapLayers(calculateHydraulics(), state.horizonMin);
           });
 
-          // Minto underpass pool marker
-          if (h.mintoDepth > 10) {
-            L.circle([28.6348, 77.2268], {
-              radius: Math.min(90, h.mintoDepth * 1.5),
-              color: h.mintoDepth > 25 ? '#D64545' : '#E8863A',
-              fillColor: h.mintoDepth > 25 ? '#D64545' : '#E8863A',
-              fillOpacity: 0.35
-            }).addTo(map).bindPopup(`<b>Minto Depression Sump</b><br>Water Depth: ${h.mintoDepth.toFixed(1)} cm`);
-          }
+          // Initial layer update
+          updateNowcastMapLayers(h, state.horizonMin);
         }, 100);
       }
 
@@ -3941,6 +4836,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       state.user.govId = govId;
       state.user.name = "Officer " + govId;
       state.isLoggedIn = true;
+      try { localStorage.setItem('jk_logged_in', 'true'); } catch(e) {}
       state.authModal = null;
       showToast("Verified Government ID: " + govId + ". Launching workspace.");
       navigate('/dashboard');
@@ -3966,12 +4862,14 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       state.user.name = "Operator " + opCode;
       state.user.organization = city + " Municipal Corp / " + stateStr;
       state.isLoggedIn = true;
+      try { localStorage.setItem('jk_logged_in', 'true'); } catch(e) {}
       state.authModal = null;
       showToast("Operator profile " + opCode + " registered (" + city + "). Launching workspace.");
       navigate('/dashboard');
     }
 
     function handleLogout() {
+      try { localStorage.setItem('jk_logged_in', 'false'); } catch(e) {}
       state.isLoggedIn = false;
       showToast("Operator session ended.");
       navigate('/');
@@ -4010,9 +4908,73 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       render();
     }
 
+    function setFloodMapMode(mode) {
+      state.floodMapMode = mode;
+      const btnCurrent = document.getElementById('toggle-flood-current');
+      const btnEnv = document.getElementById('toggle-flood-envelope');
+      if (btnCurrent && btnEnv) {
+        if (mode === 'envelope') {
+          btnCurrent.style.background = 'transparent';
+          btnCurrent.style.color = 'var(--text-secondary)';
+          btnEnv.style.background = 'var(--accent-orange)';
+          btnEnv.style.color = 'white';
+        } else {
+          btnCurrent.style.background = 'var(--accent-orange)';
+          btnCurrent.style.color = 'white';
+          btnEnv.style.background = 'transparent';
+          btnEnv.style.color = 'var(--text-secondary)';
+        }
+      }
+      updateNowcastMapLayers(calculateHydraulics(), state.horizonMin);
+    }
+
     function updateHorizon(v) {
       state.horizonMin = parseInt(v);
-      render();
+      const h = calculateHydraulics();
+
+      const horizonText = document.getElementById('horizon-display-text');
+      const rainText = document.getElementById('rain-display-text');
+      const mintoText = document.getElementById('minto-display-text');
+      const confBadge = document.getElementById('conf-badge-text');
+      const horizonSliderMarker = document.getElementById('hydro-slider-marker');
+      const sliderInput = document.getElementById('horizon-slider-input');
+
+      if (horizonText && window._activeNowcastMap) {
+        horizonText.innerHTML = `T + ${state.horizonMin} MIN <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; margin-left: 0.5rem;">[${h.confLabel}]</span>`;
+        if (rainText) {
+          rainText.innerHTML = `<span style="color: var(--text-secondary);">RAIN RATE: </span><span style="font-weight: 700; color: ${h.rain > 50 ? '#D64545' : '#E8863A'};">${h.rain.toFixed(1)} mm/hr (${h.dbz} dBZ)</span>`;
+        }
+        if (mintoText) {
+          mintoText.innerHTML = `<span style="color: var(--text-secondary);">MINTO DEPTH: </span><span style="font-weight: 700;">${h.mintoDepth.toFixed(1)} &plusmn; ${h.uncertaintyCm} cm</span>`;
+        }
+        if (confBadge) {
+          confBadge.className = h.confPct > 70 ? 'badge-success' : (h.confPct > 50 ? 'badge-warning' : 'badge-error');
+          confBadge.textContent = `CONFIDENCE: ${h.confPct}%`;
+        }
+        if (sliderInput && sliderInput.value != state.horizonMin) {
+          sliderInput.value = state.horizonMin;
+        }
+        if (horizonSliderMarker) {
+          const markerX = 40 + (state.horizonMin / 180) * 720;
+          const markerY = Math.max(25, 148 - (h.mintoDepth / 74.2) * 103);
+          const line = horizonSliderMarker.querySelector('line');
+          const circles = horizonSliderMarker.querySelectorAll('circle');
+          if (line) {
+            line.setAttribute('x1', markerX);
+            line.setAttribute('x2', markerX);
+          }
+          if (circles && circles.length >= 2) {
+            circles[0].setAttribute('cx', markerX);
+            circles[0].setAttribute('cy', markerY);
+            circles[1].setAttribute('cx', markerX);
+            circles[1].setAttribute('cy', markerY);
+          }
+          horizonSliderMarker.style.display = 'block';
+        }
+        updateNowcastMapLayers(h, state.horizonMin);
+      } else {
+        render();
+      }
     }
 
     let isPlaying = false;
@@ -4025,7 +4987,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         playTimer = setInterval(() => {
           state.horizonMin += 15;
           if (state.horizonMin > 180) state.horizonMin = 0;
-          render();
+          updateHorizon(state.horizonMin);
         }, 1300);
       } else {
         if (btn) btn.innerText = "PLAY";
@@ -4232,6 +5194,20 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 class MultiPageHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
+
+        # Favicon handler
+        if parsed.path in ("/favicon.ico", "/favicon.png"):
+            favicon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "favicon.png")
+            if os.path.exists(favicon_path):
+                with open(favicon_path, "rb") as f:
+                    icon_data = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Length", str(len(icon_data)))
+                self.send_header("Cache-Control", "public, max-age=86400")
+                self.end_headers()
+                self.wfile.write(icon_data)
+                return
 
         # Health endpoint
         if parsed.path == "/health":
