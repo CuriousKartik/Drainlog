@@ -34,8 +34,8 @@ services:
   # 3. Hybrid Physics-AI FastAPI Backend
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./backend/Dockerfile
     container_name: jalkal_backend
     restart: unless-stopped
     depends_on:
@@ -54,7 +54,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
+      - ./backend:/app/backend
       - ./ml_engine:/app/ml_engine
 
   # 4. Command & Control Dashboard Frontend (Next.js / React + Deck.gl)
@@ -62,10 +62,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
     container_name: jalkal_frontend
     restart: unless-stopped
-    environment:
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
     ports:
       - "3000:3000"
     depends_on:

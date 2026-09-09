@@ -43,15 +43,16 @@ def calculate_flood_safe_route(payload: RouteRequest):
     and the flood-safe path, reporting avoided depth hazards and travel times.
     """
     # 1. Compute inundation state at the requested horizon
-    rain_mm_hr = get_rainfall_intensity_for_horizon(payload.horizon_min)
+    rainfall = get_rainfall_intensity_for_horizon(payload.horizon_min)
     hydraulic_res = hydraulic_solver.solve_drainage_network(
         nodes=SAMPLE_NODES,
         conduits=SAMPLE_CONDUITS,
-        rainfall_intensity_mm_hr=rain_mm_hr,
+        rainfall_intensity_mm_hr=rainfall["rainfall_mm_hr"],
         horizon_min=payload.horizon_min,
     )
     road_inundations = hydraulic_solver.map_node_depths_to_roads(
         roads=SAMPLE_ROADS,
+        nodes=SAMPLE_NODES,
         node_results=hydraulic_res["nodes"],
         horizon_min=payload.horizon_min,
     )

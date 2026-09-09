@@ -11,36 +11,32 @@ import {
 
 interface RouteInspectorProps {
   routeData: any;
-  onRecalculateRoute: (origin: string, dest: string) => void;
+  onRecalculateRoute: () => void;
+  onDispatchRoute: (phone: string) => Promise<void>;
   isLoading: boolean;
 }
 
 export default function RouteInspector({
   routeData,
   onRecalculateRoute,
+  onDispatchRoute,
   isLoading,
 }: RouteInspectorProps) {
   const [phone, setPhone] = useState<string>("+91 98101 23456");
   const [dispatchStatus, setDispatchStatus] = useState<string | null>(null);
 
-  const meta = routeData?.metadata || {
-    safe_route_found: true,
-    baseline_distance_km: 1.23,
-    safe_distance_km: 1.70,
-    distance_delta_km: 0.47,
-    baseline_est_time_min: 2.1,
-    safe_est_time_min: 2.8,
-    hazards_avoided_count: 1,
-    max_avoided_flood_depth_cm: 38.0,
-    summary: "Safe route avoids 38cm deep flood at Minto Underpass Subway.",
-  };
+  const meta = routeData?.metadata;
 
-  const handleDispatchSMS = () => {
+  const handleDispatchSMS = async () => {
     setDispatchStatus("SENDING");
-    setTimeout(() => {
+    try {
+      await onDispatchRoute(phone);
       setDispatchStatus("SENT");
       setTimeout(() => setDispatchStatus(null), 3000);
-    }, 800);
+    } catch {
+      setDispatchStatus("FAILED");
+      setTimeout(() => setDispatchStatus(null), 3000);
+    }
   };
 
   return (
@@ -60,6 +56,13 @@ export default function RouteInspector({
             </div>
           </div>
         </div>
+        <button
+          onClick={onRecalculateRoute}
+          disabled={isLoading}
+          className="btn-secondary text-[10px] py-1.5 px-3"
+        >
+          {isLoading ? "CALCULATING..." : "RECALCULATE"}
+        </button>
       </div>
 
       {/* Preset Waypoints */}
@@ -89,15 +92,15 @@ export default function RouteInspector({
               </span>
             </div>
             <div className="text-2xl font-bold text-text-primary">
-              {meta.baseline_distance_km} <span className="text-xs text-text-muted font-normal">km</span>
+              {meta ? meta.baseline_distance_km : "—"} <span className="text-xs text-text-muted font-normal">km</span>
             </div>
             <div className="text-text-secondary text-[11px] mt-0.5">
-              Est: <span className="font-medium text-text-primary">{meta.baseline_est_time_min} min</span>
+              Est: <span className="font-medium text-text-primary">{meta ? meta.baseline_est_time_min : "—"} min</span>
             </div>
           </div>
           <div className="mt-2.5 pt-2 border-t border-border-light text-[#D64545] text-[11px] font-medium flex items-center gap-1">
             <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-            Traverses {meta.max_avoided_flood_depth_cm}cm Water
+            Traverses {meta ? meta.max_avoided_flood_depth_cm : "—"}cm Water
           </div>
         </div>
 
@@ -110,15 +113,16 @@ export default function RouteInspector({
               </span>
             </div>
             <div className="text-2xl font-bold text-status-success-text">
-              {meta.safe_distance_km} <span className="text-xs text-text-muted font-normal">km</span>
+              {meta ? meta.safe_distance_km : "—"} <span className="text-xs text-text-muted font-normal">km</span>
             </div>
             <div className="text-text-secondary text-[11px] mt-0.5">
-              Est: <span className="font-medium text-text-primary">{meta.safe_est_time_min} min</span>
+              Est: <span className="font-medium text-text-primary">{meta ? meta.safe_est_time_min : "—"} min</span>
             </div>
           </div>
           <div className="mt-2.5 pt-2 border-t border-[#C5E8D6] text-status-success-text text-[11px] font-medium flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-            0 Choke-Points (+{meta.distance_delta_km} km)
+            {meta ? `${meta.hazards_avoided_count} choke-point${meta.hazards_avoided_count === 1 ? "" : "s"}` : "Calculating route"}
+            {meta && ` (+${meta.distance_delta_km} km)`}
           </div>
         </div>
       </div>
@@ -127,7 +131,7 @@ export default function RouteInspector({
       <div className="bg-cream-alt p-3 rounded-md border border-border-light">
         <span className="label-mono text-[10px] block mb-1">Tactical Advisory</span>
         <p className="heading-editorial text-text-primary text-xs leading-relaxed">
-          &ldquo;{meta.summary}&rdquo;
+          &ldquo;{meta?.summary || "Calculating the current flood-safe route from the backend..."}&rdquo;
         </p>
       </div>
 
@@ -146,7 +150,7 @@ export default function RouteInspector({
           />
           <button
             onClick={handleDispatchSMS}
-            disabled={dispatchStatus === "SENDING"}
+            disabled={dispatchStatus === "SENDING" || !meta}
             className="btn-primary text-xs shrink-0 py-2 px-4"
           >
             {dispatchStatus === "SENDING" ? (
@@ -155,6 +159,8 @@ export default function RouteInspector({
               <>
                 <CheckCircle2 className="w-3.5 h-3.5" /> SENT
               </>
+            ) : dispatchStatus === "FAILED" ? (
+              <span>FAILED</span>
             ) : (
               <>
                 <Send className="w-3.5 h-3.5" /> DISPATCH

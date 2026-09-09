@@ -12,8 +12,9 @@ export default function NowcastPage() {
     horizonMin,
     setHorizonMin,
     rainfallRate,
+    rainfallSource,
+    geojsonData,
     nodes,
-    roads,
     selectedNode,
     setSelectedNode,
     parameters,
@@ -36,56 +37,6 @@ export default function NowcastPage() {
       />
     );
   }
-
-  // Generate GeoJSON payload for MapViewport
-  const geojsonData = {
-    type: "FeatureCollection",
-    features: [
-      ...roads.map((r, idx) => ({
-        type: "Feature",
-        properties: {
-          layer_type: "ROAD_SEGMENT",
-          road_id: r.id,
-          road_name: r.name,
-          water_depth_cm: r.water_depth_cm,
-          status: r.status,
-          color:
-            r.water_depth_cm > 25
-              ? [214, 69, 69, 240]
-              : r.water_depth_cm > 10
-              ? [232, 134, 58, 230]
-              : [30, 142, 90, 220],
-        },
-        geometry: {
-          type: "LineString",
-          coordinates: [
-            [77.2185 + idx * 0.0015, 28.6328 - idx * 0.001],
-            [77.2205 + idx * 0.0015, 28.6315 - idx * 0.001],
-            [77.2245 + idx * 0.0015, 28.636 - idx * 0.001],
-          ],
-        },
-      })),
-      ...nodes.map((n) => ({
-        type: "Feature",
-        properties: {
-          layer_type: "DRAIN_NODE",
-          node_id: n.id,
-          node_code: n.node_code,
-          hgl: n.hgl,
-          z_ground: n.z_ground,
-          z_invert: n.z_invert,
-          surcharge_flow_m3s: n.surcharge_m3s,
-          street_depth_cm: n.street_depth_cm,
-          is_surcharging: n.is_surcharging,
-          elevation: Math.max(14, n.street_depth_cm * 2.5),
-        },
-        geometry: {
-          type: "Point",
-          coordinates: [77.2185 + (n.x / 900) * 0.008, 28.6328 + ((420 - n.y) / 420) * 0.005],
-        },
-      })),
-    ],
-  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -126,6 +77,7 @@ export default function NowcastPage() {
           </div>
           <div className="text-xs text-text-secondary font-mono">
             Intensity: <b className="text-text-primary">{rainfallRate.toFixed(1)} mm/hr</b>
+            {rainfallSource && <span className="ml-2">[{rainfallSource === "live_open_meteo" ? "LIVE" : "FALLBACK"}]</span>}
           </div>
         </div>
 

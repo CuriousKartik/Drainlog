@@ -1,3 +1,4 @@
+import { SimulationProvider } from "@/context/SimulationContext";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -26,7 +27,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-cream text-text-primary min-h-screen antialiased selection:bg-accent-orange-light selection:text-accent-black font-mono">
-        {children}
+        <SimulationProvider>{children}</SimulationProvider>
       </body>
     </html>
   );

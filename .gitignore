@@ -68,3 +68,7 @@ scratch/
 test_py.txt
 *.tmp
 
+
+# Large/local files
+jalkal-core/yolov8n-seg.pt
+jalkalZip.zip

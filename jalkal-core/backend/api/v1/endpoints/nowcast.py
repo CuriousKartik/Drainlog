@@ -8,11 +8,16 @@ for forecast horizons T+0 to T+180 min (at 15-min intervals).
 
 from typing import Dict, Any, List, Optional
 import math
+import time
+import logging
+from datetime import datetime, timezone, timedelta
+import httpx
 from fastapi import APIRouter, Query, HTTPException
 from backend.services.hydrology_service import hydrology_service
 from backend.services.hydraulic_solver import hydraulic_solver
 
 router = APIRouter()
+logger = logging.getLogger("nowcast")
 
 # In-memory realistic Delhi urban drainage & road sample topology for immediate execution
 SAMPLE_NODES = [
@@ -66,18 +71,99 @@ SAMPLE_ROADS = [
 ]
 
 
-def get_rainfall_intensity_for_horizon(horizon_min: int) -> float:
+def _scripted_fallback_rainfall(horizon_min: int) -> float:
     """
-    Simulates a convective monsoon storm trajectory across the 0-180 min forecast horizon:
-    Peak intensity at T+45m to T+60m (~65-75 mm/hr cloudburst).
+    Scripted stand-in rainfall curve (a monsoon-cloudburst-shaped bell curve),
+    used ONLY when the live rainfall API is unreachable or returns no usable
+    data. This is NOT a forecast -- it is a fixed, hardcoded curve that
+    returns the same numbers regardless of real weather.
     """
     if horizon_min < 0:
         return 0.0
-    # Bell-shaped storm hydrograph
     peak_time = 45.0
     width = 30.0
     intensity = 78.0 * math.exp(-((horizon_min - peak_time) ** 2) / (2 * (width ** 2)))
     return round(max(5.0, intensity), 2)
+
+
+# Reference point for the live rainfall lookup: Connaught Place, Delhi
+# (matches the sample drainage network's location).
+CITY_LAT = 28.6315
+CITY_LON = 77.2167
+
+# Open-Meteo's free forecast API needs no API key/signup, which keeps this
+# usable for a hackathon demo without provisioning secrets.
+OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
+
+# Simple in-memory cache so every horizon request (and every dashboard poll)
+# doesn't re-hit the external API; refreshed at most once every 5 minutes.
+_rainfall_cache: Dict[str, Any] = {"fetched_at": 0.0, "series": None}
+_CACHE_TTL_SEC = 300.0
+
+
+def _fetch_live_precipitation_series() -> Optional[List[Dict[str, Any]]]:
+    """
+    Fetches a real 15-minute-resolution precipitation forecast from Open-Meteo.
+    Returns a list of {"time": datetime, "precip_mm_per_15min": float}, or
+    None if the API is unreachable / returns no usable data -- callers must
+    handle that by falling back to the scripted curve.
+    """
+    now = time.time()
+    if _rainfall_cache["series"] is not None and (now - _rainfall_cache["fetched_at"]) < _CACHE_TTL_SEC:
+        return _rainfall_cache["series"]
+
+    try:
+        response = httpx.get(
+            OPEN_METEO_URL,
+            params={
+                "latitude": CITY_LAT,
+                "longitude": CITY_LON,
+                "minutely_15": "precipitation",
+                "forecast_days": 1,
+                "timezone": "UTC",
+            },
+            timeout=5.0,
+        )
+        response.raise_for_status()
+        payload = response.json()
+
+        times = payload["minutely_15"]["time"]
+        precip = payload["minutely_15"]["precipitation"]
+
+        series = [
+            {
+                "time": datetime.fromisoformat(t).replace(tzinfo=timezone.utc),
+                "precip_mm_per_15min": float(p) if p is not None else 0.0,
+            }
+            for t, p in zip(times, precip)
+        ]
+        _rainfall_cache["series"] = series
+        _rainfall_cache["fetched_at"] = now
+        return series
+
+    except (httpx.HTTPError, KeyError, ValueError) as exc:
+        logger.warning(f"Live rainfall API unavailable, using scripted fallback: {exc}")
+        return None
+
+
+def get_rainfall_intensity_for_horizon(horizon_min: int) -> Dict[str, Any]:
+    """
+    Returns real rainfall intensity (mm/hr) for T+horizon_min from a live
+    weather API when available; otherwise falls back to a scripted curve.
+    Always reports which source was actually used, so the app never silently
+    presents simulated numbers as if they were live.
+    """
+    series = _fetch_live_precipitation_series()
+
+    if series:
+        target_time = datetime.now(timezone.utc) + timedelta(minutes=horizon_min)
+        closest = min(series, key=lambda s: abs((s["time"] - target_time).total_seconds()))
+        # Open-Meteo reports precipitation as mm accumulated per 15-minute
+        # bucket; multiply by 4 to express it as a standard mm/hr rate.
+        intensity = round(closest["precip_mm_per_15min"] * 4.0, 2)
+        return {"rainfall_mm_hr": intensity, "source": "live_open_meteo"}
+
+    return {"rainfall_mm_hr": _scripted_fallback_rainfall(horizon_min), "source": "simulated_fallback"}
 
 
 @router.get("/inundation-grid", response_model=Dict[str, Any])
@@ -90,7 +176,9 @@ def get_nowcast_inundation_grid(
     Returns time-scrubbed street inundation and drainage surcharge states as GeoJSON.
     Includes extruded manhole columns (ColumnLayer) and color-coded road paths (PathLayer).
     """
-    rain_mm_hr = get_rainfall_intensity_for_horizon(horizon_min)
+    rainfall_result = get_rainfall_intensity_for_horizon(horizon_min)
+    rain_mm_hr = rainfall_result["rainfall_mm_hr"]
+    rainfall_source = rainfall_result["source"]
     hydraulic_res = hydraulic_solver.solve_drainage_network(
         nodes=SAMPLE_NODES,
         conduits=SAMPLE_CONDUITS,
@@ -104,6 +192,7 @@ def get_nowcast_inundation_grid(
     # Compute road flood depths
     road_inundations = hydraulic_solver.map_node_depths_to_roads(
         roads=SAMPLE_ROADS,
+        nodes=SAMPLE_NODES,
         node_results=node_states,
         horizon_min=horizon_min,
     )
@@ -168,6 +257,7 @@ def get_nowcast_inundation_grid(
                 "hgl": n_state["hgl"],
                 "z_ground": node["z_ground"],
                 "z_invert": node["z_invert"],
+                "basin_area": node["basin_area_m2"],
                 "surcharge_flow_m3s": n_state["surcharge_flow_m3s"],
                 "street_depth_cm": depth_cm,
                 "is_surcharging": n_state["is_surcharging"],
@@ -184,6 +274,7 @@ def get_nowcast_inundation_grid(
         "type": "FeatureCollection",
         "horizon_min": horizon_min,
         "rainfall_intensity_mm_hr": rain_mm_hr,
+        "rainfall_source": rainfall_source,
         "total_flooded_roads": len([r for r in road_inundations if r["status"] != "PASSABLE"]),
         "features": features,
     }
@@ -196,12 +287,14 @@ def get_nowcast_summary():
     """
     timeline = []
     for t in range(0, 195, 15):
-        rain = get_rainfall_intensity_for_horizon(t)
+        rainfall_result = get_rainfall_intensity_for_horizon(t)
+        rain = rainfall_result["rainfall_mm_hr"]
         # Surcharge begins when rain exceeds typical pipe capacity (~35 mm/hr)
         max_flood = max(0.0, round((rain - 32.0) * 0.9, 1)) if rain > 32.0 else 2.5
         timeline.append({
             "horizon_min": t,
             "rainfall_mm_hr": rain,
+            "rainfall_source": rainfall_result["source"],
             "max_flood_depth_cm": max_flood,
             "status": "IMPASSABLE" if max_flood > 25.0 else ("SLOW" if max_flood > 10.0 else "CLEAR"),
         })
@@ -211,4 +304,3 @@ def get_nowcast_summary():
         "step_interval_min": 15,
         "timeline": timeline,
     }
-

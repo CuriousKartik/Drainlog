@@ -8,7 +8,7 @@ Uses:
 2. Deterministic Fallback: Directed Acyclic Graph (DAG) Manning Gravity Conveyance Solver
 """
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 import math
 import numpy as np
 
@@ -150,7 +150,36 @@ class HydraulicSolver:
                 "clogging_ratio": float(c.get("clogging_ratio", 0.0)),
             }
 
+        self._validate_gnn_output(node_results, conduit_results)
         return node_results, conduit_results
+
+    def _validate_gnn_output(
+        self, node_results: Dict[str, Any], conduit_results: Dict[str, Any]
+    ) -> None:
+        """
+        Rejects GNN output that runs without crashing but is physically
+        implausible -- which is exactly what an UNTRAINED model produces
+        (random weights still produce numbers, just meaningless ones).
+        Raising here means the caller's existing try/except automatically
+        falls back to the deterministic Manning DAG solver instead of
+        silently serving nonsense as if it were a real prediction.
+        """
+        for nid, r in node_results.items():
+            hgl = r["hgl"]
+            zg = r["z_ground"]
+            if math.isnan(hgl) or math.isinf(hgl):
+                raise ValueError(f"GNN produced non-finite HGL for node {nid}")
+            # A manhole's water level should never be wildly far from its own
+            # ground elevation for a network this size -- if it is, the model
+            # isn't representing real hydraulics.
+            if abs(hgl - zg) > 5.0:
+                raise ValueError(f"GNN HGL implausible for node {nid}: {hgl} vs ground {zg}")
+            if r["surcharge_flow_m3s"] < 0.0:
+                raise ValueError(f"GNN produced negative surcharge flow for node {nid}")
+
+        for cid, r in conduit_results.items():
+            if r["flow_rate_m3s"] < 0.0:
+                raise ValueError(f"GNN produced negative pipe flow for conduit {cid}")
 
     def _solve_via_manning_dag(
         self, nodes: List[Dict[str, Any]], conduits: List[Dict[str, Any]]
@@ -217,23 +246,61 @@ class HydraulicSolver:
     def map_node_depths_to_roads(
         self,
         roads: List[Dict[str, Any]],
+        nodes: List[Dict[str, Any]],
         node_results: Dict[str, Any],
         horizon_min: int,
     ) -> List[Dict[str, Any]]:
         """
         Maps nodal surcharges to nearby street segments, computing road water depth
         and routing traversal statuses ('PASSABLE', 'SLOW', 'IMPASSABLE').
+
+        Each road inherits its depth from its NEAREST drainage node (by coordinates),
+        not a network-wide average, so a road next to a badly surcharging manhole
+        actually floods more than a road next to a dry one. The elevation adjustment
+        is now relative to the network's own average ground level instead of a
+        hardcoded constant, so it works regardless of what elevation datum/range
+        the input data uses.
         """
         road_inundations = []
-        node_depths = [v["street_depth_cm"] for v in node_results.values()]
-        avg_depth = float(np.mean(node_depths)) if node_depths else 0.0
+
+        # Build (lon, lat, computed_depth) for every node that has a result,
+        # plus track ground elevations to compute a dataset-relative baseline.
+        node_points = []
+        z_grounds = []
+        for n in nodes:
+            nid = str(n["id"])
+            result = node_results.get(nid)
+            if result is None:
+                continue
+            lon, lat = n["coords"]
+            node_points.append((lon, lat, result["street_depth_cm"]))
+            z_grounds.append(float(n.get("z_ground", 12.0)))
+
+        avg_z_ground = float(np.mean(z_grounds)) if z_grounds else 12.0
 
         for r in roads:
             rid = r["id"]
-            # Dynamic elevation dip effect: lower road segments pool more floodwater
-            z_road = float(r.get("z_elevation", 10.0))
-            elevation_delta = max(0.0, 11.5 - z_road)
-            depth_cm = round(avg_depth * (1.0 + 0.3 * elevation_delta), 1)
+
+            # Find the nearest drainage node to this road's midpoint, and use
+            # THAT node's actual computed depth (instead of a network-wide average).
+            coords = r.get("coordinates", [])
+            road_lon, road_lat = coords[len(coords) // 2] if coords else (0.0, 0.0)
+
+            nearest_depth = 0.0
+            min_dist_sq = float("inf")
+            for lon, lat, depth in node_points:
+                dist_sq = (lon - road_lon) ** 2 + (lat - road_lat) ** 2
+                if dist_sq < min_dist_sq:
+                    min_dist_sq = dist_sq
+                    nearest_depth = depth
+
+            # Relative elevation adjustment: roads BELOW the network's average
+            # ground elevation pool extra water; roads at/above it don't get a
+            # penalty. This replaces the old hardcoded "11.5" threshold, which
+            # never matched real elevation data (always evaluated to zero).
+            z_road = float(r.get("z_elevation", avg_z_ground))
+            elevation_delta = max(0.0, avg_z_ground - z_road)
+            depth_cm = round(nearest_depth * (1.0 + 0.3 * elevation_delta), 1)
 
             # Inundation safety thresholding
             if depth_cm < settings.SLOWDOWN_DEPTH_CM:
@@ -260,4 +327,3 @@ class HydraulicSolver:
 
 
 hydraulic_solver = HydraulicSolver()
-
