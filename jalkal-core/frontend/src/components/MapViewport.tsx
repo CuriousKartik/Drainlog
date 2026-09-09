@@ -2,7 +2,8 @@
 
 import React, { useState, useMemo } from "react";
 import DeckGL from "@deck.gl/react";
-import { PathLayer, ColumnLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { PathLayer, ColumnLayer, ScatterplotLayer, BitmapLayer } from "@deck.gl/layers";
+import { TileLayer } from "@deck.gl/geo-layers";
 
 interface MapViewportProps {
   geojsonData: any;
@@ -57,6 +58,26 @@ export default function MapViewport({
   // Base Neutral: #111111 (Charcoal) -> [17, 17, 17]
 
   const layers = [
+    // 0. City street basemap (CARTO Positron raster tiles) so the drainage
+    // network renders over a recognizable map instead of a blank canvas.
+    new TileLayer({
+      id: "basemap-layer",
+      data: "https://basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png",
+      minZoom: 0,
+      maxZoom: 19,
+      tileSize: 256,
+      renderSubLayers: (props: any) => {
+        const {
+          bbox: { west, south, east, north },
+        } = props.tile;
+        return new BitmapLayer(props, {
+          data: null,
+          image: props.data,
+          bounds: [west, south, east, north],
+        });
+      },
+    }),
+
     // 1. Street Network Inundation Layer
     new PathLayer({
       id: "road-inundation-layer",
@@ -155,10 +176,12 @@ export default function MapViewport({
         initialViewState={INITIAL_VIEW_STATE}
         controller={true}
         layers={layers}
-      >
-        {/* Warm cream minimal background */}
-        <div className="absolute inset-0 bg-[#F5F1E8] pointer-events-none opacity-95" />
-      </DeckGL>
+      />
+
+      {/* Basemap attribution */}
+      <div className="absolute bottom-1 right-2 z-40 text-[9px] text-text-muted font-sans pointer-events-none">
+        © OpenStreetMap contributors © CARTO
+      </div>
 
       {/* Floating Hover Tooltip (Superform Card Style) */}
       {hoverInfo && hoverInfo.object && (
