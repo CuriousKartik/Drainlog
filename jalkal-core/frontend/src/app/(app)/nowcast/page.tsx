@@ -1,11 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSimulation } from "@/context/SimulationContext";
 import TimeScrubber from "@/components/TimeScrubber";
 import MapViewport from "@/components/MapViewport";
 import NodeDiagnostic from "@/components/NodeDiagnostic";
 import { LoadingCard, ErrorStateCard } from "@/components/StateFeedback";
+import { getSummaryStats, type SummaryTimelineEntry } from "@/services/api";
+
+const SOURCE_LABELS: Record<string, string> = {
+  live_open_meteo: "LIVE",
+  simulated_fallback: "FALLBACK",
+  simulated_storm: "STORM SIM",
+};
+
+const STATUS_DOT_CLASSES: Record<string, string> = {
+  CLEAR: "bg-[#1E8E5A]",
+  SLOW: "bg-accent-orange",
+  IMPASSABLE: "bg-[#D64545]",
+};
 
 export default function NowcastPage() {
   const {
@@ -13,6 +26,8 @@ export default function NowcastPage() {
     setHorizonMin,
     rainfallRate,
     rainfallSource,
+    simulateStorm,
+    setSimulateStorm,
     geojsonData,
     nodes,
     selectedNode,
@@ -23,6 +38,22 @@ export default function NowcastPage() {
     hasError,
     triggerRefresh,
   } = useSimulation();
+
+  // Per-horizon rainfall/flood timeline from the backend solver (drives the
+  // storm profile cards, which previously showed a hardcoded fake curve).
+  const [timeline, setTimeline] = useState<SummaryTimelineEntry[]>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    getSummaryStats(simulateStorm, controller.signal)
+      .then((response) => setTimeline(response.timeline))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        console.error("Unable to load summary timeline", error);
+        setTimeline([]);
+      });
+    return () => controller.abort();
+  }, [simulateStorm]);
 
   if (isSimulating) {
     return <LoadingCard message="Extrapolating ConvLSTM Doppler radar reflectivity tensors..." />;
@@ -54,6 +85,17 @@ export default function NowcastPage() {
         <div className="flex items-center gap-2 font-mono text-xs">
           <span className="badge-success">DWR PALAM CONNECTED</span>
           <span className="badge-warning">CONVLSTM INFERENCE ACTIVE</span>
+          <button
+            onClick={() => setSimulateStorm(!simulateStorm)}
+            className={`px-3 py-1.5 rounded-md border font-mono text-[11px] uppercase tracking-wide transition-all ${
+              simulateStorm
+                ? "bg-accent-black text-white border-accent-black"
+                : "bg-white text-text-secondary border-border-medium hover:border-accent-black"
+            }`}
+            title="Demo mode: run the scripted cloudburst instead of live weather"
+          >
+            Storm Sim: {simulateStorm ? "ON" : "OFF"}
+          </button>
         </div>
       </div>
 
@@ -77,7 +119,7 @@ export default function NowcastPage() {
           </div>
           <div className="text-xs text-text-secondary font-mono">
             Intensity: <b className="text-text-primary">{rainfallRate.toFixed(1)} mm/hr</b>
-            {rainfallSource && <span className="ml-2">[{rainfallSource === "live_open_meteo" ? "LIVE" : "FALLBACK"}]</span>}
+            {rainfallSource && <span className="ml-2">[{SOURCE_LABELS[rainfallSource] ?? rainfallSource}]</span>}
           </div>
         </div>
 
@@ -102,27 +144,40 @@ export default function NowcastPage() {
           <span className="label-mono text-[10px]">15-MIN INTERVALS</span>
         </div>
 
-        <div className="grid grid-cols-4 sm:grid-cols-7 md:grid-cols-13 gap-2 text-center text-xs font-mono">
-          {[0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180].map((step) => {
-            const stepRain = Math.max(4.0, Math.round(78.5 * Math.exp(-Math.pow(step - 45.0, 2) / 1800.0) * 10) / 10);
-            const isCurrent = step === horizonMin;
-            return (
-              <button
-                key={step}
-                onClick={() => setHorizonMin(step)}
-                className={`p-2.5 rounded-md border text-left transition-all ${
-                  isCurrent
-                    ? "bg-accent-black text-white border-accent-black"
-                    : "bg-cream-alt border-border-light hover:border-border-medium"
-                }`}
-              >
-                <div className="text-[10px] text-text-muted">+{step}m</div>
-                <div className="font-bold mt-1">{stepRain.toFixed(0)}</div>
-                <div className="text-[9px] text-text-secondary truncate">mm/h</div>
-              </button>
-            );
-          })}
-        </div>
+        {timeline.length === 0 ? (
+          <p className="text-xs text-text-muted font-mono py-2">
+            Timeline unavailable — backend not reachable.
+          </p>
+        ) : (
+          <div className="grid grid-cols-4 sm:grid-cols-7 md:grid-cols-13 gap-2 text-center text-xs font-mono">
+            {timeline.map((entry) => {
+              const isCurrent = entry.horizon_min === horizonMin;
+              return (
+                <button
+                  key={entry.horizon_min}
+                  onClick={() => setHorizonMin(entry.horizon_min)}
+                  title={`Max flood depth: ${entry.max_flood_depth_cm} cm (${entry.status})`}
+                  className={`p-2.5 rounded-md border text-left transition-all ${
+                    isCurrent
+                      ? "bg-accent-black text-white border-accent-black"
+                      : "bg-cream-alt border-border-light hover:border-border-medium"
+                  }`}
+                >
+                  <div className="text-[10px] text-text-muted">+{entry.horizon_min}m</div>
+                  <div className="font-bold mt-1">{entry.rainfall_mm_hr.toFixed(0)}</div>
+                  <div className="flex items-center gap-1 text-[9px] text-text-secondary">
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full inline-block ${
+                        STATUS_DOT_CLASSES[entry.status] ?? "bg-border-medium"
+                      }`}
+                    />
+                    mm/h
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Hydraulic Node Modal */}

@@ -19,6 +19,7 @@ const WAYPOINTS: Record<string, [number, number]> = {
 export default function RoutingPage() {
   const {
     horizonMin,
+    simulateStorm,
     geojsonData,
     peakWaterDepthCm,
     isSimulating,
@@ -47,6 +48,7 @@ export default function RoutingPage() {
         end_lat: endLat,
         horizon_min: horizonMin,
         vehicle_type: vehicleType,
+        simulate: simulateStorm,
       }));
     } catch (error) {
       console.error("Unable to calculate safe route", error);
@@ -54,7 +56,7 @@ export default function RoutingPage() {
     } finally {
       setIsRouting(false);
     }
-  }, [destination, horizonMin, origin, vehicleType]);
+  }, [destination, horizonMin, origin, simulateStorm, vehicleType]);
 
   useEffect(() => {
     void loadRoute();

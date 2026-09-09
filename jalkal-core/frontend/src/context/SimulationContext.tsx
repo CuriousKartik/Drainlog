@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
-import { getInundationGrid, type InundationResponse } from "@/services/api";
+import { getInundationGrid, type InundationResponse, type RainfallSource } from "@/services/api";
 
 export interface ModelParameters {
   cloggingRatio: number;      // alpha: 0.0 to 1.0
@@ -61,7 +61,9 @@ interface SimulationContextType {
   horizonMin: number;
   setHorizonMin: (h: number) => void;
   rainfallRate: number;
-  rainfallSource: "live_open_meteo" | "simulated_fallback" | null;
+  rainfallSource: RainfallSource | null;
+  simulateStorm: boolean;
+  setSimulateStorm: (on: boolean) => void;
   geojsonData: InundationResponse | null;
   nodes: NodeHydraulics[];
   roads: RoadHydraulics[];
@@ -161,7 +163,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   // Time Horizon
   const [horizonMin, setHorizonMin] = useState<number>(45);
   const [rainfallRate, setRainfallRate] = useState<number>(0);
-  const [rainfallSource, setRainfallSource] = useState<"live_open_meteo" | "simulated_fallback" | null>(null);
+  const [rainfallSource, setRainfallSource] = useState<RainfallSource | null>(null);
+  const [simulateStorm, setSimulateStorm] = useState<boolean>(false);
   const [geojsonData, setGeojsonData] = useState<InundationResponse | null>(null);
   const [nodes, setNodes] = useState<NodeHydraulics[]>([]);
   const [roads, setRoads] = useState<RoadHydraulics[]>([]);
@@ -184,7 +187,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
     setIsSimulating(true);
     setHasError(false);
 
-    getInundationGrid(horizonMin, controller.signal)
+    getInundationGrid(horizonMin, simulateStorm, controller.signal)
       .then((response) => {
         setGeojsonData(response);
         setRainfallRate(response.rainfall_intensity_mm_hr);
@@ -206,7 +209,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       });
 
     return () => controller.abort();
-  }, [horizonMin, refreshVersion]);
+  }, [horizonMin, refreshVersion, simulateStorm]);
 
   // Aggregate stats
   const peakWaterDepthCm = useMemo(() => {
@@ -294,6 +297,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
         setHorizonMin,
         rainfallRate,
         rainfallSource,
+        simulateStorm,
+        setSimulateStorm,
         geojsonData,
         nodes,
         roads,

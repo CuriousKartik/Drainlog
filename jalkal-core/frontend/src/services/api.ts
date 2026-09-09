@@ -13,11 +13,27 @@ export interface FeatureCollection {
   [key: string]: unknown;
 }
 
+export type RainfallSource = "live_open_meteo" | "simulated_fallback" | "simulated_storm";
+
 export interface InundationResponse extends FeatureCollection {
   horizon_min: number;
   rainfall_intensity_mm_hr: number;
-  rainfall_source: "live_open_meteo" | "simulated_fallback";
+  rainfall_source: RainfallSource;
   total_flooded_roads: number;
+}
+
+export interface SummaryTimelineEntry {
+  horizon_min: number;
+  rainfall_mm_hr: number;
+  rainfall_source: RainfallSource;
+  max_flood_depth_cm: number;
+  status: "CLEAR" | "SLOW" | "IMPASSABLE";
+}
+
+export interface SummaryStatsResponse {
+  forecast_horizon_hours: number;
+  step_interval_min: number;
+  timeline: SummaryTimelineEntry[];
 }
 
 export interface RouteResponse extends FeatureCollection {
@@ -41,6 +57,7 @@ export interface SafeRouteRequest {
   end_lat: number;
   horizon_min: number;
   vehicle_type: string;
+  simulate?: boolean;
 }
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
@@ -62,8 +79,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function getInundationGrid(horizonMin: number, signal?: AbortSignal) {
-  return request<InundationResponse>(`/api/v1/nowcast/inundation-grid?horizon_min=${horizonMin}`, { signal });
+export function getInundationGrid(horizonMin: number, simulate = false, signal?: AbortSignal) {
+  const simulateParam = simulate ? "&simulate=true" : "";
+  return request<InundationResponse>(
+    `/api/v1/nowcast/inundation-grid?horizon_min=${horizonMin}${simulateParam}`,
+    { signal },
+  );
+}
+
+export function getSummaryStats(simulate = false, signal?: AbortSignal) {
+  const simulateParam = simulate ? "?simulate=true" : "";
+  return request<SummaryStatsResponse>(`/api/v1/nowcast/summary-stats${simulateParam}`, { signal });
 }
 
 export function getSafeRoute(payload: SafeRouteRequest, signal?: AbortSignal) {
