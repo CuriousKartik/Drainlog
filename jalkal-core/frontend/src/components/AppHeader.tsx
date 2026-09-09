@@ -20,7 +20,7 @@ export default function AppHeader() {
   };
 
   return (
-    <header className="h-16 border-b border-border-light px-8 flex items-center justify-between bg-cream shrink-0">
+    <header className="h-16 border-b border-border-light pl-16 pr-8 flex items-center justify-between bg-cream shrink-0">
       {/* Brand & Breadcrumbs */}
       <div className="flex items-center gap-4">
         <Link href="/" className="flex items-center gap-2.5">

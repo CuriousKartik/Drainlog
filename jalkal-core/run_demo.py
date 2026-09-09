@@ -619,6 +619,19 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       border: 1px solid var(--border-light);
     }
 
+    .scientific-tools-btn {
+      background: white;
+      color: var(--text-primary);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .scientific-tools-btn:hover {
+      background: var(--bg-card-alt) !important;
+      border-color: var(--border-medium) !important;
+    }
+
     .toast {
       position: fixed;
       bottom: 24px;
@@ -630,7 +643,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       font-size: 0.75rem;
       font-weight: 600;
       display: none;
-      z-index: 2000;
+      z-index: 4000;
       box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     }
     .toast.show { display: block; }
@@ -643,7 +656,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 1800;
+      z-index: 3000;
       padding: 1rem;
     }
     .modal-overlay.open { display: flex; }
@@ -658,6 +671,17 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       border: 1px solid var(--border-medium) !important;
     }
     .leaflet-popup-tip { background: #FFFFFF !important; }
+
+    /* Map Stacking Context Isolation (prevents Leaflet panes from bleeding above off-canvas sidebar) */
+    .map-responsive,
+    .leaflet-container,
+    #drainage-leaflet-map,
+    #nowcast-leaflet-map,
+    #routing-leaflet-map {
+      position: relative;
+      z-index: 1 !important;
+      isolation: isolate;
+    }
 
     pre.code-block {
       background: #191919;
@@ -676,64 +700,91 @@ APP_SHELL_HTML = """<!DOCTYPE html>
     .app-header {
       height: 64px;
       border-bottom: 1px solid var(--border-light);
-      padding: 0 2rem;
+      padding: 0 2rem 0 4.5rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
       background: var(--bg-primary);
       position: sticky;
       top: 0;
-      z-index: 1000;
+      z-index: 30;
     }
 
     .app-workspace {
       display: flex;
       flex: 1;
       min-height: calc(100vh - 64px);
+      position: relative;
     }
 
     .app-sidebar {
-      width: 250px;
-      border-right: 1px solid var(--border-light);
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      background: var(--bg-primary);
-      flex-shrink: 0;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      height: 100vh !important;
+      z-index: 2100 !important;
+      width: 280px !important;
+      max-width: 85vw !important;
+      border-right: 1px solid var(--border-light) !important;
+      padding: 1.25rem !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      background: var(--bg-primary) !important;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.15) !important;
+      transform: translateX(-100%) !important;
+      transition: transform 0.25s ease !important;
+      overflow-y: auto !important;
+    }
+    .app-sidebar.open {
+      transform: translateX(0) !important;
     }
 
     .main-content {
       flex: 1;
+      width: 100%;
       padding: 2.2rem 2.5rem;
       overflow-y: auto;
       max-width: 100%;
     }
 
-    /* Mobile Drawer & Backdrop */
-    .mobile-menu-btn {
-      display: none;
+    /* Fixed Toggle Button (~44px, top-left corner, z-index: 1500) */
+    .sidebar-toggle-btn {
+      position: fixed;
+      top: 10px;
+      left: 12px;
+      width: 44px;
+      height: 44px;
+      z-index: 1500;
       background: white;
-      border: 1px solid var(--border-medium);
-      border-radius: var(--radius-sm);
-      padding: 0.4rem 0.5rem;
-      color: var(--text-primary);
-      cursor: pointer;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      display: flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
+      color: var(--text-primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: background 0.15s ease, border-color 0.15s ease;
       touch-action: manipulation;
     }
+    .sidebar-toggle-btn:hover {
+      background: var(--bg-card-alt);
+      border-color: var(--border-medium);
+    }
+    .sidebar-toggle-btn:focus-visible {
+      outline: 2px solid var(--accent-black);
+      outline-offset: 2px;
+    }
 
+    /* Semi-transparent Overlay Backdrop (z-index: 2000) */
     .sidebar-backdrop {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(17, 17, 17, 0.45);
-      backdrop-filter: blur(2px);
-      z-index: 1650;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 2000;
+      backdrop-filter: blur(1px);
     }
     .sidebar-backdrop.open {
       display: block;
@@ -826,25 +877,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         display: inline-flex !important;
       }
       .app-header {
-        padding: 0 1rem;
-      }
-      .app-sidebar {
-        position: fixed;
-        top: 0;
-        left: -290px;
-        width: 280px;
-        height: 100vh;
-        z-index: 1700;
-        border-right: 1px solid var(--border-medium);
-        box-shadow: 4px 0 24px rgba(0,0,0,0.18);
-        transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-        overflow-y: auto;
-      }
-      .app-sidebar.open {
-        left: 0;
-      }
-      .mobile-sidebar-close {
-        display: block !important;
+        padding: 0 1rem 0 4rem;
       }
       .main-content {
         padding: 1.25rem 1rem !important;
@@ -974,8 +1007,11 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
     // Reactive Hydraulic State
     let state = {
-      route: window.location.pathname || "/dashboard",
-      isLoggedIn: true,
+      route: window.location.pathname || "/",
+      isLoggedIn: false,
+      sidebarOpen: false,
+      toolsMenuOpen: false,
+      authModal: null,
       horizonMin: 45,
       cloggingRatio: 0.45,
       inletCapacity: 3.4,
@@ -1004,6 +1040,10 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       user: {
         name: "Kartikey Gupta",
         email: "kartikey@moes.gov.in",
+        govId: "GOV-DL-8841-MCD",
+        city: "New Delhi",
+        stateJurisdiction: "Delhi NCT",
+        operatorCode: "OP-DL-MCD-09",
         organization: "Delhi Municipal Corporation / MoES"
       },
       dataSources: {
@@ -1015,13 +1055,52 @@ APP_SHELL_HTML = """<!DOCTYPE html>
     };
 
     const DELHI_NODES = [
-      { id: "node-1", code: "MH_CP_INNER_01", name: "CP Inner Circle North", lat: 28.6340, lon: 77.2180, z_ground: 216.50, z_invert: 214.00, basin_area: 5200 },
-      { id: "node-2", code: "MH_CP_RADIAL_02", name: "CP Radial Node 3", lat: 28.6322, lon: 77.2205, z_ground: 215.80, z_invert: 213.20, basin_area: 6100 },
-      { id: "node-3", code: "MH_CP_OUTER_03", name: "Outer Circle Junction", lat: 28.6305, lon: 77.2225, z_ground: 214.90, z_invert: 212.10, basin_area: 7800 },
-      { id: "node-4", code: "MH_MINTO_BRIDGE_LOW", name: "Minto Railway Underpass Dip", lat: 28.6348, lon: 77.2268, z_ground: 211.80, z_invert: 209.20, basin_area: 12400 },
-      { id: "node-5", code: "MH_BARAKHAMBA_05", name: "Barakhamba Elevated Deck", lat: 28.6275, lon: 77.2265, z_ground: 217.50, z_invert: 214.80, basin_area: 4900 },
-      { id: "node-6", code: "MH_BHAVBHUTI_06", name: "Bhavbhuti Marg Bypass", lat: 28.6362, lon: 77.2235, z_ground: 216.00, z_invert: 213.50, basin_area: 5800 },
-      { id: "node-7", code: "OUTFALL_YAMUNA_01", name: "Trunk Drain Outfall to Yamuna", lat: 28.6385, lon: 77.2340, z_ground: 209.50, z_invert: 206.80, basin_area: 18500 }
+      // Central & Inner Circle Ring
+      { id: "node-1", code: "MH_CP_INNER_01", name: "CP Inner Circle North (Radial 1)", lat: 28.6340, lon: 77.2180, z_ground: 216.50, z_invert: 214.00, basin_area: 5200 },
+      { id: "node-2", code: "MH_CP_INNER_02", name: "CP Inner Circle North-East (Block B)", lat: 28.6338, lon: 77.2202, z_ground: 216.20, z_invert: 213.70, basin_area: 4800 },
+      { id: "node-3", code: "MH_CP_RADIAL_02", name: "CP Radial Node 3 (Block C/D)", lat: 28.6322, lon: 77.2205, z_ground: 215.80, z_invert: 213.20, basin_area: 6100 },
+      { id: "node-4", code: "MH_CP_INNER_04", name: "CP Inner Circle South-East (Block E)", lat: 28.6312, lon: 77.2198, z_ground: 215.60, z_invert: 213.00, basin_area: 5500 },
+      { id: "node-5", code: "MH_CP_INNER_05", name: "CP Inner Circle South (Janpath Entry)", lat: 28.6308, lon: 77.2185, z_ground: 215.70, z_invert: 213.10, basin_area: 5300 },
+      { id: "node-6", code: "MH_CP_INNER_06", name: "CP Inner Circle South-West (Block F/G)", lat: 28.6315, lon: 77.2170, z_ground: 215.90, z_invert: 213.30, basin_area: 5100 },
+      { id: "node-7", code: "MH_CP_INNER_07", name: "CP Inner Circle West (Block H)", lat: 28.6328, lon: 77.2164, z_ground: 216.30, z_invert: 213.70, basin_area: 4900 },
+      { id: "node-8", code: "MH_CP_INNER_08", name: "CP Inner Circle North-West (Block A)", lat: 28.6339, lon: 77.2169, z_ground: 216.60, z_invert: 214.10, basin_area: 5000 },
+      { id: "node-9", code: "MH_RAJIV_CHOWK_CTR", name: "Rajiv Chowk Central Park Hub", lat: 28.6328, lon: 77.2185, z_ground: 216.80, z_invert: 214.20, basin_area: 7200 },
+
+      // Middle Circle Concentric Arteries
+      { id: "node-10", code: "MH_CP_MID_NORTH", name: "Middle Circle North Collector", lat: 28.6348, lon: 77.2185, z_ground: 216.30, z_invert: 213.80, basin_area: 4600 },
+      { id: "node-11", code: "MH_CP_MID_EAST", name: "Middle Circle East Collector", lat: 28.6328, lon: 77.2215, z_ground: 215.70, z_invert: 213.10, basin_area: 4900 },
+      { id: "node-12", code: "MH_CP_MID_SOUTH", name: "Middle Circle South Collector", lat: 28.6300, lon: 77.2185, z_ground: 215.40, z_invert: 212.80, basin_area: 5100 },
+      { id: "node-13", code: "MH_CP_MID_WEST", name: "Middle Circle West Collector", lat: 28.6328, lon: 77.2155, z_ground: 216.10, z_invert: 213.50, basin_area: 4700 },
+
+      // Connaught Circus Outer Ring (All 8 Radial Junctions)
+      { id: "node-14", code: "MH_CP_OUTER_03", name: "Outer Circle Junction East (Barakhamba)", lat: 28.6305, lon: 77.2225, z_ground: 214.90, z_invert: 212.10, basin_area: 7800 },
+      { id: "node-15", code: "MH_CP_OUTER_MINTO", name: "Outer Circle at Minto Road Jct", lat: 28.6352, lon: 77.2228, z_ground: 215.20, z_invert: 212.60, basin_area: 8200 },
+      { id: "node-16", code: "MH_CP_OUTER_CHELM", name: "Outer Circle at Chelmsford Road", lat: 28.6360, lon: 77.2182, z_ground: 215.90, z_invert: 213.30, basin_area: 6900 },
+      { id: "node-17", code: "MH_CP_OUTER_PANCH", name: "Outer Circle at Panchkuian Road", lat: 28.6351, lon: 77.2145, z_ground: 216.40, z_invert: 213.80, basin_area: 6400 },
+      { id: "node-18", code: "MH_CP_OUTER_BKS", name: "Outer Circle at Baba Kharak Singh Marg", lat: 28.6328, lon: 77.2135, z_ground: 216.20, z_invert: 213.60, basin_area: 6600 },
+      { id: "node-19", code: "MH_CP_OUTER_SANSAD", name: "Outer Circle at Sansad Marg", lat: 28.6298, lon: 77.2148, z_ground: 215.60, z_invert: 213.00, basin_area: 7100 },
+      { id: "node-20", code: "MH_CP_OUTER_JANPATH", name: "Outer Circle at Janpath", lat: 28.6288, lon: 77.2185, z_ground: 215.00, z_invert: 212.30, basin_area: 7500 },
+      { id: "node-21", code: "MH_CP_OUTER_KG", name: "Outer Circle at Kasturba Gandhi Marg", lat: 28.6295, lon: 77.2215, z_ground: 214.80, z_invert: 212.00, basin_area: 7700 },
+
+      // Minto Road Low-Lying Sump & Surcharge Corridor
+      { id: "node-22", code: "MH_MINTO_APPROACH_01", name: "Minto Road Mid-Descent Chamber", lat: 28.6338, lon: 77.2248, z_ground: 213.40, z_invert: 210.60, basin_area: 9100 },
+      { id: "node-23", code: "MH_MINTO_BRIDGE_LOW", name: "Minto Railway Underpass Dip Sump", lat: 28.6348, lon: 77.2268, z_ground: 211.80, z_invert: 209.20, basin_area: 12400 },
+      { id: "node-24", code: "MH_MINTO_EAST_PUMP", name: "Minto Railway Storm Pumping Well", lat: 28.6353, lon: 77.2274, z_ground: 212.10, z_invert: 208.90, basin_area: 8600 },
+      { id: "node-25", code: "MH_BHAVBHUTI_06", name: "Bhavbhuti Marg Railway Bypass", lat: 28.6362, lon: 77.2235, z_ground: 216.00, z_invert: 213.50, basin_area: 5800 },
+      { id: "node-26", code: "MH_DDU_MARG_01", name: "Deen Dayal Upadhyay Marg West", lat: 28.6342, lon: 77.2285, z_ground: 213.80, z_invert: 211.00, basin_area: 8200 },
+      { id: "node-27", code: "MH_DDU_MARG_02", name: "DDU Marg Cross-Drain Junction", lat: 28.6338, lon: 77.2312, z_ground: 213.00, z_invert: 210.20, basin_area: 8900 },
+
+      // Radial Corridors, Arterials & Cross-Feeders
+      { id: "node-28", code: "MH_BARAKHAMBA_05", name: "Barakhamba Elevated Deck Collector", lat: 28.6275, lon: 77.2265, z_ground: 217.50, z_invert: 214.80, basin_area: 4900 },
+      { id: "node-29", code: "MH_TOLSTOY_BARAKHAMBA", name: "Tolstoy Marg at Barakhamba Cross", lat: 28.6292, lon: 77.2252, z_ground: 216.00, z_invert: 213.20, basin_area: 5400 },
+      { id: "node-30", code: "MH_TOLSTOY_KG", name: "Tolstoy Marg at KG Marg Cross", lat: 28.6275, lon: 77.2225, z_ground: 215.60, z_invert: 212.80, basin_area: 5600 },
+      { id: "node-31", code: "MH_TOLSTOY_JANPATH", name: "Tolstoy Marg at Janpath Cross", lat: 28.6262, lon: 77.2185, z_ground: 215.30, z_invert: 212.50, basin_area: 5800 },
+      { id: "node-32", code: "MH_SHIVAJI_STADIUM", name: "Shivaji Stadium Terminal Collector", lat: 28.6322, lon: 77.2115, z_ground: 216.80, z_invert: 214.00, basin_area: 6300 },
+
+      // Outfall Trunk Corridors
+      { id: "node-33", code: "MH_JLN_MARG_LNJP", name: "JLN Marg Collector at LNJP Gate", lat: 28.6360, lon: 77.2290, z_ground: 211.20, z_invert: 208.50, basin_area: 11200 },
+      { id: "node-34", code: "MH_DELHI_GATE_TRUNK", name: "Delhi Gate Interceptor Main", lat: 28.6372, lon: 77.2320, z_ground: 210.50, z_invert: 207.60, basin_area: 14500 },
+      { id: "node-35", code: "OUTFALL_YAMUNA_01", name: "Trunk Drain Outfall to Yamuna River", lat: 28.6385, lon: 77.2340, z_ground: 209.50, z_invert: 206.80, basin_area: 18500 }
     ];
 
     const TRANSECT_STATIONS = [
@@ -1041,25 +1120,51 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       { date: "CURRENT SESSION", event: "Live Doppler Nowcast", rainfall_mm: "LIVE", peak_depth_cm: "LIVE", detours: "LIVE", solver_latency_s: "0.014", status: "ACTIVE" }
     ];
 
-    function toggleMobileSidebar(forceState) {
+    function toggleSidebar(forceState) {
+      const next = typeof forceState === 'boolean' ? forceState : !state.sidebarOpen;
+      state.sidebarOpen = next;
       const sidebar = document.getElementById('app-sidebar');
       const backdrop = document.getElementById('sidebar-backdrop');
-      if (!sidebar) return;
-      const isOpen = sidebar.classList.contains('open');
-      const next = forceState !== undefined ? forceState : !isOpen;
-      if (next) {
-        sidebar.classList.add('open');
-        if (backdrop) backdrop.classList.add('open');
+      const toggleBtn = document.getElementById('sidebar-toggle-btn');
+      const closeBtn = document.getElementById('sidebar-close-btn');
+
+      if (sidebar && backdrop) {
+        if (state.sidebarOpen) {
+          sidebar.classList.add('open');
+          backdrop.classList.add('open');
+          if (toggleBtn) toggleBtn.style.display = 'none';
+          if (closeBtn) closeBtn.focus();
+        } else {
+          sidebar.classList.remove('open');
+          backdrop.classList.remove('open');
+          if (toggleBtn) {
+            toggleBtn.style.display = 'flex';
+            toggleBtn.focus();
+          }
+        }
       } else {
-        sidebar.classList.remove('open');
-        if (backdrop) backdrop.classList.remove('open');
+        render();
       }
     }
+
+    function toggleMobileSidebar(forceState) {
+      toggleSidebar(forceState);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (state.sidebarOpen) {
+          toggleSidebar(false);
+        } else if (state.authModal) {
+          closeAuthModal();
+        }
+      }
+    });
 
     function navigate(path) {
       state.route = path;
       window.history.pushState({}, "", path);
-      toggleMobileSidebar(false);
+      toggleSidebar(false);
       render();
       window.scrollTo(0, 0);
     }
@@ -1407,14 +1512,10 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       return `
         <div style="min-height: 100vh; display: flex; flex-direction: column;">
           <header class="app-header" style="height: 64px; border-bottom: 1px solid var(--border-light); padding: 0 1.25rem; display: flex; align-items: center; justify-content: space-between; background: var(--bg-primary);">
-            <div style="display: flex; align-items: center; gap: 0.65rem;">
+            <div class="brand-logo-link" style="display: flex; align-items: center; gap: 0.65rem; cursor: pointer;" onclick="navigate('/')" title="Return to Homepage">
               <div style="width: 32px; height: 32px; border-radius: 6px; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem;">JK</div>
               <span class="heading-display" style="font-size: 1.25rem;">JALKAL</span>
               <span class="desktop-only" style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">/ SIH26085 - MoES</span>
-            </div>
-            <div style="display: flex; gap: 0.5rem;">
-              <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick="navigate('/login')">LOGIN</button>
-              <button class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.7rem;" onclick="navigate('/signup')">SIGN UP</button>
             </div>
           </header>
 
@@ -1422,14 +1523,14 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             <div style="display: flex; flex-direction: column; gap: 1.2rem; max-width: 780px;">
               <span class="badge-success" style="align-self: flex-start;">0-3H URBAN FLOOD NOWCASTING & SAFE NAVIGATION ENGINE</span>
               <h1 class="heading-display" style="font-size: clamp(1.8rem, 5vw, 3rem); line-height: 1.08;">
-                Physics-AI Urban Inundation Modeling & Evacuation Routing
+                Urban Flood Forecasting System
               </h1>
               <p class="heading-editorial" style="font-size: clamp(1rem, 2.8vw, 1.15rem); color: var(--text-secondary); line-height: 1.6;">
                 Predicting street-level urban inundation under high-resolution rainfall nowcasting, fusing Doppler radar extrapolation, CartoDEM terrain models, and 1D-2D Saint-Venant drainage graph surrogates.
               </p>
               <div style="display: flex; gap: 0.8rem; margin-top: 0.5rem; flex-wrap: wrap;">
-                <button class="btn-primary" style="padding: 0.75rem 1.5rem;" onclick="navigate('/dashboard')">LAUNCH DASHBOARD</button>
-                <button class="btn-secondary" style="padding: 0.75rem 1.5rem;" onclick="navigate('/hydraulic-transect')">CONDUIT TRANSECT</button>
+                <button class="btn-primary" style="padding: 0.75rem 1.8rem;" onclick="openAuthModal('login')">OPERATOR LOGIN</button>
+                <button class="btn-secondary" style="padding: 0.75rem 1.8rem;" onclick="openAuthModal('register')">REGISTER AS OPERATOR</button>
               </div>
             </div>
 
@@ -1468,128 +1569,33 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       `;
     }
 
-    function renderLogin() {
-      return `
-        <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem;">
-          <div style="margin-bottom: 1.5rem; cursor: pointer;" onclick="navigate('/')">
-            <div style="display: flex; align-items: center; gap: 0.6rem;">
-              <div style="width: 32px; height: 32px; border-radius: 6px; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem;">JK</div>
-              <span class="heading-display" style="font-size: 1.3rem;">JALKAL</span>
-            </div>
-          </div>
-
-          <div class="card" style="width: 100%; max-width: 420px;">
-            <h1 class="heading-display" style="font-size: 1.6rem; margin-bottom: 0.3rem;">Operator Sign In</h1>
-            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1.5rem; font-family: sans-serif;">
-              Access the Delhi Catchment Urban Flood Nowcast & Dispatch platform.
-            </p>
-
-            <form onsubmit="handleLoginSubmit(event)" style="display: flex; flex-direction: column; gap: 1rem;">
-              <div>
-                <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">Institutional Email</label>
-                <input id="login-email" type="email" value="${state.user.email}" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
-              </div>
-
-              <div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
-                  <label class="label-mono">Password</label>
-                  <span style="font-size: 0.7rem; color: var(--text-secondary); text-decoration: underline; cursor: pointer;" onclick="showToast('Recovery token dispatched to registered institutional email.')">Forgot password?</span>
-                </div>
-                <input id="login-pass" type="password" value="password123" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
-              </div>
-
-              <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 0.75rem; margin-top: 0.5rem;">
-                SIGN IN TO DASHBOARD
-              </button>
-            </form>
-
-            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); text-align: center; font-size: 0.75rem; color: var(--text-secondary);">
-              Need operator credentials? <span style="font-weight: bold; color: var(--text-primary); cursor: pointer; text-decoration: underline;" onclick="navigate('/signup')">Register here</span>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderSignup() {
-      return `
-        <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem;">
-          <div style="margin-bottom: 1.5rem; cursor: pointer;" onclick="navigate('/')">
-            <div style="display: flex; align-items: center; gap: 0.6rem;">
-              <div style="width: 32px; height: 32px; border-radius: 6px; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem;">JK</div>
-              <span class="heading-display" style="font-size: 1.3rem;">JALKAL</span>
-            </div>
-          </div>
-
-          <div class="card" style="width: 100%; max-width: 440px;">
-            <h1 class="heading-display" style="font-size: 1.6rem; margin-bottom: 0.3rem;">Operator Registration</h1>
-            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1.5rem; font-family: sans-serif;">
-              Create operational telemetry account for municipal catchment dispatch.
-            </p>
-
-            <form onsubmit="handleSignupSubmit(event)" style="display: flex; flex-direction: column; gap: 1rem;">
-              <div>
-                <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">Full Name</label>
-                <input id="signup-name" type="text" value="${state.user.name}" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
-              </div>
-
-              <div>
-                <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">Institutional Email</label>
-                <input id="signup-email" type="email" value="${state.user.email}" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
-              </div>
-
-              <div>
-                <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">Department / Jurisdiction</label>
-                <input id="signup-org" type="text" value="${state.user.organization}" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
-              </div>
-
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-                <div>
-                  <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">Password</label>
-                  <input type="password" value="password123" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
-                </div>
-                <div>
-                  <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">Confirm</label>
-                  <input type="password" value="password123" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
-                </div>
-              </div>
-
-              <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 0.75rem; margin-top: 0.5rem;">
-                REGISTER OPERATOR
-              </button>
-            </form>
-
-            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); text-align: center; font-size: 0.75rem; color: var(--text-secondary);">
-              Already registered? <span style="font-weight: bold; color: var(--text-primary); cursor: pointer; text-decoration: underline;" onclick="navigate('/login')">Sign in</span>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
     function renderAppShell(contentHtml, pageTitle) {
       const h = calculateHydraulics();
 
       return `
         <div class="app-shell" style="min-height: 100vh; display: flex; flex-direction: column;">
-          <!-- Mobile Sidebar Backdrop -->
-          <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="toggleMobileSidebar(false)"></div>
+          <!-- Fixed Toggle Button (~44px, top-left corner, z-index: 60) -->
+          <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" onclick="toggleSidebar(true)" aria-label="Open sidebar" title="Open Navigation" style="${state.sidebarOpen ? 'display: none;' : 'display: flex;'}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          <!-- Semi-transparent Overlay Backdrop (z-index: 40) -->
+          <div id="sidebar-backdrop" class="sidebar-backdrop ${state.sidebarOpen ? 'open' : ''}" onclick="toggleSidebar(false)" aria-hidden="true"></div>
 
           <!-- Top Header -->
           <header class="app-header">
             <div style="display: flex; align-items: center; gap: 0.65rem;">
-              <!-- Mobile Hamburger Toggle -->
-              <button class="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Toggle Menu">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="3" y1="6" x2="21" y2="6"></line>
-                  <line x1="3" y1="12" x2="21" y2="12"></line>
-                  <line x1="3" y1="18" x2="21" y2="18"></line>
-                </svg>
-              </button>
-              <div style="width: 32px; height: 32px; border-radius: 6px; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; cursor: pointer; flex-shrink: 0;" onclick="navigate('/dashboard')">
-                JK
+              <!-- Brand Logo Component -->
+              <div class="brand-logo-link" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="navigate('/')" title="Return to Homepage">
+                <div style="width: 32px; height: 32px; border-radius: 6px; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; flex-shrink: 0;">
+                  JK
+                </div>
+                <span class="heading-display app-header-title" style="font-size: 1.25rem; color: var(--accent-black);">JALKAL</span>
               </div>
-              <span class="heading-display app-header-title" style="font-size: 1.25rem; color: var(--accent-black); cursor: pointer;" onclick="navigate('/dashboard')">JALKAL</span>
               <span class="desktop-only" style="color: var(--border-medium);">/</span>
               <span class="label-mono desktop-only" style="color: var(--text-primary); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;">${pageTitle}</span>
             </div>
@@ -1612,29 +1618,48 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                 ${h.mintoDepth.toFixed(1)} cm
               </div>
               <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.68rem;" onclick="syncSimulation()">SYNC</button>
-              <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.68rem; color: #D64545;" onclick="navigate('/login')">EXIT</button>
+              <button class="btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.68rem; color: #D64545;" onclick="handleLogout()">EXIT</button>
             </div>
           </header>
 
           <!-- Workspace (Sidebar + Main) -->
           <div class="app-workspace">
             <!-- Sidebar -->
-            <aside id="app-sidebar" class="app-sidebar">
+            <aside id="app-sidebar" class="app-sidebar ${state.sidebarOpen ? 'open' : ''}" role="dialog" aria-modal="true" aria-label="Navigation Menu">
               <div>
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-                  <div style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 0.65rem 0.75rem; display: flex; align-items: center; gap: 0.75rem; flex: 1;">
-                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem;">JK</div>
-                    <div>
-                      <div style="font-weight: 600; font-size: 0.78rem;">Delhi Basin</div>
-                      <div style="font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase;">CONNAUGHT & MINTO</div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; gap: 0.5rem;">
+                  <div style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 0.65rem 0.75rem; display: flex; align-items: center; gap: 0.75rem; flex: 1; overflow: hidden;">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; flex-shrink: 0;">JK</div>
+                    <div style="overflow: hidden;">
+                      <div style="font-weight: 600; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Delhi Basin</div>
+                      <div style="font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">CONNAUGHT & MINTO</div>
                     </div>
                   </div>
-                  <!-- Mobile drawer close button -->
-                  <button class="mobile-sidebar-close" onclick="toggleMobileSidebar(false)" aria-label="Close menu" style="display: none; background: none; border: none; font-size: 1.25rem; font-weight: bold; cursor: pointer; color: var(--text-secondary); padding: 0.4rem 0.6rem; margin-left: 0.5rem;">&times;</button>
+                  <!-- Close (X) icon inside sidebar header -->
+                  <button id="sidebar-close-btn" class="sidebar-close-btn" onclick="toggleSidebar(false)" aria-label="Close sidebar" title="Close sidebar" style="width: 36px; height: 36px; background: white; border: 1px solid var(--border-light); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-secondary); transition: all 0.15s ease; flex-shrink: 0;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
                 </div>
 
-                <div class="label-mono" style="padding: 0 0.5rem; margin-bottom: 0.5rem;">SCIENTIFIC TOOLS</div>
-                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                <!-- Single button for Scientific Tools (collapsible menu) -->
+                <button id="scientific-tools-btn" class="scientific-tools-btn" onclick="toggleScientificTools()" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.8rem; background: white; color: var(--text-primary); border: 1px solid ${state.toolsMenuOpen ? 'var(--accent-black)' : 'var(--border-light)'}; border-radius: var(--radius-md); cursor: pointer; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; transition: all 0.15s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.04); white-space: nowrap; box-sizing: border-box;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; min-width: 0; white-space: nowrap;">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #1E8E5A; flex-shrink: 0; display: inline-block;"></span>
+                    <span style="white-space: nowrap; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; color: var(--text-primary);">SCIENTIFIC TOOLS</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.45rem; flex-shrink: 0; white-space: nowrap;">
+                    <span class="badge-success" style="font-size: 0.6rem; padding: 0.12rem 0.45rem; font-weight: 700; white-space: nowrap;">9 LIVE</span>
+                    <svg class="tools-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); transition: transform 0.2s ease; transform: ${state.toolsMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)'}; flex-shrink: 0;">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </div>
+                </button>
+
+                <!-- Collapsible tools list that opens up when clicked -->
+                <div id="scientific-tools-menu" style="display: ${state.toolsMenuOpen ? 'flex' : 'none'}; flex-direction: column; gap: 0.25rem; margin-top: 0.5rem; padding: 0.35rem 0.3rem; background: rgba(0,0,0,0.015); border: 1px solid var(--border-light); border-radius: var(--radius-md);">
                   <div class="sidebar-item ${state.route === '/dashboard' ? 'active' : ''}" onclick="navigate('/dashboard')">
                     <span>Dashboard</span>
                     <span class="badge-success" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">LIVE</span>
@@ -1953,32 +1978,94 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- Hydrograph with Shaded Confidence Envelope -->
-          <div class="card">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.6rem;">
-              <span style="font-weight: 700; font-size: 0.85rem;">Dynamic Inundation Hydrograph & 95% Confidence Envelope</span>
-              <span class="label-mono">LEAD TIME DECORRELATION</span>
+          <!-- Modern Restyled Hydrograph with Shaded Confidence Envelope -->
+          <div style="background: #FFFFFF; border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.05); padding: 28px; position: relative;">
+            <!-- Header with Lead Time Decorrelation Badge (No hard bottom border) -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+              <div>
+                <h3 style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary); margin: 0; letter-spacing: -0.01em;">
+                  Dynamic Inundation Hydrograph &amp; 95% Confidence Envelope
+                </h3>
+                <p style="font-size: 0.72rem; color: #6B7280; margin: 0.25rem 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 400;">
+                  Coupled Saint-Venant 1D-2D hydrograph forecasting depth with ensemble variance spread
+                </p>
+              </div>
+              <span style="background: #EEF2FF; color: #4338CA; border: 1px solid #E0E7FF; font-size: 0.65rem; font-weight: 600; padding: 0.28rem 0.85rem; border-radius: 9999px; letter-spacing: 0.04em; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.4rem;">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: #4F46E5; display: inline-block;"></span>
+                LEAD TIME DECORRELATION
+              </span>
             </div>
 
-            <div style="height: 180px; width: 100%; position: relative;">
-              <svg width="100%" height="100%" viewBox="0 0 800 160" preserveAspectRatio="none">
-                <polygon points="
-                  40,140 100,120 160,80 220,25 280,60 340,105 400,125 460,135 520,138 580,140 640,140 700,140 760,140
-                  760,155 700,155 640,155 580,155 520,155 460,155 400,155 340,150 280,110 220,65 160,110 100,135 40,148
-                " fill="#FDF0E4" stroke="none" />
-                <polyline points="
-                  40,144 100,128 160,95 220,45 280,85 340,128 400,140 460,145 520,147 580,148 640,148 700,148 760,148
-                " fill="none" stroke="#E8863A" stroke-width="3" />
-                ${state.horizonMin > 75 ? `
-                  <polyline points="
-                    400,140 460,145 520,147 580,148 640,148 700,148 760,148
-                  " fill="none" stroke="#E8863A" stroke-width="3" stroke-dasharray="6,6" />
+            <!-- Chart Container with Interactive Tooltip -->
+            <div id="hydrograph-container" style="height: 190px; width: 100%; position: relative; cursor: crosshair;" onmousemove="handleHydrographHover(event)" onmouseleave="handleHydrographLeave()">
+              <svg width="100%" height="100%" viewBox="0 0 800 170" preserveAspectRatio="none" style="overflow: visible;">
+                <defs>
+                  <!-- Gradient Stroke: Deep Blue / Indigo #4F46E5 -> Lighter Blue #818CF8 -->
+                  <linearGradient id="hydroStrokeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#4F46E5" />
+                    <stop offset="45%" stop-color="#6366F1" />
+                    <stop offset="100%" stop-color="#818CF8" />
+                  </linearGradient>
+
+                  <!-- Gradient Fill: Soft gradient fading to transparent (rgba(79,70,229,0.15) -> transparent) -->
+                  <linearGradient id="envelopeFillGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#4F46E5" stop-opacity="0.16" />
+                    <stop offset="65%" stop-color="#6366F1" stop-opacity="0.06" />
+                    <stop offset="100%" stop-color="#818CF8" stop-opacity="0.0" />
+                  </linearGradient>
+                </defs>
+
+                <!-- Faint Horizontal Gridlines (rgba(0,0,0,0.04)), no axis border lines -->
+                <line x1="40" y1="25" x2="760" y2="25" stroke="rgba(0,0,0,0.04)" stroke-width="1" />
+                <line x1="40" y1="65" x2="760" y2="65" stroke="rgba(0,0,0,0.04)" stroke-width="1" />
+                <line x1="40" y1="105" x2="760" y2="105" stroke="rgba(0,0,0,0.04)" stroke-width="1" />
+                <line x1="40" y1="145" x2="760" y2="145" stroke="rgba(0,0,0,0.04)" stroke-width="1" />
+
+                <!-- Y-Axis Faint Labels (400-500 font weight) -->
+                <text x="32" y="29" font-size="9" fill="#9CA3AF" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="450">75cm</text>
+                <text x="32" y="69" font-size="9" fill="#9CA3AF" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="450">50cm</text>
+                <text x="32" y="109" font-size="9" fill="#9CA3AF" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="450">25cm</text>
+                <text x="32" y="149" font-size="9" fill="#9CA3AF" text-anchor="end" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="450">0cm</text>
+
+                <!-- Smoothed 95% Confidence Envelope (soft gradient fill fading to transparent) -->
+                <path d="M 40.0,140.0 C 50.0,136.7 80.0,130.0 100.0,120.0 C 120.0,110.0 140.0,95.8 160.0,80.0 C 180.0,64.2 200.0,28.3 220.0,25.0 C 240.0,21.7 260.0,46.7 280.0,60.0 C 300.0,73.3 320.0,94.2 340.0,105.0 C 360.0,115.8 380.0,120.0 400.0,125.0 C 420.0,130.0 440.0,132.8 460.0,135.0 C 480.0,137.2 500.0,137.2 520.0,138.0 C 540.0,138.8 560.0,139.7 580.0,140.0 C 600.0,140.3 620.0,140.0 640.0,140.0 C 660.0,140.0 680.0,140.0 700.0,140.0 C 720.0,140.0 750.0,140.0 760.0,140.0 L 760.0,155.0 C 750.0,155.0 720.0,155.0 700.0,155.0 C 680.0,155.0 660.0,155.0 640.0,155.0 C 620.0,155.0 600.0,155.0 580.0,155.0 C 560.0,155.0 540.0,155.0 520.0,155.0 C 500.0,155.0 480.0,155.0 460.0,155.0 C 440.0,155.0 420.0,155.8 400.0,155.0 C 380.0,154.2 360.0,157.5 340.0,150.0 C 320.0,142.5 300.0,124.2 280.0,110.0 C 260.0,95.8 240.0,65.0 220.0,65.0 C 200.0,65.0 180.0,98.3 160.0,110.0 C 140.0,121.7 120.0,128.7 100.0,135.0 C 80.0,141.3 50.0,145.8 40.0,148.0 Z" fill="url(#envelopeFillGrad)" stroke="none" />
+
+                <!-- Smoothed Hydrograph Curve with Deep Blue -> Lighter Blue Gradient Stroke -->
+                <path id="hydro-curve-path" d="M 40.0,144.0 C 50.0,141.3 80.0,136.2 100.0,128.0 C 120.0,119.8 140.0,108.8 160.0,95.0 C 180.0,81.2 200.0,46.7 220.0,45.0 C 240.0,43.3 260.0,71.2 280.0,85.0 C 300.0,98.8 320.0,118.8 340.0,128.0 C 360.0,137.2 380.0,137.2 400.0,140.0 C 420.0,142.8 440.0,143.8 460.0,145.0 C 480.0,146.2 500.0,146.5 520.0,147.0 C 540.0,147.5 560.0,147.8 580.0,148.0 C 600.0,148.2 620.0,148.0 640.0,148.0 C 660.0,148.0 680.0,148.0 700.0,148.0 C 720.0,148.0 750.0,148.0 760.0,148.0" fill="none" stroke="url(#hydroStrokeGrad)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+
+                <!-- Peak Squall Marker (T = 45m, x = 220, y = 45) -->
+                <!-- Thin, lighter dashed vertical line (rgba(0,0,0,0.15)) -->
+                <line x1="220" y1="18" x2="220" y2="152" stroke="rgba(0,0,0,0.15)" stroke-width="1.2" stroke-dasharray="3,3" />
+
+                <!-- Small filled circle with subtle glow/halo ring -->
+                <circle cx="220" cy="45" r="12" fill="#4F46E5" fill-opacity="0.14" stroke="#4F46E5" stroke-opacity="0.3" stroke-width="1.2" />
+                <circle cx="220" cy="45" r="5.5" fill="#4F46E5" stroke="#FFFFFF" stroke-width="2" />
+
+                <!-- Dynamic Horizon Marker (if user moves slider from 45m) -->
+                ${state.horizonMin !== 45 ? `
+                  <line x1="${40 + (state.horizonMin / 180) * 720}" y1="18" x2="${40 + (state.horizonMin / 180) * 720}" y2="152" stroke="rgba(79,70,229,0.3)" stroke-width="1.2" stroke-dasharray="3,3" />
+                  <circle cx="${40 + (state.horizonMin / 180) * 720}" cy="${Math.max(25, 148 - (h.mintoDepth / 74.2) * 103)}" r="10" fill="#6366F1" fill-opacity="0.14" stroke="#6366F1" stroke-opacity="0.3" stroke-width="1" />
+                  <circle cx="${40 + (state.horizonMin / 180) * 720}" cy="${Math.max(25, 148 - (h.mintoDepth / 74.2) * 103)}" r="4.5" fill="#4F46E5" stroke="#FFFFFF" stroke-width="2" />
                 ` : ''}
-                <line x1="${40 + (state.horizonMin / 180) * 720}" y1="10" x2="${40 + (state.horizonMin / 180) * 720}" y2="155" stroke="#111111" stroke-width="2" stroke-dasharray="4,4" />
-                <circle cx="${40 + (state.horizonMin / 180) * 720}" cy="${155 - (h.mintoDepth / 135) * 110}" r="5" fill="#D64545" stroke="#FFFFFF" stroke-width="2" />
+
+                <!-- Interactive hover crosshair line (starts at dot center, ends at x-axis) and blue dot with white border -->
+                <line id="hydro-hover-line" x1="0" y1="0" x2="0" y2="148" stroke="#4F46E5" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="3,3" style="display: none; pointer-events: none;" />
+                <circle id="hydro-hover-dot" cx="0" cy="0" r="5.5" fill="#4F46E5" stroke="#FFFFFF" stroke-width="2" style="display: none; pointer-events: none;" />
               </svg>
+
+              <!-- Hover Tooltip Card (Small rounded card with soft shadow) -->
+              <div id="hydro-tooltip" style="position: absolute; display: none; pointer-events: none; background: #FFFFFF; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.06); padding: 0.55rem 0.85rem; z-index: 25; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 125px; transform: translate(-50%, -125%); transition: opacity 0.15s ease;">
+                <div id="hydro-tooltip-time" style="font-size: 0.68rem; color: #6B7280; font-weight: 500;">T = 45m (Peak Squall)</div>
+                <div style="display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.15rem;">
+                  <span style="width: 7px; height: 7px; border-radius: 50%; background: #4F46E5; display: inline-block;"></span>
+                  <span id="hydro-tooltip-depth" style="font-size: 0.95rem; font-weight: 700; color: #111827;">74.2 cm</span>
+                  <span id="hydro-tooltip-uncert" style="font-size: 0.65rem; color: #9CA3AF;">&plusmn;14%</span>
+                </div>
+              </div>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.5rem;">
+
+            <!-- Faint, smaller, lighter-weight time markers (font-weight 450) -->
+            <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 450; color: #6B7280; margin-top: 0.85rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 0 0.5rem;">
               <span>T = 0m (Current)</span>
               <span>T = 45m (Peak Squall)</span>
               <span>T = 90m (Post-Frontal)</span>
@@ -2132,7 +2219,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                 <span style="font-weight: 700; font-size: 0.85rem;">Connaught Place Drainage Network (Delhi GIS)</span>
                 <span style="font-size: 0.7rem; color: var(--text-secondary); margin-left: 0.5rem;">Click any manhole circle to inspect invert diagnostics</span>
               </div>
-              <span class="label-mono">7 MONITORED NODES</span>
+              <span class="label-mono">${DELHI_NODES.length} MONITORED NODES</span>
             </div>
 
             <div id="drainage-leaflet-map" class="map-responsive"></div>
@@ -3078,8 +3165,97 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       `;
     }
 
-    // Diagnostic Modal for Invert Inspection
+    // Global Modal Renderer (Auth Modals & Diagnostic Inspector)
     function renderModal() {
+      // 1. Operator Login Modal (Asks for Government ID and Password)
+      if (state.authModal === 'login') {
+        return `
+          <div class="modal-overlay open" onclick="closeAuthModal(event)">
+            <div class="card" style="width: 100%; max-width: 440px; padding: 1.8rem; position: relative;" onclick="event.stopPropagation()">
+              <button onclick="closeAuthModal()" style="position: absolute; top: 18px; right: 18px; background: none; border: none; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: var(--text-secondary);">&times; CLOSE</button>
+              <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem;">
+                <div style="width: 28px; height: 28px; border-radius: 6px; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.72rem;">JK</div>
+                <span class="label-mono">OPERATOR VERIFICATION</span>
+              </div>
+              <h2 class="heading-display" style="font-size: 1.4rem; margin-bottom: 0.3rem;">Operator Sign In</h2>
+              <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1.3rem; font-family: sans-serif;">
+                Enter verified official credentials to authenticate command-level flood nowcast dispatch.
+              </p>
+
+              <form onsubmit="handleOperatorLoginSubmit(event)" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div>
+                  <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">Official Government ID</label>
+                  <input id="login-gov-id" type="text" placeholder="e.g. GOV-DL-8841-MCD or Employee ID" value="${state.user.govId || 'GOV-DL-8841-MCD'}" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
+                </div>
+
+                <div>
+                  <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">Password</label>
+                  <input id="login-password" type="password" placeholder="Enter password" value="password123" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
+                </div>
+
+                <div style="display: flex; gap: 0.6rem; margin-top: 0.4rem;">
+                  <button type="submit" class="btn-primary" style="flex: 1; justify-content: center; padding: 0.75rem;">VERIFY & LAUNCH WORKSPACE</button>
+                  <button type="button" class="btn-secondary" onclick="closeAuthModal()">CANCEL</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        `;
+      }
+
+      // 2. Register As Operator Modal (Asks for City, State, Operator Code ID, Government ID, Password)
+      if (state.authModal === 'register') {
+        return `
+          <div class="modal-overlay open" onclick="closeAuthModal(event)">
+            <div class="card" style="width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 1.8rem; position: relative;" onclick="event.stopPropagation()">
+              <button onclick="closeAuthModal()" style="position: absolute; top: 18px; right: 18px; background: none; border: none; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: var(--text-secondary);">&times; CLOSE</button>
+              <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem;">
+                <div style="width: 28px; height: 28px; border-radius: 6px; background: var(--accent-black); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.72rem;">JK</div>
+                <span class="label-mono">REGISTRATION DESK</span>
+              </div>
+              <h2 class="heading-display" style="font-size: 1.4rem; margin-bottom: 0.3rem;">Register As Operator</h2>
+              <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1.3rem; font-family: sans-serif;">
+                Establish municipal catchment operator identity for drainage routing telemetry.
+              </p>
+
+              <form onsubmit="handleOperatorRegisterSubmit(event)" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                  <div>
+                    <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">City</label>
+                    <input id="reg-city" type="text" placeholder="e.g. New Delhi" value="${state.user.city || 'New Delhi'}" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
+                  </div>
+                  <div>
+                    <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">State</label>
+                    <input id="reg-state" type="text" placeholder="e.g. Delhi NCT" value="${state.user.stateJurisdiction || 'Delhi NCT'}" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">Operator Code ID</label>
+                  <input id="reg-opcode" type="text" placeholder="e.g. OP-DL-MCD-09" value="${state.user.operatorCode || 'OP-DL-MCD-09'}" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
+                </div>
+
+                <div>
+                  <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">Official Government ID</label>
+                  <input id="reg-govid" type="text" placeholder="e.g. GOV-DL-8841-MCD" value="${state.user.govId || 'GOV-DL-8841-MCD'}" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
+                </div>
+
+                <div>
+                  <label class="label-mono" style="display: block; margin-bottom: 0.3rem;">Password</label>
+                  <input id="reg-password" type="password" placeholder="Create password" value="password123" required style="width: 100%; background: var(--bg-card-alt); border: 1px solid var(--border-medium); border-radius: var(--radius-sm); padding: 0.6rem 0.8rem; font-size: 0.75rem; font-family: var(--font-mono); outline: none;">
+                </div>
+
+                <div style="display: flex; gap: 0.6rem; margin-top: 0.4rem;">
+                  <button type="submit" class="btn-primary" style="flex: 1; justify-content: center; padding: 0.75rem;">REGISTER & LAUNCH WORKSPACE</button>
+                  <button type="button" class="btn-secondary" onclick="closeAuthModal()">CANCEL</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        `;
+      }
+
+      // 3. Diagnostic Modal for Invert Inspection
       if (!state.selectedNode) return "";
       const h = calculateHydraulics();
 
@@ -3133,12 +3309,17 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       let content = "";
       const path = state.route;
 
+      if (!state.isLoggedIn && path !== "/" && path !== "/landing") {
+        state.route = "/";
+        window.history.replaceState({}, "", "/");
+        document.getElementById('app-root').innerHTML = renderLanding() + renderModal();
+        return;
+      }
+
       if (path === "/" || path === "/landing") {
         content = renderLanding();
-      } else if (path === "/login") {
-        content = renderLogin();
-      } else if (path === "/signup") {
-        content = renderSignup();
+      } else if (path === "/login" || path === "/signup") {
+        content = renderAppShell(renderDashboardPage(), "Dashboard Overview");
       } else if (path === "/nowcast") {
         content = renderAppShell(renderNowcastPage(), "Radar Nowcast & Timeline");
       } else if (path === "/causal-chain") {
@@ -3450,42 +3631,80 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           let map = L.map('drainage-leaflet-map').setView([28.6330, 77.2230], 15);
           window._activeDrainageMap = map;
           setTimeout(() => map.invalidateSize(), 200);
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://carto.com/">CARTO</a> (ac_ns85x1et) &copy; OpenStreetMap',
-            subdomains: 'abcd',
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19
           }).addTo(map);
 
-          // Render Conduits (Pipes along street rights-of-way)
+          // Comprehensive Connaught Place Storm Drainage Network (Pipes, Collectors & Trunks)
           const conduits = [
-            // CP Inner Circle to Radial 2
-            [[28.6340, 77.2180], [28.6342, 77.2184], [28.6343, 77.2189], [28.6344, 77.2195], [28.6343, 77.2201], [28.6341, 77.2207], [28.6337, 77.2212], [28.6334, 77.2215]],
-            // Radial 2 to Connaught Circus
-            [[28.6334, 77.2215], [28.6331, 77.2221], [28.6327, 77.2228], [28.6324, 77.2234]],
-            // Minto Main Trunk: Connaught Circus down Minto Road through Underpass Dip to JLN Marg
-            [[28.6324, 77.2234], [28.6328, 77.2240], [28.6332, 77.2246], [28.6336, 77.2251], [28.6340, 77.2257], [28.6343, 77.2261], [28.6346, 77.2265], [28.6347, 77.2266], [28.6348, 77.2268], [28.6350, 77.2272], [28.6353, 77.2278], [28.6357, 77.2284], [28.6360, 77.2290]],
-            // Outfall Collector: LNJP along JLN Marg to Yamuna Trunk Outfall
-            [[28.6360, 77.2290], [28.6364, 77.2302], [28.6368, 77.2315], [28.6373, 77.2328], [28.6380, 77.2340]],
-            // Barakhamba Road Trunk
-            [[28.6321, 77.2218], [28.6314, 77.2228], [28.6309, 77.2234], [28.6304, 77.2240], [28.6295, 77.2251], [28.6284, 77.2263], [28.6273, 77.2272]],
-            // Bhavbhuti Bypass Collector along Railway corridor
-            [[28.6340, 77.2180], [28.6347, 77.2182], [28.6353, 77.2186], [28.6361, 77.2192], [28.6368, 77.2199], [28.6375, 77.2208], [28.6381, 77.2217], [28.6386, 77.2238], [28.6382, 77.2258], [28.6371, 77.2276], [28.6360, 77.2290]]
+            // 1. Full Inner Circle Conduit Loop (Blocks A through H)
+            [
+              [28.6340, 77.2180], [28.6342, 77.2190], [28.6338, 77.2202],
+              [28.6330, 77.2207], [28.6322, 77.2205], [28.6315, 77.2202],
+              [28.6312, 77.2198], [28.6308, 77.2185], [28.6312, 77.2174],
+              [28.6315, 77.2170], [28.6322, 77.2166], [28.6328, 77.2164],
+              [28.6335, 77.2166], [28.6339, 77.2169], [28.6340, 77.2180]
+            ],
+            // 2. Full Outer Circle (Connaught Circus) Trunk Loop
+            [
+              [28.6360, 77.2182], [28.6358, 77.2205], [28.6352, 77.2228],
+              [28.6335, 77.2235], [28.6328, 77.2238], [28.6315, 77.2234],
+              [28.6305, 77.2225], [28.6295, 77.2215], [28.6288, 77.2185],
+              [28.6292, 77.2162], [28.6298, 77.2148], [28.6312, 77.2138],
+              [28.6328, 77.2135], [28.6342, 77.2138], [28.6351, 77.2145],
+              [28.6358, 77.2165], [28.6360, 77.2182]
+            ],
+            // 3. Middle Circle Collector Ring
+            [[28.6348, 77.2185], [28.6344, 77.2208], [28.6328, 77.2215], [28.6306, 77.2208], [28.6300, 77.2185], [28.6306, 77.2162], [28.6328, 77.2155], [28.6344, 77.2162], [28.6348, 77.2185]],
+            // 4. Central Hub Spoke Feeders (Rajiv Chowk to Inner Ring)
+            [[28.6328, 77.2185], [28.6340, 77.2180]],
+            [[28.6328, 77.2185], [28.6322, 77.2205]],
+            [[28.6328, 77.2185], [28.6308, 77.2185]],
+            [[28.6328, 77.2185], [28.6328, 77.2164]],
+            // 5. Radial 1: Chelmsford Road Arterial Conduit
+            [[28.6340, 77.2180], [28.6348, 77.2182], [28.6360, 77.2182], [28.6375, 77.2186], [28.6392, 77.2195], [28.6410, 77.2215]],
+            // 6. Radial 2: Minto Main Storm Trunk (Connaught Circus down Minto Road through Underpass Dip to JLN Marg)
+            [[28.6338, 77.2202], [28.6344, 77.2215], [28.6352, 77.2228], [28.6345, 77.2238], [28.6338, 77.2248], [28.6344, 77.2258], [28.6348, 77.2268], [28.6353, 77.2274], [28.6357, 77.2284], [28.6360, 77.2290]],
+            // 7. Radial 3: Barakhamba Road Trunk Corridor
+            [[28.6328, 77.2218], [28.6328, 77.2238], [28.6315, 77.2244], [28.6300, 77.2250], [28.6292, 77.2252], [28.6275, 77.2265]],
+            // 8. Radial 4: Kasturba Gandhi Marg Trunk Corridor
+            [[28.6312, 77.2198], [28.6304, 77.2208], [28.6295, 77.2215], [28.6285, 77.2220], [28.6275, 77.2225], [28.6258, 77.2235]],
+            // 9. Radial 5: Janpath Main Storm Drain Corridor
+            [[28.6308, 77.2185], [28.6298, 77.2185], [28.6288, 77.2185], [28.6275, 77.2185], [28.6262, 77.2185], [28.6248, 77.2188], [28.6235, 77.2195]],
+            // 10. Radial 6: Sansad Marg (Parliament Street) Collector
+            [[28.6315, 77.2170], [28.6308, 77.2160], [28.6298, 77.2148], [28.6285, 77.2135], [28.6268, 77.2118]],
+            // 11. Radial 7: Baba Kharak Singh Marg to Shivaji Stadium
+            [[28.6328, 77.2164], [28.6328, 77.2150], [28.6328, 77.2135], [28.6325, 77.2125], [28.6322, 77.2115]],
+            // 12. Radial 8: Shaheed Bhagat Singh / Panchkuian Road Drain
+            [[28.6339, 77.2169], [28.6345, 77.2158], [28.6351, 77.2145], [28.6360, 77.2128], [28.6370, 77.2105]],
+            // 13. Bhavbhuti Marg Railway Bypass Collector
+            [[28.6360, 77.2182], [28.6365, 77.2195], [28.6368, 77.2210], [28.6365, 77.2225], [28.6362, 77.2235], [28.6360, 77.2255], [28.6355, 77.2272], [28.6360, 77.2290]],
+            // 14. Deen Dayal Upadhyay (DDU) Marg Interceptor Trunk
+            [[28.6348, 77.2268], [28.6344, 77.2278], [28.6342, 77.2285], [28.6340, 77.2298], [28.6338, 77.2312], [28.6335, 77.2330]],
+            // 15. Tolstoy Marg Transverse Interceptor (Cross-Connecting Radials 3, 4, and 5)
+            [[28.6292, 77.2252], [28.6282, 77.2238], [28.6275, 77.2225], [28.6268, 77.2205], [28.6262, 77.2185]],
+            // 16. Outfall Trunk Main: JLN Marg from LNJP Hospital to Yamuna River Outfall
+            [[28.6360, 77.2290], [28.6364, 77.2302], [28.6368, 77.2315], [28.6372, 77.2320], [28.6378, 77.2332], [28.6385, 77.2340]]
           ];
 
           conduits.forEach((line, idx) => {
-            let isMintoMain = idx === 2;
+            let isMintoMain = idx === 5; // Minto Underpass Trunk
+            let isTrunk = idx === 1 || idx === 15; // Outer circle & Yamuna Main
             L.polyline(line, {
-              color: isMintoMain && state.cloggingRatio > 0.3 ? '#D64545' : '#111111',
-              weight: isMintoMain ? 5 : 3,
-              dashArray: isMintoMain && h.qSurcharge > 0 ? '6,6' : null
+              color: isMintoMain && state.cloggingRatio > 0.3 ? '#D64545' : (isTrunk ? '#1E3A8A' : '#111111'),
+              weight: isMintoMain ? 5 : (isTrunk ? 4 : 2.8),
+              dashArray: isMintoMain && h.qSurcharge > 0 ? '6,6' : null,
+              opacity: 0.9
             }).addTo(map);
           });
 
-          // Render Manhole Markers
+          // Render Manhole Markers for all network nodes
           DELHI_NODES.forEach(n => {
             let isMinto = n.code === 'MH_MINTO_BRIDGE_LOW';
-            let color = isMinto && h.mintoDepth > 25 ? '#D64545' : '#111111';
-            let radius = isMinto ? 9 : 7;
+            let isOutfall = n.code === 'OUTFALL_YAMUNA_01';
+            let color = isMinto && h.mintoDepth > 25 ? '#D64545' : (isOutfall ? '#2563EB' : '#111111');
+            let radius = isMinto ? 9 : (isOutfall ? 8 : 5.5);
 
             let marker = L.circleMarker([n.lat, n.lon], {
               radius: radius,
@@ -3499,6 +3718,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               <b>${n.code}</b><br>
               ${n.name}<br>
               Rim: ${n.z_ground.toFixed(2)}m | Invert: ${n.z_invert.toFixed(2)}m<br>
+              Subcatchment: ${n.basin_area.toLocaleString()} m&sup2;<br>
               <a href="javascript:void(0)" onclick="openNodeModal('${n.code}', ${n.z_ground}, ${n.z_invert})">Inspect HGL Diagnostic</a>
             `);
 
@@ -3528,9 +3748,8 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           let map = L.map('nowcast-leaflet-map').setView([28.6330, 77.2230], 15);
           window._activeNowcastMap = map;
           setTimeout(() => map.invalidateSize(), 200);
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://carto.com/">CARTO</a> (ac_ns85x1et) &copy; OpenStreetMap',
-            subdomains: 'abcd',
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19
           }).addTo(map);
 
@@ -3573,9 +3792,8 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
           let map = L.map('routing-leaflet-map').setView([28.6330, 77.2230], 15);
           window._activeRoutingMap = map;
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://carto.com/">CARTO</a> (ac_ns85x1et) &copy; OpenStreetMap',
-            subdomains: 'abcd',
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19
           }).addTo(map);
 
@@ -3584,6 +3802,86 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           setTimeout(() => map.invalidateSize(), 200);
         }, 100);
       }
+    }
+
+    // Helper: calculate exact y-coordinate on SVG path curve for given x
+    function getPathYAtX(path, targetX) {
+      if (!path || !path.getTotalLength) return 148;
+      const totalLength = path.getTotalLength();
+      let start = 0;
+      let end = totalLength;
+      let point = path.getPointAtLength(0);
+      
+      for (let i = 0; i < 20; i++) {
+        const mid = (start + end) / 2;
+        point = path.getPointAtLength(mid);
+        if (Math.abs(point.x - targetX) < 0.25) {
+          break;
+        }
+        if (point.x < targetX) {
+          start = mid;
+        } else {
+          end = mid;
+        }
+      }
+      return point.y;
+    }
+
+    // Hydrograph Interactive Hover Tooltip Handlers
+    function handleHydrographHover(e) {
+      const container = document.getElementById('hydrograph-container');
+      const path = document.getElementById('hydro-curve-path');
+      const tooltip = document.getElementById('hydro-tooltip');
+      const hoverLine = document.getElementById('hydro-hover-line');
+      const hoverDot = document.getElementById('hydro-hover-dot');
+      if (!container || !tooltip || !hoverLine || !hoverDot) return;
+
+      const rect = container.getBoundingClientRect();
+      const clientX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+      const pct = clientX / rect.width;
+      
+      const mins = Math.round(pct * 180);
+      const svgX = 40 + pct * 720;
+      
+      // Query the exact y-coordinate directly on the curve (prevents dot from floating above)
+      const svgY = path ? getPathYAtX(path, svgX) : 148;
+      
+      // Calculate depth directly from the curve's elevation (148 = 0cm baseline, 45 = 74.2cm peak)
+      const depth = Math.max(0, Math.round(((148 - svgY) / 103) * 74.2 * 10) / 10);
+      const uncert = mins < 30 ? 8 : (mins < 60 ? 14 : (mins < 120 ? 28 : 45));
+
+      tooltip.style.display = 'block';
+      tooltip.style.left = `${clientX}px`;
+      tooltip.style.top = `${(svgY / 170) * rect.height}px`;
+
+      const phase = mins === 45 ? 'Peak Squall' : (mins < 45 ? 'Pre-Frontal' : 'Post-Frontal');
+      const timeEl = document.getElementById('hydro-tooltip-time');
+      const depthEl = document.getElementById('hydro-tooltip-depth');
+      const uncertEl = document.getElementById('hydro-tooltip-uncert');
+      if (timeEl) timeEl.textContent = `T = ${mins}m (${phase})`;
+      if (depthEl) depthEl.textContent = `${depth.toFixed(1)} cm`;
+      if (uncertEl) uncertEl.textContent = `\u00B1${uncert}%`;
+
+      // Vertical guide line connects the dot down to the x-axis, terminating EXACTLY at the dot's center
+      hoverLine.style.display = 'block';
+      hoverLine.setAttribute('x1', svgX);
+      hoverLine.setAttribute('y1', svgY);
+      hoverLine.setAttribute('x2', svgX);
+      hoverLine.setAttribute('y2', 148);
+
+      // Blue marker dot with white border sitting precisely on the curve
+      hoverDot.style.display = 'block';
+      hoverDot.setAttribute('cx', svgX);
+      hoverDot.setAttribute('cy', svgY);
+    }
+
+    function handleHydrographLeave() {
+      const tooltip = document.getElementById('hydro-tooltip');
+      const hoverLine = document.getElementById('hydro-hover-line');
+      const hoverDot = document.getElementById('hydro-hover-dot');
+      if (tooltip) tooltip.style.display = 'none';
+      if (hoverLine) hoverLine.style.display = 'none';
+      if (hoverDot) hoverDot.style.display = 'none';
     }
 
     // Interaction Handlers
@@ -3599,23 +3897,78 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       render();
     }
 
-    function handleLoginSubmit(e) {
+    function toggleScientificTools() {
+      state.toolsMenuOpen = !state.toolsMenuOpen;
+      const menu = document.getElementById('scientific-tools-menu');
+      const btn = document.getElementById('scientific-tools-btn');
+      if (menu && btn) {
+        menu.style.display = state.toolsMenuOpen ? 'flex' : 'none';
+        const chevron = btn.querySelector('.tools-chevron');
+        if (chevron) {
+          chevron.style.transform = state.toolsMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+        btn.style.borderColor = state.toolsMenuOpen ? 'var(--accent-black)' : 'var(--border-light)';
+      } else {
+        render();
+      }
+    }
+
+    function openAuthModal(mode) {
+      state.authModal = mode;
+      render();
+    }
+
+    function closeAuthModal(e) {
+      if (e && e.target !== e.currentTarget) return;
+      state.authModal = null;
+      render();
+    }
+
+    function handleOperatorLoginSubmit(e) {
       e.preventDefault();
-      let em = document.getElementById('login-email').value;
-      state.user.email = em;
+      const govId = document.getElementById('login-gov-id').value.trim();
+      const pass = document.getElementById('login-password').value;
+      if (!govId || !pass) {
+        showToast("Please enter Official Government ID and password.");
+        return;
+      }
+      state.user.govId = govId;
+      state.user.name = "Officer " + govId;
       state.isLoggedIn = true;
-      showToast("Signed in as " + em);
+      state.authModal = null;
+      showToast("Verified Government ID: " + govId + ". Launching workspace.");
       navigate('/dashboard');
     }
 
-    function handleSignupSubmit(e) {
+    function handleOperatorRegisterSubmit(e) {
       e.preventDefault();
-      state.user.name = document.getElementById('signup-name').value;
-      state.user.email = document.getElementById('signup-email').value;
-      state.user.organization = document.getElementById('signup-org').value;
+      const city = document.getElementById('reg-city').value.trim();
+      const stateStr = document.getElementById('reg-state').value.trim();
+      const opCode = document.getElementById('reg-opcode').value.trim();
+      const govId = document.getElementById('reg-govid').value.trim();
+      const pass = document.getElementById('reg-password').value;
+
+      if (!city || !stateStr || !opCode || !govId || !pass) {
+        showToast("Please complete all registration fields.");
+        return;
+      }
+
+      state.user.city = city;
+      state.user.stateJurisdiction = stateStr;
+      state.user.operatorCode = opCode;
+      state.user.govId = govId;
+      state.user.name = "Operator " + opCode;
+      state.user.organization = city + " Municipal Corp / " + stateStr;
       state.isLoggedIn = true;
-      showToast("Operator account registered.");
+      state.authModal = null;
+      showToast("Operator profile " + opCode + " registered (" + city + "). Launching workspace.");
       navigate('/dashboard');
+    }
+
+    function handleLogout() {
+      state.isLoggedIn = false;
+      showToast("Operator session ended.");
+      navigate('/');
     }
 
     function handleAccountSave(e) {

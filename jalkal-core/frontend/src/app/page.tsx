@@ -22,14 +22,7 @@ export default function LandingPage() {
           </div>
         </Link>
 
-        <nav className="flex items-center gap-3">
-          <Link href="/login" className="btn-secondary text-xs py-2 px-5">
-            LOGIN
-          </Link>
-          <Link href="/signup" className="btn-primary text-xs py-2 px-5">
-            GET STARTED
-          </Link>
-        </nav>
+        {/* No login/signup links in header */}
       </header>
 
       {/* 2. Hero Section */}
@@ -43,7 +36,7 @@ export default function LandingPage() {
           </div>
 
           <h1 className="heading-display text-4xl sm:text-6xl text-accent-black tracking-tight leading-none">
-            Urban Flood Nowcasting & Safe Navigation Engine
+            Urban Flood Forecasting System
           </h1>
 
           <p className="heading-editorial text-lg sm:text-xl text-text-secondary leading-relaxed font-normal">
@@ -52,10 +45,10 @@ export default function LandingPage() {
 
           <div className="flex flex-wrap items-center gap-4 pt-2">
             <Link href="/dashboard" className="btn-primary text-sm py-3 px-8">
-              LAUNCH DASHBOARD
+              OPERATOR LOGIN
             </Link>
-            <Link href="/login" className="btn-secondary text-sm py-3 px-8">
-              SIGN IN WITH CREDENTIALS
+            <Link href="/dashboard" className="btn-secondary text-sm py-3 px-8">
+              REGISTER AS OPERATOR
             </Link>
           </div>
         </div>
