@@ -1,0 +1,128 @@
+{
+  "type": "FeatureCollection",
+  "name": "delhi_storm_catchments",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "catchment-1",
+      "properties": {
+        "catchment_id": "CATCH_CP_INNER",
+        "name": "Connaught Place Inner Circle Plaza Catchment",
+        "area_m2": 84500,
+        "impervious_pct": 92.5,
+        "soil_group": "Type-C (Silty Loam / Urban Compacted)",
+        "slope_pct": 0.45,
+        "manning_n_overland": 0.016,
+        "outlet_node": "MH_CP_INNER_01",
+        "depression_storage_mm": 1.8
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.2160, 28.6345],
+            [77.2185, 28.6355],
+            [77.2215, 28.6345],
+            [77.2225, 28.6325],
+            [77.2210, 28.6305],
+            [77.2185, 28.6295],
+            [77.2160, 28.6305],
+            [77.2150, 28.6325],
+            [77.2160, 28.6345]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "catchment-2",
+      "properties": {
+        "catchment_id": "CATCH_MINTO_SUMP",
+        "name": "Minto Road Railway Subway Depression Catchment",
+        "area_m2": 112000,
+        "impervious_pct": 96.0,
+        "soil_group": "Type-D (Impermeable Asphalt / Paved Masonry)",
+        "slope_pct": 2.85,
+        "manning_n_overland": 0.013,
+        "outlet_node": "MH_MINTO_BRIDGE_LOW",
+        "depression_storage_mm": 0.8
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.2230, 28.6355],
+            [77.2260, 28.6368],
+            [77.2295, 28.6362],
+            [77.2290, 28.6335],
+            [77.2255, 28.6325],
+            [77.2230, 28.6355]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "catchment-3",
+      "properties": {
+        "catchment_id": "CATCH_BARAKHAMBA",
+        "name": "Barakhamba Road Arterial Catchment",
+        "area_m2": 76000,
+        "impervious_pct": 88.0,
+        "soil_group": "Type-C (Urban Compacted)",
+        "slope_pct": 0.65,
+        "manning_n_overland": 0.015,
+        "outlet_node": "MH_BARAKHAMBA_05",
+        "depression_storage_mm": 2.1
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.2215, 28.6325],
+            [77.2250, 28.6310],
+            [77.2280, 28.6270],
+            [77.2255, 28.6260],
+            [77.2225, 28.6295],
+            [77.2215, 28.6325]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "catchment-4",
+      "properties": {
+        "catchment_id": "CATCH_DDU_MARG",
+        "name": "Deen Dayal Upadhyay Marg Interceptor Catchment",
+        "area_m2": 94000,
+        "impervious_pct": 91.0,
+        "soil_group": "Type-C (Urban Compacted)",
+        "slope_pct": 0.80,
+        "manning_n_overland": 0.014,
+        "outlet_node": "MH_DDU_MARG_01",
+        "depression_storage_mm": 1.5
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.2268, 28.6348],
+            [77.2305, 28.6350],
+            [77.2335, 28.6335],
+            [77.2310, 28.6320],
+            [77.2270, 28.6325],
+            [77.2268, 28.6348]
+          ]
+        ]
+      }
+    }
+  ]
+}
+

@@ -68,4 +68,6 @@ scratch/
 test_py.txt
 *.tmp
 *.tsbuildinfo
+Drainlog/
+
 

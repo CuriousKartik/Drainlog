@@ -2,7 +2,11 @@
 
 import React, { useState, useMemo } from "react";
 import DeckGL from "@deck.gl/react";
-import { PathLayer, ColumnLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { PathLayer, ScatterplotLayer } from "@deck.gl/layers";
+// @ts-ignore
+import { BitmapLayer } from "@deck.gl/layers";
+// @ts-ignore
+import { TileLayer } from "@deck.gl/geo-layers";
 
 interface MapViewportProps {
   geojsonData: any;
@@ -11,11 +15,11 @@ interface MapViewportProps {
 }
 
 const INITIAL_VIEW_STATE = {
-  longitude: 77.2215,
-  latitude: 28.6315,
-  zoom: 14.8,
-  pitch: 45,
-  bearing: -12,
+  longitude: 77.2230,
+  latitude: 28.6335,
+  zoom: 15,
+  pitch: 0,
+  bearing: 0,
   maxZoom: 20,
   minZoom: 10,
 };
@@ -50,29 +54,65 @@ export default function MapViewport({
     return routeData.features.filter((f: any) => f.geometry?.type === "LineString");
   }, [routeData]);
 
-  // Superform Palette (No Neons):
-  // Safe (<10cm): #1E8E5A (Forest Green) -> [30, 142, 90]
-  // Warning (10-25cm): #E8863A (Superform Orange) -> [232, 134, 58]
-  // Impassable (>25cm): #D64545 (Brick Red) -> [214, 69, 69]
-  // Base Neutral: #111111 (Charcoal) -> [17, 17, 17]
-
   const layers = [
-    // 1. Street Network Inundation Layer
+    // 0. High-Resolution Aerial Satellite Basemap (Esri World Imagery)
+    new TileLayer({
+      id: "esri-satellite-tiles",
+      data: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      minZoom: 0,
+      maxZoom: 19,
+      tileSize: 256,
+      renderSubLayers: (props: any) => {
+        const {
+          bbox: { west, south, east, north },
+        } = props.tile;
+
+        return new BitmapLayer(props, {
+          data: null,
+          image: props.data,
+          bounds: [west, south, east, north],
+        });
+      },
+    }),
+
+    // 1. Pass 1: Street Flood Inundation Margin / Curb Halo (Reference Image Style)
+    new PathLayer({
+      id: "road-inundation-halo-layer",
+      data: roads,
+      pickable: false,
+      widthScale: 1,
+      widthMinPixels: 14,
+      widthMaxPixels: 28,
+      getPath: (d: any) => d.geometry.coordinates,
+      getColor: (d: any) => {
+        const depth = d.properties.water_depth_cm;
+        if (depth > 25.0) return [0, 180, 216, 140];
+        if (depth > 10.0) return [0, 180, 216, 110];
+        return [0, 180, 216, 80];
+      },
+      getWidth: (d: any) => (d.properties.water_depth_cm > 25.0 ? 24 : 16),
+      jointRounded: true,
+      capRounded: true,
+    }),
+
+    // 2. Pass 2: Street Network Core Inundation Channel
     new PathLayer({
       id: "road-inundation-layer",
       data: roads,
       pickable: true,
       widthScale: 1,
       widthMinPixels: 4,
-      widthMaxPixels: 10,
+      widthMaxPixels: 9,
       getPath: (d: any) => d.geometry.coordinates,
       getColor: (d: any) => {
         const depth = d.properties.water_depth_cm;
-        if (depth < 10.0) return [30, 142, 90, 230];       // #1E8E5A
-        if (depth <= 25.0) return [232, 134, 58, 235];     // #E8863A
-        return [214, 69, 69, 245];                         // #D64545
+        if (depth < 10.0) return [16, 185, 129, 245];     // #10B981 Emerald Green
+        if (depth <= 25.0) return [245, 158, 11, 245];    // #F59E0B Amber Yellow
+        return [239, 68, 68, 255];                        // #EF4444 Crimson Red
       },
-      getWidth: (d: any) => (d.properties.water_depth_cm > 25.0 ? 8 : 5),
+      getWidth: (d: any) => (d.properties.water_depth_cm > 25.0 ? 7 : 5),
+      jointRounded: true,
+      capRounded: true,
       onHover: (info: any) => setHoverInfo(info),
       updateTriggers: {
         getColor: [geojsonData],
@@ -80,18 +120,22 @@ export default function MapViewport({
       },
     }),
 
-    // 2. 3D Architectural Manhole Cylinders (Charcoal / Terracotta)
-    new ColumnLayer({
-      id: "manhole-columns-layer",
+    // 3. Hydraulic Drainage Inlets (Flat Circular Nodes with Ring Status)
+    new ScatterplotLayer({
+      id: "manhole-markers-layer",
       data: manholes,
       pickable: true,
-      diskResolution: 20,
-      radius: 18,
-      elevationScale: 2.2,
+      opacity: 0.95,
+      stroked: true,
+      filled: true,
+      radiusScale: 1,
+      radiusMinPixels: 6,
+      radiusMaxPixels: 12,
       getPosition: (d: any) => d.geometry.coordinates,
       getFillColor: (d: any) =>
-        d.properties.is_surcharging ? [214, 69, 69, 235] : [17, 17, 17, 210],
-      getElevation: (d: any) => Math.max(14, d.properties.elevation || 14),
+        d.properties.is_surcharging ? [239, 68, 68, 240] : [14, 165, 233, 230],
+      getLineColor: [255, 255, 255, 255],
+      getLineWidth: 2,
       onClick: (info: any) => {
         if (info.object) {
           onSelectNode(info.object.properties);
@@ -99,12 +143,27 @@ export default function MapViewport({
       },
       onHover: (info: any) => setHoverInfo(info),
       updateTriggers: {
-        getElevation: [geojsonData],
         getFillColor: [geojsonData],
       },
     }),
 
-    // 3. Baseline Route (Brick Red)
+    // Surcharged Outer Warning Rings
+    new ScatterplotLayer({
+      id: "manhole-warning-rings-layer",
+      data: manholes.filter((m: any) => m.properties.is_surcharging),
+      pickable: false,
+      opacity: 0.85,
+      stroked: true,
+      filled: false,
+      radiusScale: 1,
+      radiusMinPixels: 14,
+      radiusMaxPixels: 22,
+      getPosition: (d: any) => d.geometry.coordinates,
+      getLineColor: [239, 68, 68, 220],
+      getLineWidth: 2.5,
+    }),
+
+    // 4. Baseline Route (Brick Red)
     new PathLayer({
       id: "route-baseline-layer",
       data: routes.filter((r: any) => r.properties.route_type === "BASELINE_UNPROTECTED"),
@@ -112,12 +171,12 @@ export default function MapViewport({
       widthScale: 1,
       widthMinPixels: 4,
       getPath: (d: any) => d.geometry.coordinates,
-      getColor: [214, 69, 69, 220],
+      getColor: [239, 68, 68, 220],
       getWidth: 4,
       onHover: (info: any) => setHoverInfo(info),
     }),
 
-    // 4. Flood-Safe Detour Route (Deep Charcoal / Green)
+    // 5. Flood-Safe Detour Route (Vibrant Cyan Bypass)
     new PathLayer({
       id: "route-safe-layer",
       data: routes.filter((r: any) => r.properties.route_type === "FLOOD_SAFE_RECOMMENDED"),
@@ -125,12 +184,12 @@ export default function MapViewport({
       widthScale: 1,
       widthMinPixels: 6,
       getPath: (d: any) => d.geometry.coordinates,
-      getColor: [17, 17, 17, 255], // Clean bold black route
+      getColor: [0, 229, 255, 255], // Glowing cyan safe detour
       getWidth: 6,
       onHover: (info: any) => setHoverInfo(info),
     }),
 
-    // 5. Hazard Pinpoints (Subtle terracotta dots)
+    // 6. Hazard Pinpoints
     new ScatterplotLayer({
       id: "hazard-pins-layer",
       data: routeData?.features?.filter((f: any) => f.geometry?.type === "Point") || [],
@@ -142,23 +201,20 @@ export default function MapViewport({
       radiusMinPixels: 6,
       radiusMaxPixels: 14,
       getPosition: (d: any) => d.geometry.coordinates,
-      getFillColor: [214, 69, 69, 255],
-      getLineColor: [250, 247, 240, 255],
+      getFillColor: [239, 68, 68, 255],
+      getLineColor: [255, 255, 255, 255],
       getLineWidth: 2,
       onHover: (info: any) => setHoverInfo(info),
     }),
   ];
 
   return (
-    <div className="relative w-full h-full bg-[#F5F1E8] overflow-hidden rounded-2xl border border-border-light">
+    <div className="relative w-full h-full bg-slate-950 overflow-hidden rounded-2xl border border-border-light">
       <DeckGL
         initialViewState={INITIAL_VIEW_STATE}
         controller={true}
         layers={layers}
-      >
-        {/* Warm cream minimal background */}
-        <div className="absolute inset-0 bg-[#F5F1E8] pointer-events-none opacity-95" />
-      </DeckGL>
+      />
 
       {/* Floating Hover Tooltip (Superform Card Style) */}
       {hoverInfo && hoverInfo.object && (
@@ -233,31 +289,35 @@ export default function MapViewport({
         </div>
       )}
 
-      {/* Superform Map Legend */}
-      <div className="absolute top-4 right-4 z-40 bg-white border border-border-light rounded-md p-3.5 shadow-sm text-xs font-mono space-y-2">
-        <div className="label-mono font-semibold">
-          Street Inundation
+      {/* Aerial Ribbon Map Legend */}
+      <div className="absolute top-4 right-4 z-40 bg-white/95 backdrop-blur-sm border border-border-light rounded-lg p-3.5 shadow-md text-xs font-mono space-y-2">
+        <div className="label-mono font-bold text-accent-black uppercase text-[10px] tracking-wider border-b border-border-light pb-1">
+          Aerial Flood Telemetry
         </div>
         <div className="space-y-1.5 pt-0.5">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#1E8E5A] inline-block" />
+            <span className="w-4 h-2.5 rounded bg-[#00B4D8]/60 border border-[#00B4D8] inline-block" />
+            <span className="text-text-secondary text-[11px]">Water Margin / Curb Halo</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-4 h-1 rounded-sm bg-[#10B981] inline-block" />
             <span className="text-text-secondary text-[11px]">&lt; 10 cm (Passable)</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-accent-orange inline-block" />
-            <span className="text-text-secondary text-[11px]">10–25 cm (Slowdown)</span>
+            <span className="w-4 h-1.5 rounded-sm bg-[#F59E0B] inline-block" />
+            <span className="text-text-secondary text-[11px]">10–25 cm (Caution)</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#D64545] inline-block" />
+            <span className="w-4 h-2 rounded-sm bg-[#EF4444] inline-block" />
             <span className="text-text-secondary text-[11px]">&gt; 25 cm (Impassable)</span>
           </div>
           <div className="flex items-center gap-2 pt-1 border-t border-border-light">
-            <span className="w-2.5 h-2.5 rounded-sm bg-accent-black inline-block" />
-            <span className="text-text-secondary text-[11px]">Drainage Inlets (3D)</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#0EA5E9] border-2 border-white inline-block shadow-sm" />
+            <span className="text-text-secondary text-[11px]">Manhole Station Inlet</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-4 h-0.5 bg-accent-black inline-block" />
-            <span className="text-text-secondary text-[11px]">Safe Detour Route</span>
+            <span className="w-4 h-1 rounded-sm bg-[#00E5FF] inline-block" />
+            <span className="text-text-secondary text-[11px]">Flood-Safe Detour</span>
           </div>
         </div>
       </div>

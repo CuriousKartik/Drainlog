@@ -150,7 +150,7 @@ export default function NowcastPage() {
               Dynamic Inundation Hydrograph &amp; 95% Confidence Envelope
             </h3>
             <p className="text-xs text-text-muted mt-0.5 font-sans">
-              Coupled Saint-Venant 1D-2D hydrograph forecasting depth with ensemble variance spread
+              Dynamic hydrograph forecasting water depth with ensemble variance spread
             </p>
           </div>
           <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-semibold px-3 py-1 rounded-full tracking-wider whitespace-nowrap inline-flex items-center gap-1.5 font-mono">

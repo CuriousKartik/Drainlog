@@ -1,0 +1,131 @@
+[TITLE]
+;;Project: JalKal Delhi Basin Hydrology & Urban Storm Sewer Network
+;;Catchment: Connaught Circus to Minto Railway Underpass Trunk to Yamuna Outfall
+;;Model Version: EPA-SWMM 5.2.4
+
+[OPTIONS]
+;;Option             Value
+FLOW_UNITS           CMS
+INFILTRATION         HORTON
+FLOW_ROUTING         DYNAMIC_WAVE
+LINK_OFFSETS         DEPTH
+MIN_SLOPE            0.0001
+ALLOW_PONDING        YES
+SKIP_STEADY_STATE    NO
+START_DATE           09/17/2026
+START_TIME           00:00:00
+REPORT_START_DATE    09/17/2026
+REPORT_START_TIME    00:00:00
+END_DATE             09/17/2026
+END_TIME             06:00:00
+SWEEP_START          01/01
+SWEEP_END            12/31
+DRY_DAYS             5
+REPORT_STEP          00:01:00
+WET_STEP             00:00:30
+DRY_STEP             00:05:00
+ROUTING_STEP         00:00:05
+SYS_FLOW_TOL         5
+LAT_FLOW_TOL         5
+HEAD_TOLERANCE       0.0015
+MINIMUM_STEP         0.5
+THREADS              4
+
+[EVAPORATION]
+;;Data Source    Parameters
+CONSTANT         2.80
+DRY_ONLY         NO
+
+[RAINGAGES]
+;;Name           Format    Interval SCF      Source    
+RG_PALAM_RADAR   INTENSITY 0:15     1.0      TIMESERIES TS_STORM_EVENT
+
+[SUBCATCHMENTS]
+;;Name           Rain Gage        Outlet           Area     %Imperv  Width    %Slope   CurbLen  SnowPack        
+SC_CP_INNER      RG_PALAM_RADAR   MH_CP_INNER_01   8.45     92.5     420      0.45     0        
+SC_CP_RADIAL     RG_PALAM_RADAR   MH_CP_RADIAL_02  6.10     90.0     310      0.50     0        
+SC_CP_OUTER      RG_PALAM_RADAR   MH_CP_OUTER_03   7.80     94.0     380      0.60     0        
+SC_MINTO_SUMP    RG_PALAM_RADAR   MH_MINTO_LOW     12.40    96.5     490      2.85     0        
+SC_BHAVBHUTI     RG_PALAM_RADAR   MH_BHAVBHUTI_06  5.80     88.0     280      0.75     0        
+SC_DDU_MARG      RG_PALAM_RADAR   MH_DDU_01        8.90     91.0     350      0.80     0        
+
+[SUBAREAS]
+;;Subcatchment   N-Imperv   N-Perv     S-Imperv   S-Perv     %Zero-Imperv Route-To   %Routed   
+SC_CP_INNER      0.014      0.150      1.50       3.80       25           OUTLET    
+SC_CP_RADIAL     0.014      0.150      1.50       3.80       25           OUTLET    
+SC_CP_OUTER      0.014      0.150      1.50       3.80       25           OUTLET    
+SC_MINTO_SUMP    0.012      0.120      0.80       2.50       40           OUTLET    
+SC_BHAVBHUTI     0.014      0.150      1.50       3.80       20           OUTLET    
+SC_DDU_MARG      0.014      0.150      1.50       3.80       20           OUTLET    
+
+[INFILTRATION]
+;;Subcatchment   MaxRate    MinRate    Decay      DryTime    MaxInfil  
+SC_CP_INNER      75.0       8.5        3.5        7          0         
+SC_CP_RADIAL     75.0       8.5        3.5        7          0         
+SC_CP_OUTER      75.0       8.5        3.5        7          0         
+SC_MINTO_SUMP    65.0       6.0        4.0        7          0         
+SC_BHAVBHUTI     75.0       8.5        3.5        7          0         
+SC_DDU_MARG      75.0       8.5        3.5        7          0         
+
+[JUNCTIONS]
+;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
+MH_CP_INNER_01   214.00     2.50       0.15       0.80       1200      
+MH_CP_RADIAL_02  213.20     2.60       0.20       0.80       1500      
+MH_CP_OUTER_03   212.10     2.80       0.25       1.00       2200      
+MH_MINTO_LOW     209.20     2.60       0.30       3.50       6500      
+MH_BHAVBHUTI_06  208.10     4.90       0.20       0.50       800       
+MH_DDU_01        211.00     2.80       0.20       0.60       1100      
+
+[OUTFALLS]
+;;Name           Elevation  Type       Stage Data       Gated    Route To        
+OUTFALL_YAMUNA   206.80     FREE                        NO                       
+
+[CONDUITS]
+;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
+C_CP_RADIAL      MH_CP_INNER_01   MH_CP_RADIAL_02  280.0      0.014      0.0        0.0        0.0        0.0       
+C_RADIAL_OUTER   MH_CP_RADIAL_02  MH_CP_OUTER_03   310.0      0.014      0.0        0.0        0.0        0.0       
+C_OUTER_MINTO    MH_CP_OUTER_03   MH_MINTO_LOW     480.0      0.014      0.0        0.0        0.0        0.0       
+C_MINTO_BHAV     MH_MINTO_LOW     MH_BHAVBHUTI_06  310.0      0.015      0.0        0.0        0.0        0.0       
+C_BHAV_OUTFALL   MH_BHAVBHUTI_06  OUTFALL_YAMUNA   310.0      0.014      0.0        0.0        0.0        0.0       
+C_DDU_TRUNK      MH_DDU_01        MH_MINTO_LOW     290.0      0.014      0.0        0.0        0.0        0.0       
+
+[XSECTIONS]
+;;Link           Shape        Geom1      Geom2      Geom3      Geom4      Barrels    Culvert   
+C_CP_RADIAL      CIRCULAR     1.20       0          0          0          1          
+C_RADIAL_OUTER   CIRCULAR     1.20       0          0          0          1          
+C_OUTER_MINTO    CIRCULAR     1.20       0          0          0          1          
+C_MINTO_BHAV     CIRCULAR     1.20       0          0          0          1          
+C_BHAV_OUTFALL   CIRCULAR     1.40       0          0          0          1          
+C_DDU_TRUNK      CIRCULAR     1.00       0          0          0          1          
+
+[TIMESERIES]
+;;Name           Date       Time       Value     
+TS_STORM_EVENT              00:00      4.0       
+TS_STORM_EVENT              00:15      18.5      
+TS_STORM_EVENT              00:30      54.2      
+TS_STORM_EVENT              00:45      78.5      
+TS_STORM_EVENT              01:00      62.0      
+TS_STORM_EVENT              01:15      34.5      
+TS_STORM_EVENT              01:30      15.0      
+TS_STORM_EVENT              02:00      6.0       
+TS_STORM_EVENT              03:00      2.0       
+
+[COORDINATES]
+;;Node           X-Coord            Y-Coord           
+MH_CP_INNER_01   77.2180            28.6340           
+MH_CP_RADIAL_02  77.2205            28.6322           
+MH_CP_OUTER_03   77.2225            28.6305           
+MH_MINTO_LOW     77.2268            28.6348           
+MH_BHAVBHUTI_06  77.2235            28.6362           
+MH_DDU_01        77.2285            28.6342           
+OUTFALL_YAMUNA   77.2340            28.6385           
+
+[REPORT]
+INPUT            YES
+CONTINUITY       YES
+FLOWSTATS        YES
+NODESTATS        YES
+SUBCATCHMENTS    ALL
+NODES            ALL
+LINKS            ALL
+

@@ -1,0 +1,40 @@
+{
+  "dataset_name": "CartoDEM_HighRes_Delhi_Central_10m",
+  "source_agency": "ISRO / NRSC & Survey of India (Bhuvan Geoportal)",
+  "projection": "EPSG:32643 (WGS 84 / UTM Zone 43N)",
+  "geographic_crs": "EPSG:4326 (WGS 84)",
+  "pixel_resolution_meters": {
+    "dx": 10.0,
+    "dy": 10.0
+  },
+  "grid_dimensions": {
+    "rows": 850,
+    "cols": 920,
+    "bands": 1
+  },
+  "bounding_box_utm": {
+    "min_x": 716400.0,
+    "min_y": 3169200.0,
+    "max_x": 725600.0,
+    "max_y": 3177700.0
+  },
+  "bounding_box_wgs84": {
+    "min_lon": 77.2050,
+    "max_lon": 77.2450,
+    "min_lat": 28.6200,
+    "max_lat": 28.6480
+  },
+  "elevation_stats_amsl_meters": {
+    "min": 206.50,
+    "max": 224.80,
+    "mean": 215.35,
+    "minto_subway_dip": 211.80,
+    "yamuna_outfall_threshold": 206.80,
+    "nodata_value": -9999.0
+  },
+  "geotiff_archive_path": "/var/gis/rasters/cartodem_central_delhi_10m.tif",
+  "compression": "DEFLATE",
+  "tiled": true,
+  "tile_size": [256, 256]
+}
+

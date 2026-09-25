@@ -1,0 +1,71 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "node-23",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.2268,
+          28.6348
+        ]
+      },
+      "properties": {
+        "code": "MH_MINTO_BRIDGE_LOW",
+        "name": "Minto Railway Underpass Dip Sump",
+        "rim_elev_m": 211.8,
+        "invert_elev_m": 209.2,
+        "subcatchment_area_m2": 12400,
+        "is_critical_chokepoint": true,
+        "connected_outfall": "OUTFALL_YAMUNA_01"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node-22",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.2248,
+          28.6338
+        ]
+      },
+      "properties": {
+        "code": "MH_MINTO_APPROACH_01",
+        "name": "Minto Road Mid-Descent Chamber",
+        "rim_elev_m": 213.4,
+        "invert_elev_m": 210.6,
+        "subcatchment_area_m2": 9100,
+        "is_critical_chokepoint": false,
+        "connected_outfall": "OUTFALL_YAMUNA_01"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node-35",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          77.234,
+          28.6385
+        ]
+      },
+      "properties": {
+        "code": "OUTFALL_YAMUNA_01",
+        "name": "Trunk Drain Outfall to Yamuna River",
+        "rim_elev_m": 209.5,
+        "invert_elev_m": 206.8,
+        "subcatchment_area_m2": 18500,
+        "is_critical_chokepoint": false,
+        "connected_outfall": "YAMUNA_RIVER"
+      }
+    }
+  ]
+}

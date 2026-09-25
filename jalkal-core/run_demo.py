@@ -510,7 +510,9 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       font-family: var(--font-mono);
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
+      overflow-y: auto;
       width: 100%;
+      min-height: 100%;
     }
 
     .heading-display { font-family: var(--font-display); font-weight: 900; letter-spacing: -0.02em; }
@@ -760,7 +762,8 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       flex: 1;
       width: 100%;
       padding: 2.2rem 2.5rem;
-      overflow-y: auto;
+      overflow-y: auto !important;
+      min-height: calc(100vh - 64px);
       max-width: 100%;
     }
 
@@ -1072,6 +1075,301 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         grid-template-columns: 1fr !important;
       }
     }
+
+    /* Master Screen Layout and Floating HUD Components */
+    .main-content.master-screen-layout {
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: 100% !important;
+      min-height: calc(100vh - 64px);
+      overflow-y: auto !important;
+      position: relative;
+    }
+    body.fullscreen-map-mode .main-content.master-screen-layout {
+      height: 100vh !important;
+      min-height: 100vh !important;
+      overflow: hidden !important;
+    }
+    body.fullscreen-map-mode #master-screen-status-section {
+      display: none !important;
+    }
+
+    #master-screen-container {
+      position: relative;
+      width: 100%;
+      min-height: 100%;
+      background: var(--bg-primary);
+    }
+    #master-screen-map-wrapper {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 64px);
+      min-height: 520px;
+      overflow: hidden;
+      background: #111827;
+    }
+    body.fullscreen-map-mode #master-screen-map-wrapper {
+      height: 100vh !important;
+      min-height: 100vh !important;
+    }
+    #master-screen-map {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .master-scroll-hint {
+      position: absolute;
+      bottom: 78px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      background: rgba(17, 24, 39, 0.82);
+      color: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 9999px;
+      padding: 0.28rem 0.85rem;
+      font-size: 0.62rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .master-scroll-hint:hover {
+      background: rgba(17, 24, 39, 0.96);
+      color: #FFFFFF;
+      transform: translateX(-50%) translateY(-2px);
+    }
+    body.fullscreen-map-mode .master-scroll-hint {
+      display: none !important;
+    }
+
+    .master-hud-top {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.2rem;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 9999px;
+      padding: 0.4rem 0.9rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      max-width: 95vw;
+    }
+
+    .master-basemap-group {
+      display: flex;
+      background: #E2E8F0;
+      border-radius: 9999px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .btn-bm-toggle {
+      background: transparent;
+      border: none;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-bm-toggle.active {
+      background: var(--accent-black);
+      color: #FFFFFF;
+      font-weight: 700;
+    }
+
+    .btn-hud-action {
+      background: white;
+      border: 1px solid var(--border-medium);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: all 0.15s ease;
+    }
+    .btn-hud-action:hover {
+      background: #F1F5F9;
+    }
+
+    .master-hud-bottom {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 0, 0, 0.14);
+      border-radius: 14px;
+      padding: 0.6rem 1rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+      width: 92%;
+      max-width: 840px;
+    }
+
+    .master-player-btn {
+      background: var(--accent-black);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.45rem 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: background 0.15s ease;
+    }
+    .master-player-btn:hover {
+      background: #334155;
+    }
+
+    .master-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: #E2E8F0;
+      outline: none;
+    }
+    .master-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-black);
+      border: 2px solid white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+    .master-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-black);
+      border: 2px solid white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+
+    .preset-pill {
+      background: white;
+      border: 1px solid var(--border-medium);
+      border-radius: 9999px;
+      padding: 0.25rem 0.55rem;
+      font-family: var(--font-mono);
+      font-size: 0.64rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .preset-pill:hover, .preset-pill.active {
+      background: var(--accent-black);
+      color: white;
+      border-color: var(--accent-black);
+    }
+
+    .master-drawer {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      bottom: 86px;
+      width: 350px;
+      max-width: calc(100vw - 28px);
+      z-index: 1002;
+      background: #FFFFFF;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,0.12);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+      overflow-y: auto;
+      padding: 1.1rem;
+      transform: translateX(120%);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .master-drawer.open {
+      transform: translateX(0);
+    }
+
+    .master-floating-legend {
+      position: absolute;
+      bottom: 86px;
+      left: 16px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 10px;
+      padding: 0.65rem 0.85rem;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.14);
+    }
+
+    .node-id-badge {
+      background: rgba(15, 23, 42, 0.88);
+      color: #FFFFFF;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .node-id-badge.alert {
+      background: #DC2626;
+      border-color: #FFFFFF;
+      box-shadow: 0 0 6px rgba(220, 38, 38, 0.9);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse-dot-anim 1.8s infinite;
+    }
+    .pulse-dot.red { background: #EF4444; box-shadow: 0 0 6px #EF4444; }
+    .pulse-dot.orange { background: #F59E0B; box-shadow: 0 0 6px #F59E0B; }
+    .pulse-dot.green { background: #10B981; box-shadow: 0 0 6px #10B981; }
+    @keyframes pulse-dot-anim {
+      0% { transform: scale(0.9); opacity: 0.7; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.7; }
+    }
   </style>
 </head>
 <body>
@@ -1116,6 +1414,9 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       fullScreenMode: false,
       authModal: null,
       floodMapMode: "current",
+      masterBasemap: "satellite",
+      selectedMasterFeature: null,
+      showMasterDetour: false,
       horizonMin: 45,
       cloggingRatio: 0.45,
       inletCapacity: 3.4,
@@ -1224,6 +1525,318 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       { date: "CURRENT SESSION", event: "Live Doppler Nowcast", rainfall_mm: "LIVE", peak_depth_cm: "LIVE", detours: "LIVE", solver_latency_s: "0.014", status: "ACTIVE" }
     ];
 
+    const NODE_SHORT_IDS = {
+      "MH_CP_INNER_01": "029",
+      "MH_CP_INNER_02": "926",
+      "MH_CP_RADIAL_02": "925",
+      "MH_CP_INNER_04": "924",
+      "MH_CP_INNER_05": "923",
+      "MH_CP_INNER_06": "922",
+      "MH_CP_INNER_07": "921",
+      "MH_CP_INNER_08": "920",
+      "MH_RAJIV_CHOWK_CTR": "900",
+      "MH_CP_MID_NORTH": "919",
+      "MH_CP_MID_EAST": "918",
+      "MH_CP_MID_SOUTH": "915",
+      "MH_CP_MID_WEST": "914",
+      "MH_CP_OUTER_03": "913",
+      "MH_CP_OUTER_MINTO": "917",
+      "MH_CP_OUTER_CHELM": "911",
+      "MH_MINTO_APPROACH_01": "912",
+      "MH_MINTO_BRIDGE_LOW": "916",
+      "MH_MINTO_EAST_PUMP": "016",
+      "MH_BHAVBHUTI_06": "018",
+      "MH_DDU_MARG_01": "172",
+      "MH_DDU_MARG_02": "175",
+      "MH_JLN_MARG_LNJP": "226",
+      "MH_DELHI_GATE_TRUNK": "228",
+      "OUTFALL_YAMUNA_01": "731"
+    };
+
+    const DELHI_DRAINAGE_CONDUITS = [
+            // 1. Full Inner Circle Conduit Loop
+            [
+              [28.6340, 77.2180], [28.6342, 77.2190], [28.6338, 77.2202],
+              [28.6330, 77.2207], [28.6322, 77.2205], [28.6315, 77.2202],
+              [28.6312, 77.2198], [28.6308, 77.2185], [28.6312, 77.2174],
+              [28.6315, 77.2170], [28.6322, 77.2166], [28.6328, 77.2164],
+              [28.6335, 77.2166], [28.6339, 77.2169], [28.6340, 77.2180]
+            ],
+            // 2. Full Outer Circle (Connaught Circus) Trunk Loop (Blue conduit matching Screenshot 4)
+            [
+              [28.6360, 77.2182], [28.6358, 77.2205], [28.6352, 77.2228],
+              [28.6335, 77.2235], [28.6328, 77.2238], [28.6315, 77.2234],
+              [28.6305, 77.2225], [28.6295, 77.2215], [28.6288, 77.2185],
+              [28.6292, 77.2162], [28.6298, 77.2148], [28.6312, 77.2138],
+              [28.6328, 77.2135], [28.6342, 77.2138], [28.6351, 77.2145],
+              [28.6358, 77.2165], [28.6360, 77.2182]
+            ],
+            // 3. Middle Circle Collector Ring
+            [[28.6348, 77.2185], [28.6344, 77.2208], [28.6328, 77.2215], [28.6306, 77.2208], [28.6300, 77.2185], [28.6306, 77.2162], [28.6328, 77.2155], [28.6344, 77.2162], [28.6348, 77.2185]],
+            // 4. Central Hub Spoke Feeders
+            [[28.6328, 77.2185], [28.6340, 77.2180]],
+            [[28.6328, 77.2185], [28.6322, 77.2205]],
+            [[28.6328, 77.2185], [28.6308, 77.2185]],
+            [[28.6328, 77.2185], [28.6328, 77.2164]],
+            // 5. Radial 1: Chelmsford Road Arterial Conduit
+            [[28.6340, 77.2180], [28.6348, 77.2182], [28.6360, 77.2182], [28.6375, 77.2186], [28.6392, 77.2195], [28.6410, 77.2215]],
+            // 6. Radial 2: Minto Main Storm Trunk
+            [[28.6338, 77.2202], [28.6344, 77.2215], [28.6352, 77.2228], [28.6345, 77.2238], [28.6338, 77.2248], [28.6344, 77.2258], [28.6348, 77.2268], [28.6353, 77.2274], [28.6357, 77.2284], [28.6360, 77.2290]],
+            // 7. Radial 3: Barakhamba Road Trunk Corridor
+            [[28.6328, 77.2218], [28.6328, 77.2238], [28.6315, 77.2244], [28.6300, 77.2250], [28.6292, 77.2252], [28.6275, 77.2265]],
+            // 8. Radial 4: Kasturba Gandhi Marg Trunk Corridor
+            [[28.6312, 77.2198], [28.6304, 77.2208], [28.6295, 77.2215], [28.6285, 77.2220], [28.6275, 77.2225], [28.6258, 77.2235]],
+            // 9. Radial 5: Janpath Main Storm Drain Corridor
+            [[28.6308, 77.2185], [28.6298, 77.2185], [28.6288, 77.2185], [28.6275, 77.2185], [28.6262, 77.2185], [28.6248, 77.2188], [28.6235, 77.2195]],
+            // 10. Radial 6: Sansad Marg Collector
+            [[28.6315, 77.2170], [28.6308, 77.2160], [28.6298, 77.2148], [28.6285, 77.2135], [28.6268, 77.2118]],
+            // 11. Radial 7: Baba Kharak Singh Marg
+            [[28.6328, 77.2164], [28.6328, 77.2150], [28.6328, 77.2135], [28.6325, 77.2125], [28.6322, 77.2115]],
+            // 12. Radial 8: Shaheed Bhagat Singh Road Drain
+            [[28.6339, 77.2169], [28.6345, 77.2158], [28.6351, 77.2145], [28.6360, 77.2128], [28.6370, 77.2105]],
+            // 13. Bhavbhuti Marg Railway Bypass Collector
+            [[28.6360, 77.2182], [28.6365, 77.2195], [28.6368, 77.2210], [28.6365, 77.2225], [28.6362, 77.2235], [28.6360, 77.2255], [28.6355, 77.2272], [28.6360, 77.2290]],
+            // 14. Deen Dayal Upadhyay (DDU) Marg Interceptor Trunk
+            [[28.6348, 77.2268], [28.6344, 77.2278], [28.6342, 77.2285], [28.6340, 77.2298], [28.6338, 77.2312], [28.6335, 77.2330]],
+            // 15. Tolstoy Marg Transverse Interceptor
+            [[28.6292, 77.2252], [28.6282, 77.2238], [28.6275, 77.2225], [28.6268, 77.2205], [28.6262, 77.2185]],
+            // 16. Outfall Trunk Main to Yamuna River
+            [[28.6360, 77.2290], [28.6364, 77.2302], [28.6368, 77.2315], [28.6372, 77.2320], [28.6378, 77.2332], [28.6385, 77.2340]]
+          ];
+
+    // Comprehensive Delhi Connaught Place & Minto Inundation Street Network
+        const DELHI_STREET_NETWORK = [
+          {
+            id: 'minto_underpass',
+            name: 'Minto Road Railway Subway (Choke Sump)',
+            coords: [
+              [28.6332, 77.2246], [28.6336, 77.2251], [28.6340, 77.2257], [28.6343, 77.2261],
+              [28.6346, 77.2265], [28.6348, 77.2268], [28.6350, 77.2272], [28.6353, 77.2276],
+              [28.6357, 77.2284], [28.6360, 77.2290]
+            ],
+            baseElev: 211.8,
+            getDepth: (h, isEnv) => isEnv ? h.mintoDepth + h.uncertaintyCm : h.mintoDepth,
+            nominalSpeed: 40
+          },
+          {
+            id: 'ddu_marg',
+            name: 'Deen Dayal Upadhyay (DDU) Marg',
+            coords: [
+              [28.6348, 77.2268], [28.6344, 77.2278], [28.6342, 77.2285], [28.6340, 77.2298],
+              [28.6338, 77.2312], [28.6335, 77.2330]
+            ],
+            baseElev: 213.2,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(1.2, Math.round(h.mintoDepth * 0.42 * (1.0 + state.cloggingRatio * 0.25) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.42 * 10) / 10 : base;
+            },
+            nominalSpeed: 45
+          },
+          {
+            id: 'minto_radial_approach',
+            name: 'Radial Road 2 & Minto Radial Approach',
+            coords: [
+              [28.6338, 77.2202], [28.6344, 77.2215], [28.6345, 77.2238], [28.6348, 77.2268]
+            ],
+            baseElev: 215.4,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(1.0, Math.round(h.mintoDepth * 0.38 * (1.0 + state.cloggingRatio * 0.3) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.38 * 10) / 10 : base;
+            },
+            nominalSpeed: 40
+          },
+          {
+            id: 'outer_circle_east',
+            name: 'Connaught Circus Outer Circle (East / Shivaji Bridge)',
+            coords: [
+              [28.6360, 77.2182], [28.6358, 77.2205], [28.6352, 77.2228], [28.6335, 77.2235],
+              [28.6328, 77.2238], [28.6315, 77.2234], [28.6305, 77.2225]
+            ],
+            baseElev: 215.8,
+            getDepth: (h, isEnv) => {
+              const extra = (h.mintoDepth > 35) ? (h.mintoDepth - 35) * 0.22 : 0;
+              const base = Math.max(1.5, Math.round((5.8 * (h.rain / 55.0) + extra) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.25 * 10) / 10 : base;
+            },
+            nominalSpeed: 40
+          },
+          {
+            id: 'outer_circle_west',
+            name: 'Connaught Circus Outer Circle (West / Regal)',
+            coords: [
+              [28.6305, 77.2225], [28.6295, 77.2215], [28.6288, 77.2185], [28.6292, 77.2162],
+              [28.6298, 77.2148], [28.6312, 77.2138], [28.6328, 77.2135], [28.6342, 77.2138],
+              [28.6351, 77.2145], [28.6358, 77.2165], [28.6360, 77.2182]
+            ],
+            baseElev: 216.9,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.8, Math.round(3.4 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.12 * 10) / 10 : base;
+            },
+            nominalSpeed: 45
+          },
+          {
+            id: 'inner_circle',
+            name: 'Connaught Circus Inner Circle (Full Ring)',
+            coords: [
+              [28.6340, 77.2180], [28.6342, 77.2190], [28.6338, 77.2202], [28.6330, 77.2207],
+              [28.6322, 77.2205], [28.6315, 77.2202], [28.6312, 77.2198], [28.6308, 77.2185],
+              [28.6312, 77.2174], [28.6315, 77.2170], [28.6322, 77.2166], [28.6328, 77.2164],
+              [28.6335, 77.2166], [28.6339, 77.2169], [28.6340, 77.2180]
+            ],
+            baseElev: 216.2,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(1.0, Math.round(4.6 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.15 * 10) / 10 : base;
+            },
+            nominalSpeed: 40
+          },
+          {
+            id: 'middle_circle',
+            name: 'Connaught Circus Middle Circle Collector',
+            coords: [
+              [28.6348, 77.2185], [28.6344, 77.2208], [28.6328, 77.2215], [28.6306, 77.2208],
+              [28.6300, 77.2185], [28.6306, 77.2162], [28.6328, 77.2155], [28.6344, 77.2162],
+              [28.6348, 77.2185]
+            ],
+            baseElev: 216.4,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.9, Math.round(4.1 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.14 * 10) / 10 : base;
+            },
+            nominalSpeed: 35
+          },
+          {
+            id: 'barakhamba_flyover',
+            name: 'Barakhamba Road & Ranjit Singh Flyover (Detour Route)',
+            coords: [
+              [28.6340, 77.2180], [28.6333, 77.2192], [28.6325, 77.2210], [28.6318, 77.2223],
+              [28.6309, 77.2234], [28.6300, 77.2246], [28.6290, 77.2257], [28.6278, 77.2268],
+              [28.6276, 77.2278], [28.6282, 77.2284], [28.6294, 77.2293], [28.6307, 77.2301],
+              [28.6322, 77.2308], [28.6337, 77.2314], [28.6350, 77.2311], [28.6358, 77.2299],
+              [28.6360, 77.2290]
+            ],
+            baseElev: 217.5,
+            getDepth: (h, isEnv) => 0.4,
+            nominalSpeed: 50
+          },
+          {
+            id: 'bhavbhuti_marg',
+            name: 'Bhavbhuti Marg (Railway Bypass Corridor)',
+            coords: [
+              [28.6340, 77.2180], [28.6347, 77.2182], [28.6353, 77.2186], [28.6361, 77.2192],
+              [28.6368, 77.2199], [28.6375, 77.2208], [28.6381, 77.2217], [28.6384, 77.2226],
+              [28.6386, 77.2238], [28.6385, 77.2248], [28.6382, 77.2258], [28.6377, 77.2268],
+              [28.6371, 77.2276], [28.6365, 77.2284], [28.6360, 77.2290]
+            ],
+            baseElev: 216.0,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.6, Math.round(2.2 * (h.rain / 50.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.1 * 10) / 10 : base;
+            },
+            nominalSpeed: 40
+          },
+          {
+            id: 'kg_marg',
+            name: 'Kasturba Gandhi (KG) Marg Arterial',
+            coords: [
+              [28.6312, 77.2198], [28.6304, 77.2208], [28.6295, 77.2215], [28.6285, 77.2220],
+              [28.6275, 77.2225], [28.6258, 77.2235]
+            ],
+            baseElev: 216.8,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.5, Math.round(2.8 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.1 * 10) / 10 : base;
+            },
+            nominalSpeed: 45
+          },
+          {
+            id: 'janpath',
+            name: 'Janpath Road Corridor',
+            coords: [
+              [28.6308, 77.2185], [28.6298, 77.2185], [28.6288, 77.2185], [28.6275, 77.2185],
+              [28.6262, 77.2185], [28.6248, 77.2188], [28.6235, 77.2195]
+            ],
+            baseElev: 217.0,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.5, Math.round(2.5 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.08 * 10) / 10 : base;
+            },
+            nominalSpeed: 45
+          },
+          {
+            id: 'chelmsford_road',
+            name: 'Chelmsford Road (Paharganj / NDLS Connector)',
+            coords: [
+              [28.6340, 77.2180], [28.6348, 77.2182], [28.6360, 77.2182], [28.6375, 77.2186],
+              [28.6392, 77.2195], [28.6410, 77.2215]
+            ],
+            baseElev: 215.8,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.8, Math.round(3.6 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.12 * 10) / 10 : base;
+            },
+            nominalSpeed: 35
+          },
+          {
+            id: 'tolstoy_marg',
+            name: 'Tolstoy Marg Transverse Interceptor',
+            coords: [
+              [28.6292, 77.2252], [28.6282, 77.2238], [28.6275, 77.2225], [28.6268, 77.2205],
+              [28.6262, 77.2185]
+            ],
+            baseElev: 217.2,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.4, Math.round(1.8 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.08 * 10) / 10 : base;
+            },
+            nominalSpeed: 45
+          },
+          {
+            id: 'sansad_marg',
+            name: 'Sansad Marg (Parliament Street)',
+            coords: [
+              [28.6315, 77.2170], [28.6308, 77.2160], [28.6298, 77.2148], [28.6285, 77.2135],
+              [28.6268, 77.2118]
+            ],
+            baseElev: 217.6,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.3, Math.round(1.5 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.06 * 10) / 10 : base;
+            },
+            nominalSpeed: 50
+          },
+          {
+            id: 'bks_marg',
+            name: 'Baba Kharak Singh (BKS) Marg',
+            coords: [
+              [28.6328, 77.2164], [28.6328, 77.2150], [28.6328, 77.2135], [28.6325, 77.2125],
+              [28.6322, 77.2115]
+            ],
+            baseElev: 217.8,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.3, Math.round(1.4 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.05 * 10) / 10 : base;
+            },
+            nominalSpeed: 45
+          },
+          {
+            id: 'shaheed_bhagat_singh',
+            name: 'Shaheed Bhagat Singh Road',
+            coords: [
+              [28.6339, 77.2169], [28.6345, 77.2158], [28.6351, 77.2145], [28.6360, 77.2128],
+              [28.6370, 77.2105]
+            ],
+            baseElev: 217.4,
+            getDepth: (h, isEnv) => {
+              const base = Math.max(0.4, Math.round(1.7 * (h.rain / 60.0) * 10) / 10);
+              return isEnv ? base + Math.round(h.uncertaintyCm * 0.06 * 10) / 10 : base;
+            },
+            nominalSpeed: 40
+          }
+        ];
+
+
     function toggleSidebar(forceState) {
       const next = typeof forceState === 'boolean' ? forceState : !state.sidebarOpen;
       state.sidebarOpen = next;
@@ -1270,6 +1883,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         if (window._activeDrainageMap) window._activeDrainageMap.invalidateSize();
         if (window._activeNowcastMap) window._activeNowcastMap.invalidateSize();
         if (window._activeRoutingMap) window._activeRoutingMap.invalidateSize();
+        if (window._activeMasterMap) window._activeMasterMap.invalidateSize();
       }, 150);
     }
 
@@ -1429,8 +2043,8 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           ],
           baseElev: 215.4,
           depth: radialDepth,
-          status: radialDepth >= 10 ? "SLOW" : "PASSABLE",
-          speed: radialDepth >= 10 ? 16 : 36
+          status: radialDepth > 25.0 ? "IMPASSABLE" : (radialDepth >= 10 ? "SLOW" : "PASSABLE"),
+          speed: radialDepth > 25.0 ? 0 : (radialDepth >= 10 ? 16 : 36)
         },
         {
           id: "road-3",
@@ -1641,7 +2255,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         confPct, confLabel, confStyle,
         roads,
         clearanceRate: flyoverDepth < 10 ? 100.0 : 0.0,
-        impassableCount: roads.filter(r => r.status === "IMPASSABLE").length,
+        impassableCount: DELHI_STREET_NETWORK.filter(st => st.getDepth({ mintoDepth, rain, uncertaintyCm }, false) > 25.0).length,
         vehicleMatrix,
         criticalInfrastructure,
         hourlyEconomicLossInr,
@@ -1716,6 +2330,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
     function renderAppShell(contentHtml, pageTitle) {
       const h = calculateHydraulics();
+      const isMasterRoute = (state.route === "/" || state.route === "/dashboard" || state.route === "/master");
 
       return `
         <div class="app-shell" style="min-height: 100vh; display: flex; flex-direction: column;">
@@ -1750,11 +2365,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             <!-- Header Middle Telemetry (Desktop / Tablet) -->
             <div class="header-telemetry" style="display: flex; align-items: center; gap: 0.8rem;">
               <div style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-pill); padding: 0.3rem 0.8rem; font-size: 0.68rem; display: flex; align-items: center; gap: 0.4rem;">
-                <span style="width: 6px; height: 6px; border-radius: 50%; background: #1E8E5A; display: inline-block;"></span>
-                <span>SOLVER: SAINT-VENANT 1D-2D</span>
-              </div>
-              <div style="background: white; border: 1px solid var(--border-light); border-radius: var(--radius-pill); padding: 0.3rem 0.8rem; font-size: 0.68rem;">
-                <span style="color: var(--text-secondary);">PEAK MINTO PONDING: </span>
+                <span id="header-telemetry-minto-label" style="color: var(--text-secondary);">${state.horizonMin === 45 ? 'PEAK MINTO PONDING (T+45M): ' : `MINTO PONDING (T+${state.horizonMin}M): `}</span>
                 <span id="header-telemetry-minto" style="font-weight: 700; color: ${h.mintoDepth > 25 ? '#D64545' : '#E8863A'};">${h.mintoDepth.toFixed(1)} cm</span>
               </div>
             </div>
@@ -1800,6 +2411,20 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                       GIS WORKSTATION & MAPS
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                      <div class="sidebar-item ${isMasterRoute ? 'active' : ''}" data-route="/" onclick="navigate('/')" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer; border-left: 3px solid #10B981;">
+                        <div style="display: flex; flex-direction: column;">
+                          <span style="font-weight: 700; font-size: 0.8rem;">Master Flood Map</span>
+                          <span style="font-size: 0.62rem; color: var(--text-secondary);">Aerial Inundation & Status</span>
+                        </div>
+                        <span class="badge-success" style="font-size: 0.6rem; padding: 0.12rem 0.45rem; font-weight: 700;">PRIMARY LIVE</span>
+                      </div>
+                      <div class="sidebar-item ${state.route === '/catchment-kpi' ? 'active' : ''}" data-route="/catchment-kpi" onclick="navigate('/catchment-kpi')" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer;">
+                        <div style="display: flex; flex-direction: column;">
+                          <span style="font-weight: 700; font-size: 0.8rem;">Catchment Telemetry</span>
+                          <span style="font-size: 0.62rem; color: var(--text-secondary);">Asset Risk & Economic Ticker</span>
+                        </div>
+                        <span class="badge-secondary" style="font-size: 0.6rem; padding: 0.12rem 0.45rem; font-weight: 700;">METRICS</span>
+                      </div>
                       <div class="sidebar-item ${state.route === '/drainage-graph' ? 'active' : ''}" data-route="/drainage-graph" onclick="navigate('/drainage-graph')" style="display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; border-radius: 8px; cursor: pointer;">
                         <div style="display: flex; flex-direction: column;">
                           <span style="font-weight: 700; font-size: 0.8rem;">Drainage GIS Network</span>
@@ -1900,9 +2525,979 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             </aside>
 
             <!-- Main Scroll Area -->
-            <main id="app-main-content" class="main-content">
+            <main id="app-main-content" class="main-content ${isMasterRoute ? 'master-screen-layout' : ''}">
               ${contentHtml}
             </main>
+          </div>
+        </div>
+      `;
+    }
+
+
+    // =========================================================================
+    // Master Screen: Live City Flood & Street Inundation Map Page
+    // Aerial Satellite Basemap + Dual-Pass Flood Ribbons + Flow Arrows + Floating HUD
+    // =========================================================================
+
+    function updateMasterScreenLayers(h, horizonMin) {
+      if (!window._activeMasterMap) return;
+      const map = window._activeMasterMap;
+      const isEnv = (state.floodMapMode === 'envelope');
+
+      // 1. Render Dual-Pass Street Inundation Ribbons
+      if (window._masterRibbonLayerGroup) {
+        window._masterRibbonLayerGroup.clearLayers();
+
+        DELHI_STREET_NETWORK.forEach(st => {
+          const streetDepth = st.getDepth(h, isEnv);
+          const isBlocked = streetDepth > 25.0;
+          const isCaution = streetDepth > 10.0 && streetDepth <= 25.0;
+
+          // Pass 1: Outer Water Margin / Curb Halo (Reference image blue halo)
+          // Dynamically scale halo width and opacity according to flood depth
+          const haloColor = '#00B4D8';
+          const haloWeight = isBlocked ? 28 : (isCaution ? 22 : (streetDepth > 5.0 ? 16 : 8));
+          const haloOpacity = isBlocked ? 0.55 : (isCaution ? 0.45 : (streetDepth > 5.0 ? 0.30 : 0.16));
+
+          const haloPolyline = L.polyline(st.coords, {
+            color: haloColor,
+            weight: haloWeight,
+            opacity: haloOpacity,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(window._masterRibbonLayerGroup);
+
+          // Pass 2: Inner Core Depth Channel
+          // Red (>25cm Impassable), Amber (10-25cm Caution), Green (<=10cm Clear)
+          const coreColor = isBlocked ? '#EF4444' : (isCaution ? '#F59E0B' : '#10B981');
+          const coreWeight = isBlocked ? 7 : (isCaution ? 5.5 : 4.5);
+
+          const corePolyline = L.polyline(st.coords, {
+            color: coreColor,
+            weight: coreWeight,
+            opacity: 0.95,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(window._masterRibbonLayerGroup);
+
+          const clickHandler = () => {
+            selectMasterFeature('road', st.id, st.name, streetDepth, st.baseElev, st.nominalSpeed);
+          };
+
+          haloPolyline.on('click', clickHandler);
+          corePolyline.on('click', clickHandler);
+
+          corePolyline.bindTooltip(`<b>${st.name}</b><br>Depth: <b>${streetDepth.toFixed(1)} cm</b> (${isBlocked ? 'Blocked' : isCaution ? 'Caution' : 'Clear'})`, {
+            sticky: true
+          });
+        });
+      }
+
+      // 2. Render Hydraulic Conduits
+      if (window._masterConduitLayerGroup) {
+        window._masterConduitLayerGroup.clearLayers();
+
+        DELHI_DRAINAGE_CONDUITS.forEach((line, idx) => {
+          const isMintoMain = (idx === 5);
+          const isSurcharging = (isMintoMain && h.qSurcharge > 0);
+          const strokeColor = isSurcharging ? '#EF4444' : (idx === 1 ? '#0284C7' : '#1E293B');
+          const strokeWidth = isMintoMain ? 4.5 : (idx === 1 ? 3.8 : 2.5);
+
+          L.polyline(line, {
+            color: strokeColor,
+            weight: strokeWidth,
+            dashArray: isSurcharging ? '6, 6' : null,
+            opacity: 0.85
+          }).addTo(window._masterConduitLayerGroup);
+        });
+      }
+
+      // 3. Render Manhole Nodes with Station IDs (like 912, 916, 917 in reference image)
+      if (window._masterNodeLayerGroup) {
+        window._masterNodeLayerGroup.clearLayers();
+
+        DELHI_NODES.forEach(n => {
+          const isMinto = (n.code === 'MH_MINTO_BRIDGE_LOW');
+          const isSurcharged = isMinto && (h.mintoDepth > 25);
+          const isElevated = isMinto && (h.mintoDepth > 10 && h.mintoDepth <= 25);
+          const isOutfall = (n.code === 'OUTFALL_YAMUNA_01');
+
+          const fillColor = isSurcharged ? '#EF4444' : (isElevated ? '#F59E0B' : (isOutfall ? '#0284C7' : '#0EA5E9'));
+          const strokeColor = '#FFFFFF';
+          const radius = isMinto ? 8.5 : (isOutfall ? 7.5 : 5.5);
+
+          const marker = L.circleMarker([n.lat, n.lon], {
+            radius: radius,
+            fillColor: fillColor,
+            color: strokeColor,
+            weight: 2,
+            fillOpacity: 0.95
+          }).addTo(window._masterNodeLayerGroup);
+
+          if (isMinto && (isSurcharged || isElevated)) {
+            L.circleMarker([n.lat, n.lon], {
+              radius: 15,
+              fill: false,
+              color: isSurcharged ? '#EF4444' : '#F59E0B',
+              weight: 2,
+              opacity: 0.85,
+              dashArray: isSurcharged ? '4, 4' : null
+            }).addTo(window._masterNodeLayerGroup);
+          }
+
+          const shortId = NODE_SHORT_IDS[n.code] || n.code.replace('MH_', '');
+          const labelIcon = L.divIcon({
+            className: 'master-node-label',
+            html: `<span class="node-id-badge ${isSurcharged ? 'alert' : ''}">${shortId}</span>`,
+            iconSize: [36, 16],
+            iconAnchor: [-8, 8]
+          });
+          L.marker([n.lat, n.lon], { icon: labelIcon, interactive: false }).addTo(window._masterNodeLayerGroup);
+
+          marker.on('click', () => {
+            selectMasterFeature('node', n.code, n.name, isMinto ? h.mintoDepth : 0, n.z_ground, n.z_invert);
+          });
+        });
+      }
+
+      // 4. Update Directional Flow Chevrons
+      updateMasterFlowArrows();
+
+      // 5. Update Detour Route if enabled
+      updateMasterDetourLayer();
+    }
+
+    function updateMasterFlowArrows() {
+      if (!window._activeMasterMap || !window._masterFlowArrowLayerGroup) return;
+      window._masterFlowArrowLayerGroup.clearLayers();
+      const map = window._activeMasterMap;
+      const zoom = map.getZoom();
+      if (zoom < 14) return;
+
+      const h = calculateHydraulics();
+
+      DELHI_DRAINAGE_CONDUITS.forEach((line, idx) => {
+        const isMintoMain = (idx === 5);
+        const isSurcharging = (isMintoMain && h.qSurcharge > 0);
+        const arrowColor = isSurcharging ? '#EF4444' : '#10B981';
+
+        for (let i = 0; i < line.length - 1; i++) {
+          const p1 = line[i];
+          const p2 = line[i + 1];
+
+          const pt1 = map.latLngToLayerPoint(L.latLng(p1[0], p1[1]));
+          const pt2 = map.latLngToLayerPoint(L.latLng(p2[0], p2[1]));
+          const dx = pt2.x - pt1.x;
+          const dy = pt2.y - pt1.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 26) continue;
+
+          const midLat = (p1[0] + p2[0]) / 2;
+          const midLon = (p1[1] + p2[1]) / 2;
+          const deg = Math.atan2(dy, dx) * 180 / Math.PI;
+
+          const icon = L.divIcon({
+            className: 'flow-arrow-marker',
+            html: `<div style="transform: rotate(${deg}deg); display:flex; align-items:center; justify-content:center; width:16px; height:16px; pointer-events:none;">
+              <svg width="14" height="14" viewBox="0 0 24 24">
+                <polygon points="2,5 18,12 2,19 7,12" fill="${arrowColor}" stroke="#FFFFFF" stroke-width="1.2"/>
+              </svg>
+            </div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+          });
+
+          L.marker([midLat, midLon], { icon: icon, interactive: false }).addTo(window._masterFlowArrowLayerGroup);
+        }
+      });
+    }
+
+    function updateMasterDetourLayer() {
+      if (!window._activeMasterMap || !window._masterDetourLayerGroup) return;
+      window._masterDetourLayerGroup.clearLayers();
+
+      if (!state.showMasterDetour) return;
+
+      const detourLatLngs = OSRM_DETOUR_COORDS.map(coord => [coord[1], coord[0]]);
+
+      L.polyline(detourLatLngs, {
+        color: '#00E5FF',
+        weight: 12,
+        opacity: 0.35,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(window._masterDetourLayerGroup);
+
+      L.polyline(detourLatLngs, {
+        color: '#0284C7',
+        weight: 5.5,
+        opacity: 1.0,
+        dashArray: '8, 6',
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(window._masterDetourLayerGroup);
+
+      const startPt = detourLatLngs[0];
+      const endPt = detourLatLngs[detourLatLngs.length - 1];
+
+      L.circleMarker(startPt, {
+        radius: 7,
+        fillColor: '#10B981',
+        color: '#FFFFFF',
+        weight: 2,
+        fillOpacity: 1
+      }).addTo(window._masterDetourLayerGroup).bindPopup('<b>Detour Origin: CP Radial</b>');
+
+      L.circleMarker(endPt, {
+        radius: 7,
+        fillColor: '#0284C7',
+        color: '#FFFFFF',
+        weight: 2,
+        fillOpacity: 1
+      }).addTo(window._masterDetourLayerGroup).bindPopup('<b>Detour Destination: LNJP Hospital Gate</b>');
+    }
+
+    window.updateMasterScreenLayers = updateMasterScreenLayers;
+    window.updateMasterFlowArrows = updateMasterFlowArrows;
+    window.updateMasterDetourLayer = updateMasterDetourLayer;
+
+    function selectMasterFeature(type, id, name, depth, elev, speed, zi) {
+      state.selectedMasterFeature = { type, id, name, depth, elev, speed, zi };
+      renderMasterDrawerContent();
+      const drawer = document.getElementById('master-telemetry-drawer');
+      if (drawer) drawer.classList.add('open');
+    }
+
+    function closeMasterDrawer() {
+      state.selectedMasterFeature = null;
+      const drawer = document.getElementById('master-telemetry-drawer');
+      if (drawer) drawer.classList.remove('open');
+    }
+
+    function toggleMasterDetourRoute() {
+      state.showMasterDetour = !state.showMasterDetour;
+      updateMasterDetourLayer();
+      renderMasterDrawerContent();
+    }
+
+    function switchMasterBasemap(type) {
+      state.masterBasemap = type;
+      if (!window._activeMasterMap || !window._masterBasemaps) return;
+      const map = window._activeMasterMap;
+      
+      Object.values(window._masterBasemaps).forEach(layer => {
+        if (map.hasLayer(layer)) map.removeLayer(layer);
+      });
+
+      if (type === 'street') {
+        window._masterBasemaps.street.addTo(map);
+      } else if (type === 'dark') {
+        window._masterBasemaps.dark.addTo(map);
+      } else {
+        window._masterBasemaps.satellite.addTo(map);
+      }
+
+      const btnSat = document.getElementById('btn-bm-sat');
+      const btnStreet = document.getElementById('btn-bm-street');
+      const btnDark = document.getElementById('btn-bm-dark');
+      if (btnSat) btnSat.classList.toggle('active', type === 'satellite');
+      if (btnStreet) btnStreet.classList.toggle('active', type === 'street');
+      if (btnDark) btnDark.classList.toggle('active', type === 'dark');
+    }
+
+    let isMasterPlaying = false;
+    let masterPlayTimer = null;
+
+    function toggleMasterAutoPlay() {
+      isMasterPlaying = !isMasterPlaying;
+      const btn = document.getElementById('master-play-btn');
+      const icon = document.getElementById('master-play-icon');
+      const text = document.getElementById('master-play-text');
+
+      if (isMasterPlaying) {
+        if (text) text.innerText = "PAUSE";
+        if (icon) {
+          icon.innerHTML = '<rect x="5" y="4" width="4" height="16"></rect><rect x="15" y="4" width="4" height="16"></rect>';
+        }
+        masterPlayTimer = setInterval(() => {
+          let nextHorizon = state.horizonMin + 15;
+          if (nextHorizon > 180) nextHorizon = 0;
+          updateMasterHorizon(nextHorizon);
+        }, 1300);
+      } else {
+        if (text) text.innerText = "PLAY";
+        if (icon) {
+          icon.innerHTML = '<polygon points="5,3 19,12 5,21"></polygon>';
+        }
+        clearInterval(masterPlayTimer);
+      }
+    }
+
+    function updateMasterStatusSection(h) {
+      const section = document.getElementById('master-screen-status-section');
+      if (!section) return;
+
+      const isCrit = h.mintoDepth > 25;
+      const isElev = h.mintoDepth > 10;
+      const mintoStatus = isCrit ? 'Impasse' : (isElev ? 'Caution' : 'Clear');
+
+      const elMintoDepth = document.getElementById('status-card-minto-depth');
+      if (elMintoDepth) {
+        elMintoDepth.innerHTML = `${h.mintoDepth.toFixed(1)} <span style="font-size: 0.8rem; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">cm</span>`;
+        elMintoDepth.style.color = isCrit ? '#D64545' : '#E8863A';
+      }
+      const elMintoDesc = document.getElementById('status-card-minto-desc');
+      if (elMintoDesc) {
+        elMintoDesc.innerHTML = `Operational State: <b>${mintoStatus}</b> &bull; HGL: <b>${h.mintoHgl.toFixed(2)}m</b>`;
+      }
+
+      const elBlockedCount = document.getElementById('status-card-blocked-count');
+      if (elBlockedCount) {
+        elBlockedCount.innerHTML = `${h.impassableCount} <span style="font-size: 0.8rem; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">ROADS</span>`;
+        elBlockedCount.style.color = h.impassableCount > 0 ? '#D64545' : '#10B981';
+      }
+      const elBlockedDesc = document.getElementById('status-card-blocked-desc');
+      if (elBlockedDesc) {
+        elBlockedDesc.innerHTML = `Passable Corridors: <b>${DELHI_STREET_NETWORK.length - h.impassableCount} / ${DELHI_STREET_NETWORK.length}</b>`;
+      }
+
+      const elRainRate = document.getElementById('status-card-rain-rate');
+      if (elRainRate) {
+        elRainRate.innerHTML = `${h.rain.toFixed(1)} <span style="font-size: 0.8rem; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">mm/h</span>`;
+        elRainRate.style.color = h.rain > 50 ? '#D64545' : '#E8863A';
+      }
+      const elRainDesc = document.getElementById('status-card-rain-desc');
+      if (elRainDesc) {
+        elRainDesc.innerHTML = `Radar Reflectivity: <b>${h.dbz} dBZ</b> &bull; Lead: <b>T+${state.horizonMin}M</b>`;
+      }
+
+      const elLossVal = document.getElementById('status-card-loss-val');
+      if (elLossVal) {
+        elLossVal.innerHTML = `₹${(h.hourlyEconomicLossInr / 1000).toFixed(0)}k <span style="font-size: 0.8rem; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">/hr</span>`;
+        elLossVal.style.color = h.impassableCount > 0 ? '#D64545' : '#10B981';
+      }
+      const elLossDesc = document.getElementById('status-card-loss-desc');
+      if (elLossDesc) {
+        elLossDesc.innerHTML = `Traffic Delay: <b>${h.pcuDelayedPerHr.toLocaleString()} PCU/hr</b>`;
+      }
+
+      const isEnv = (state.floodMapMode === 'envelope');
+      DELHI_STREET_NETWORK.forEach(st => {
+        const depth = st.getDepth(h, isEnv);
+        const isBlocked = depth > 25.0;
+        const isCaution = depth > 10.0 && depth <= 25.0;
+
+        const cellDepth = document.getElementById(`status-street-depth-${st.id}`);
+        if (cellDepth) {
+          cellDepth.innerText = `${depth.toFixed(1)} cm`;
+          cellDepth.style.color = isBlocked ? '#EF4444' : (isCaution ? '#F59E0B' : '#10B981');
+        }
+        const cellBadge = document.getElementById(`status-street-badge-${st.id}`);
+        if (cellBadge) {
+          cellBadge.className = isBlocked ? 'badge-error' : (isCaution ? 'badge-warning' : 'badge-success');
+          cellBadge.innerText = isBlocked ? 'IMPASSABLE' : (isCaution ? 'CAUTION' : 'CLEAR');
+        }
+        const cellSpeed = document.getElementById(`status-street-speed-${st.id}`);
+        if (cellSpeed) {
+          const spd = isBlocked ? 0 : Math.max(12, Math.round(st.nominalSpeed - depth * 0.5));
+          cellSpeed.innerText = `${spd} km/h`;
+        }
+        const cellAction = document.getElementById(`status-street-action-${st.id}`);
+        if (cellAction) {
+          cellAction.innerText = isBlocked ? 'Closure Enforced / Detour Active' : (isCaution ? 'Drive With Caution' : 'Nominal Flow / Clear');
+          cellAction.style.color = isBlocked ? '#EF4444' : (isCaution ? '#D97706' : '#10B981');
+        }
+      });
+
+      const vTwoWheeler = h.mintoDepth <= 10.0;
+      const vSedan = h.mintoDepth <= 15.0;
+      const vAmbulance = h.mintoDepth <= 25.0;
+      const vBus = h.mintoDepth <= 30.0;
+      const vFire = h.mintoDepth <= 45.0;
+
+      const fleetItems = [
+        { id: 'master-fleet-two_wheeler', clear: vTwoWheeler },
+        { id: 'master-fleet-sedan_car', clear: vSedan },
+        { id: 'master-fleet-emergency_ambulance', clear: vAmbulance },
+        { id: 'master-fleet-dtc_bus', clear: vBus },
+        { id: 'master-fleet-fire_truck', clear: vFire }
+      ];
+      fleetItems.forEach(item => {
+        const el = document.getElementById(item.id);
+        if (el) {
+          el.className = item.clear ? 'badge-success' : 'badge-error';
+          el.innerText = item.clear ? 'PASSABLE' : 'BLOCKED';
+        }
+      });
+
+      if (h.criticalInfrastructure) {
+        h.criticalInfrastructure.forEach(asset => {
+          const depthEl = document.getElementById(`status-asset-depth-${asset.id}`);
+          if (depthEl) depthEl.innerHTML = `Live: <b>${asset.waterDepthCm.toFixed(1)} cm</b>`;
+          const badgeEl = document.getElementById(`status-asset-badge-${asset.id}`);
+          if (badgeEl) {
+            badgeEl.className = asset.riskClass;
+            badgeEl.innerText = asset.riskLevel;
+          }
+        });
+      }
+    }
+
+    function inspectStreetFromTable(streetId) {
+      const st = DELHI_STREET_NETWORK.find(s => s.id === streetId);
+      if (!st) return;
+      const h = calculateHydraulics();
+      const isEnv = (state.floodMapMode === 'envelope');
+      const d = st.getDepth(h, isEnv);
+      const spd = d > 25 ? 0 : Math.max(12, Math.round(st.nominalSpeed - d * 0.5));
+      selectMasterFeature('road', st.id, st.name, d, st.baseElev, spd, null);
+      const mapWrapper = document.getElementById('master-screen-map-wrapper');
+      if (mapWrapper) mapWrapper.scrollIntoView({ behavior: 'smooth' });
+      if (window._activeMasterMap && st.coords && st.coords.length > 0) {
+        const mid = st.coords[Math.floor(st.coords.length / 2)];
+        window._activeMasterMap.panTo(mid);
+      }
+    }
+    window.inspectStreetFromTable = inspectStreetFromTable;
+
+    function updateMasterHorizon(v) {
+      state.horizonMin = parseInt(v);
+      const h = calculateHydraulics();
+
+      const slider = document.getElementById('master-timeline-slider');
+      if (slider && parseInt(slider.value) !== state.horizonMin) slider.value = state.horizonMin;
+
+      const timeLead = document.getElementById('master-time-lead');
+      if (timeLead) {
+        timeLead.innerHTML = `T + ${state.horizonMin} MIN <span style="font-weight: 500; color: var(--text-secondary); font-size: 0.68rem;">[${h.confLabel}]</span>`;
+      }
+      const timeRain = document.getElementById('master-time-rain');
+      if (timeRain) {
+        timeRain.innerHTML = `RAIN: ${h.rain.toFixed(1)} mm/hr (${h.dbz} dBZ)`;
+        timeRain.style.color = h.rain > 50 ? '#D64545' : '#E8863A';
+      }
+
+      document.querySelectorAll('.preset-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('onclick') === `updateMasterHorizon(${state.horizonMin})`);
+      });
+
+      const alertBadge = document.getElementById('master-hud-alert-badge');
+      const alertText = document.getElementById('master-hud-alert-text');
+      const mintoVal = document.getElementById('master-hud-minto-val');
+      const mintoStatus = document.getElementById('master-hud-minto-status');
+      const roadsVal = document.getElementById('master-hud-roads-val');
+
+      if (alertBadge) {
+        const isCrit = h.mintoDepth > 25;
+        const isElev = h.mintoDepth > 10;
+        alertBadge.className = isCrit ? 'badge-error' : (isElev ? 'badge-warning' : 'badge-success');
+        const dot = alertBadge.querySelector('.pulse-dot');
+        if (dot) dot.className = `pulse-dot ${isCrit ? 'red' : (isElev ? 'orange' : 'green')}`;
+        if (alertText) alertText.innerText = isCrit ? 'CRITICAL FLOOD ALERT' : (isElev ? 'ELEVATED PONDING' : 'NORMAL DRAINAGE');
+      }
+
+      if (mintoVal) {
+        mintoVal.innerText = `${h.mintoDepth.toFixed(1)} cm`;
+        mintoVal.style.color = h.mintoDepth > 25 ? '#D64545' : '#E8863A';
+      }
+      if (mintoStatus) {
+        mintoStatus.innerText = h.mintoDepth > 25 ? '(Impasse)' : (h.mintoDepth > 10 ? '(Caution)' : '(Clear)');
+      }
+      if (roadsVal) {
+        roadsVal.innerText = `${h.impassableCount} BLOCKED`;
+        roadsVal.style.color = h.impassableCount > 0 ? '#D64545' : '#10B981';
+      }
+
+      const headerMinto = document.getElementById('header-telemetry-minto');
+      if (headerMinto) {
+        headerMinto.innerText = `${h.mintoDepth.toFixed(1)} cm`;
+        headerMinto.style.color = h.mintoDepth > 25 ? '#D64545' : '#E8863A';
+      }
+
+      updateMasterScreenLayers(h, state.horizonMin);
+      updateMasterStatusSection(h);
+
+      if (state.selectedMasterFeature) {
+        renderMasterDrawerContent();
+      }
+    }
+
+    function renderMasterDrawerContent() {
+      const container = document.getElementById('master-drawer-content');
+      if (!container || !state.selectedMasterFeature) return;
+
+      const f = state.selectedMasterFeature;
+      const h = calculateHydraulics();
+
+      let depth = f.depth;
+      if (f.type === 'road') {
+        const st = DELHI_STREET_NETWORK.find(s => s.id === f.id);
+        if (st) depth = st.getDepth(h, state.floodMapMode === 'envelope');
+      } else if (f.type === 'node' && f.id === 'MH_MINTO_BRIDGE_LOW') {
+        depth = h.mintoDepth;
+      }
+
+      const isBlocked = depth > 25.0;
+      const isCaution = depth > 10.0 && depth <= 25.0;
+      const statusBadge = isBlocked 
+        ? '<span class="badge-error" style="font-weight:700; font-size:0.68rem; padding:0.2rem 0.6rem;">IMPASSABLE / BLOCKED</span>'
+        : (isCaution 
+          ? '<span class="badge-warning" style="font-weight:700; font-size:0.68rem; padding:0.2rem 0.6rem;">CAUTION / PONDING</span>' 
+          : '<span class="badge-success" style="font-weight:700; font-size:0.68rem; padding:0.2rem 0.6rem;">PASSABLE / CLEAR</span>');
+
+      const statusColor = isBlocked ? '#EF4444' : (isCaution ? '#F59E0B' : '#10B981');
+
+      let html = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-light); padding-bottom: 0.65rem; margin-bottom: 0.85rem;">
+          <div style="flex: 1; padding-right: 0.5rem;">
+            <div class="label-mono" style="font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase;">
+              ${f.type === 'road' ? 'ROAD CORRIDOR TELEMETRY' : 'HYDRAULIC NODE INLET'}
+            </div>
+            <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--accent-black); margin-top: 0.2rem; line-height: 1.3;">
+              ${f.name}
+            </h3>
+          </div>
+          <button onclick="closeMasterDrawer()" style="background: #F1F5F9; border: 1px solid var(--border-light); border-radius: 6px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-secondary);" title="Close Drawer">
+            <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" fill="none">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div style="background: var(--bg-card-alt); border: 1px solid var(--border-light); border-radius: 10px; padding: 0.85rem; margin-bottom: 0.85rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+            <span class="label-mono" style="font-size: 0.64rem; color: var(--text-secondary);">WATER DEPTH</span>
+            ${statusBadge}
+          </div>
+          <div style="display: flex; align-items: baseline; gap: 0.35rem;">
+            <span style="font-size: 2.2rem; font-weight: 900; font-family: var(--font-display); color: ${statusColor}; line-height: 1;">
+              ${depth.toFixed(1)}
+            </span>
+            <span style="font-size: 0.9rem; font-family: var(--font-mono); color: var(--text-secondary); font-weight: 700;">cm</span>
+          </div>
+          <div style="font-size: 0.68rem; color: var(--text-secondary); margin-top: 0.35rem;">
+            Pavement Elevation: <b>${f.elev || 214.5} m AMSL</b> &bull; Lead Time: <b>T + ${state.horizonMin}M</b>
+          </div>
+        </div>
+      `;
+
+      if (f.type === 'road') {
+        const vTwoWheeler = depth <= 10.0;
+        const vSedan = depth <= 15.0;
+        const vAmbulance = depth <= 25.0;
+        const vBus = depth <= 30.0;
+
+        html += `
+          <div style="margin-bottom: 0.85rem;">
+            <div class="label-mono" style="font-size: 0.64rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.45rem;">
+              FLEET PASSABILITY CHECKLIST
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid var(--border-light); border-radius: 6px; padding: 0.45rem 0.6rem; font-size: 0.72rem;">
+                <div style="font-weight: 600;">Two-Wheeler / Scooter (10cm)</div>
+                <span class="${vTwoWheeler ? 'badge-success' : 'badge-error'}" style="font-size: 0.62rem; font-weight: 700;">
+                  ${vTwoWheeler ? 'CLEAR' : 'BLOCKED'}
+                </span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid var(--border-light); border-radius: 6px; padding: 0.45rem 0.6rem; font-size: 0.72rem;">
+                <div style="font-weight: 600;">Sedan / Hatchback (15cm)</div>
+                <span class="${vSedan ? 'badge-success' : 'badge-error'}" style="font-size: 0.62rem; font-weight: 700;">
+                  ${vSedan ? 'CLEAR' : 'BLOCKED'}
+                </span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid var(--border-light); border-radius: 6px; padding: 0.45rem 0.6rem; font-size: 0.72rem;">
+                <div style="font-weight: 600;">Emergency Ambulance (25cm)</div>
+                <span class="${vAmbulance ? 'badge-success' : 'badge-error'}" style="font-size: 0.62rem; font-weight: 700;">
+                  ${vAmbulance ? 'CLEAR' : 'BLOCKED'}
+                </span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid var(--border-light); border-radius: 6px; padding: 0.45rem 0.6rem; font-size: 0.72rem;">
+                <div style="font-weight: 600;">DTC Electric Bus (30cm)</div>
+                <span class="${vBus ? 'badge-success' : 'badge-error'}" style="font-size: 0.62rem; font-weight: 700;">
+                  ${vBus ? 'CLEAR' : 'BLOCKED'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 0.8rem; margin-top: 0.5rem;">
+            <div style="font-size: 0.74rem; font-weight: 700; color: var(--accent-black); margin-bottom: 0.25rem;">
+              ${state.showMasterDetour ? 'Active Detour Corridor' : 'Safe Route Alternative'}
+            </div>
+            <div style="font-size: 0.68rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 0.65rem;">
+              ${isBlocked 
+                ? 'Direct corridor blocked by storm sump ponding. Barakhamba Flyover provides an elevated, 100% flood-free bypass (+1.1 km).' 
+                : 'Normal corridor is currently passable. Flyover bypass is on standby.'}
+            </div>
+            <button class="btn-primary" style="width: 100%; padding: 0.5rem; font-size: 0.72rem; font-weight: 700;" onclick="toggleMasterDetourRoute()">
+              ${state.showMasterDetour ? 'HIDE DETOUR ROUTE' : 'SHOW SAFE DETOUR ON MAP'}
+            </button>
+          </div>
+        `;
+      } else if (f.type === 'node') {
+        html += `
+          <div style="margin-bottom: 0.85rem;">
+            <div class="label-mono" style="font-size: 0.64rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.45rem;">
+              HYDRAULIC PARAMETERS
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.72rem;">
+              <div style="display:flex; justify-content:space-between; padding:0.35rem 0; border-bottom:1px solid #EEE;">
+                <span style="color:var(--text-secondary);">Ground Rim Elevation:</span>
+                <b>${(f.elev || 215.0).toFixed(2)} m AMSL</b>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:0.35rem 0; border-bottom:1px solid #EEE;">
+                <span style="color:var(--text-secondary);">Conduit Invert Elevation:</span>
+                <b>${(f.zi || 212.0).toFixed(2)} m AMSL</b>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:0.35rem 0; border-bottom:1px solid #EEE;">
+                <span style="color:var(--text-secondary);">Hydraulic State:</span>
+                <b>${depth > 25 ? 'Surcharged Overflow' : (depth > 10 ? 'Elevated Pressure' : 'Gravity Drainage')}</b>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-secondary" style="width: 100%; padding: 0.5rem; font-size: 0.72rem; font-weight: 700;" onclick="navigate('/hydraulic-transect')">
+            VIEW 2D SUBSURFACE TRANSECT
+          </button>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function renderMasterScreenPage() {
+      const h = calculateHydraulics();
+      const isCrit = h.mintoDepth > 25;
+      const isElev = h.mintoDepth > 10;
+      const alertClass = isCrit ? 'badge-error' : (isElev ? 'badge-warning' : 'badge-success');
+      const alertDotColor = isCrit ? 'red' : (isElev ? 'orange' : 'green');
+      const alertText = isCrit ? 'CRITICAL FLOOD ALERT' : (isElev ? 'ELEVATED PONDING' : 'NORMAL DRAINAGE');
+      const mintoColor = isCrit ? '#D64545' : '#E8863A';
+      const mintoStatus = isCrit ? 'Impasse' : (isElev ? 'Caution' : 'Clear');
+
+      return `
+        <div id="master-screen-container">
+          <!-- Aerial Map Viewport Wrapper -->
+          <div id="master-screen-map-wrapper">
+            <!-- Full-Bleed Map Canvas -->
+            <div id="master-screen-map"></div>
+
+            <!-- Floating Top HUD Status Bar -->
+            <div class="master-hud-top">
+              <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <div id="master-hud-alert-badge" class="${alertClass}" style="display: flex; align-items: center; gap: 0.45rem; padding: 0.35rem 0.75rem; border-radius: 9999px; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.04em;">
+                  <span class="pulse-dot ${alertDotColor}"></span>
+                  <span id="master-hud-alert-text">${alertText}</span>
+                </div>
+                <div class="desktop-only" style="height: 18px; width: 1px; background: rgba(0,0,0,0.12);"></div>
+                <div class="desktop-only" style="font-size: 0.74rem; font-family: var(--font-mono); display: flex; align-items: center; gap: 0.35rem;">
+                  <span style="color: var(--text-secondary); font-weight: 600;">MINTO PONDING:</span>
+                  <span id="master-hud-minto-val" style="font-weight: 800; color: ${mintoColor}; font-size: 0.82rem;">${h.mintoDepth.toFixed(1)} cm</span>
+                  <span id="master-hud-minto-status" style="font-size: 0.65rem; color: var(--text-muted);">(${mintoStatus})</span>
+                </div>
+                <div class="desktop-only" style="height: 18px; width: 1px; background: rgba(0,0,0,0.12);"></div>
+                <div class="desktop-only" style="font-size: 0.72rem; font-family: var(--font-mono);">
+                  <span style="color: var(--text-secondary); font-weight: 600;">ROADS: </span>
+                  <span id="master-hud-roads-val" style="font-weight: 700; color: ${h.impassableCount > 0 ? '#D64545' : '#10B981'};">${h.impassableCount} BLOCKED</span>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 0.45rem;">
+                <div class="master-basemap-group">
+                  <button id="btn-bm-sat" class="btn-bm-toggle active" onclick="switchMasterBasemap('satellite')">Satellite</button>
+                  <button id="btn-bm-street" class="btn-bm-toggle" onclick="switchMasterBasemap('street')">Streets</button>
+                  <button id="btn-bm-dark" class="btn-bm-toggle" onclick="switchMasterBasemap('dark')">Dark</button>
+                </div>
+                <button class="btn-hud-action" onclick="toggleFullScreenMap()" title="Toggle Fullscreen Canvas">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Floating Bottom Timeline Player Bar -->
+            <div class="master-hud-bottom">
+              <button id="master-play-btn" class="master-player-btn" onclick="toggleMasterAutoPlay()" aria-label="Play or pause simulation">
+                <svg id="master-play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5,3 19,12 5,21"></polygon>
+                </svg>
+                <span id="master-play-text" style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;">PLAY</span>
+              </button>
+
+              <div style="display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 200px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; font-family: var(--font-mono);">
+                  <span id="master-time-lead" style="font-weight: 800; color: var(--accent-black); font-size: 0.78rem;">
+                    T + ${state.horizonMin} MIN <span style="font-weight: 500; color: var(--text-secondary); font-size: 0.68rem;">[${h.confLabel}]</span>
+                  </span>
+                  <span id="master-time-rain" style="font-weight: 700; color: ${h.rain > 50 ? '#D64545' : '#E8863A'};">
+                    RAIN: ${h.rain.toFixed(1)} mm/hr (${h.dbz} dBZ)
+                  </span>
+                </div>
+                <input type="range" id="master-timeline-slider" min="0" max="180" step="5" value="${state.horizonMin}" oninput="updateMasterHorizon(this.value)" class="master-slider" style="width: 100%; cursor: pointer;">
+              </div>
+
+              <div class="desktop-only" style="display: flex; align-items: center; gap: 0.3rem;">
+                <button class="preset-pill ${state.horizonMin === 0 ? 'active' : ''}" onclick="updateMasterHorizon(0)">Now</button>
+                <button class="preset-pill ${state.horizonMin === 30 ? 'active' : ''}" onclick="updateMasterHorizon(30)">+30m</button>
+                <button class="preset-pill ${state.horizonMin === 45 ? 'active' : ''}" onclick="updateMasterHorizon(45)" style="${state.horizonMin === 45 ? 'border-color:#D64545; color:#D64545; font-weight:800;' : ''}">+45m Peak</button>
+                <button class="preset-pill ${state.horizonMin === 60 ? 'active' : ''}" onclick="updateMasterHorizon(60)">+1h</button>
+                <button class="preset-pill ${state.horizonMin === 120 ? 'active' : ''}" onclick="updateMasterHorizon(120)">+2h</button>
+              </div>
+            </div>
+
+            <!-- Slide-In Interactive Telemetry Drawer -->
+            <div id="master-telemetry-drawer" class="master-drawer ${state.selectedMasterFeature ? 'open' : ''}">
+              <div id="master-drawer-content"></div>
+            </div>
+
+            <!-- Master Floating Legend Card (Bottom-Left) -->
+            <div class="master-floating-legend">
+              <div style="font-weight: 800; font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.4rem; border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 0.25rem;">
+                STREET FLOOD &amp; DRAINAGE
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.68rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="display: inline-block; width: 18px; height: 10px; background: rgba(0,180,216,0.55); border-radius: 2px; border: 1px solid #00B4D8;"></span>
+                  <span>Water Margin / Curb Halo</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="display: inline-block; width: 18px; height: 4px; background: #EF4444; border-radius: 2px;"></span>
+                  <span>Impassable (&gt;25 cm)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="display: inline-block; width: 18px; height: 3.5px; background: #F59E0B; border-radius: 2px;"></span>
+                  <span>Caution Ponding (10-25 cm)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="display: inline-block; width: 18px; height: 3px; background: #10B981; border-radius: 2px;"></span>
+                  <span>Clear Corridor (&lt;10 cm)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #0EA5E9; border: 2px solid white;"></span>
+                  <span>Manhole Inlet / Node</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="font-weight: 800; color: #10B981; font-size: 0.75rem;">&rarr;</span>
+                  <span>Gravity Flow Vector</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Scroll Down Hint Indicator Pill -->
+            <div class="master-scroll-hint" onclick="document.getElementById('master-screen-status-section').scrollIntoView({ behavior: 'smooth' })">
+              <span>LIVE MUNICIPAL TELEMETRY &amp; STREET STATUS</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Live Municipal Telemetry & Street Status Section (Scrollable Downwards) -->
+          <div id="master-screen-status-section" style="padding: 2rem 1.5rem 3.5rem; max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.8rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; border-bottom: 2px solid var(--border-light); padding-bottom: 1.2rem;">
+              <div>
+                <div class="label-mono" style="margin-bottom: 0.25rem;">DELHI DRAINAGE BASIN &bull; REAL-TIME MUNICIPAL TELEMETRY</div>
+                <h2 class="heading-display" style="font-size: 2rem; margin: 0; line-height: 1.2;">Live Street Network &amp; Hydraulic Status</h2>
+                <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.35rem; font-family: sans-serif;">
+                  Synchronized with Saint-Venant hydraulic routing engine, street flood depths, fleet clearance matrix, and critical infrastructure telemetry.
+                </p>
+              </div>
+              <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                <button class="btn-secondary" onclick="document.getElementById('master-screen-map-wrapper').scrollIntoView({ behavior: 'smooth' })" style="display: flex; align-items: center; gap: 0.4rem;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                  BACK TO MAP
+                </button>
+                <button class="btn-secondary" onclick="navigate('/hydraulic-transect')">CONDUIT TRANSECT</button>
+                <button class="btn-primary" onclick="navigate('/routing')">SAFE DETOUR ROUTING</button>
+              </div>
+            </div>
+
+            <!-- 4 Summary KPI Metric Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem;">
+              <div class="card" style="padding: 1.15rem; border-left: 4px solid ${isCrit ? '#D64545' : '#E8863A'};">
+                <div class="label-mono">MINTO SUMP PONDING</div>
+                <div id="status-card-minto-depth" class="heading-display" style="font-size: 2.1rem; margin-top: 0.3rem; color: ${mintoColor};">
+                  ${h.mintoDepth.toFixed(1)} <span style="font-size: 0.8rem; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">cm</span>
+                </div>
+                <div id="status-card-minto-desc" style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem;">
+                  Operational State: <b>${mintoStatus}</b> &bull; HGL: <b>${h.mintoHgl.toFixed(2)}m</b>
+                </div>
+              </div>
+
+              <div class="card" style="padding: 1.15rem; border-left: 4px solid ${h.impassableCount > 0 ? '#D64545' : '#10B981'};">
+                <div class="label-mono">MONITORED ROAD STATUS</div>
+                <div id="status-card-blocked-count" class="heading-display" style="font-size: 2.1rem; margin-top: 0.3rem; color: ${h.impassableCount > 0 ? '#D64545' : '#10B981'};">
+                  ${h.impassableCount} <span style="font-size: 0.8rem; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">ROADS</span>
+                </div>
+                <div id="status-card-blocked-desc" style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem;">
+                  Passable Corridors: <b>${DELHI_STREET_NETWORK.length - h.impassableCount} / ${DELHI_STREET_NETWORK.length}</b>
+                </div>
+              </div>
+
+              <div class="card" style="padding: 1.15rem; border-left: 4px solid ${h.rain > 50 ? '#D64545' : '#E8863A'};">
+                <div class="label-mono">RADAR PRECIPITATION</div>
+                <div id="status-card-rain-rate" class="heading-display" style="font-size: 2.1rem; margin-top: 0.3rem; color: ${h.rain > 50 ? '#D64545' : '#E8863A'};">
+                  ${h.rain.toFixed(1)} <span style="font-size: 0.8rem; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">mm/h</span>
+                </div>
+                <div id="status-card-rain-desc" style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem;">
+                  Radar Reflectivity: <b>${h.dbz} dBZ</b> &bull; Lead: <b>T+${state.horizonMin}M</b>
+                </div>
+              </div>
+
+              <div class="card" style="padding: 1.15rem; border-left: 4px solid ${h.impassableCount > 0 ? '#D64545' : '#10B981'};">
+                <div class="label-mono">ESTIMATED ECONOMIC LOSS</div>
+                <div id="status-card-loss-val" class="heading-display" style="font-size: 2.1rem; margin-top: 0.3rem; color: ${h.impassableCount > 0 ? '#D64545' : '#10B981'};">
+                  ₹${(h.hourlyEconomicLossInr / 1000).toFixed(0)}k <span style="font-size: 0.8rem; font-family: var(--font-mono); font-weight: 600; color: var(--text-secondary);">/hr</span>
+                </div>
+                <div id="status-card-loss-desc" style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.35rem;">
+                  Traffic Delay: <b>${h.pcuDelayedPerHr.toLocaleString()} PCU/hr</b>
+                </div>
+              </div>
+            </div>
+
+            <!-- Monitored Delhi Street Network Table -->
+            <div class="card" style="padding: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+                <div>
+                  <div class="label-mono">DELHI MONITORED ROAD NETWORK</div>
+                  <h3 style="font-size: 1.15rem; font-weight: 800; margin: 0.15rem 0 0 0;">Corridor-by-Corridor Water Accumulation &amp; Traffic Advisory</h3>
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-secondary); font-family: var(--font-mono);">
+                  TOTAL MONITORED: <b>${DELHI_STREET_NETWORK.length} CORRIDORS</b>
+                </div>
+              </div>
+
+              <div style="overflow-x: auto;">
+                <table class="data-table" style="width: 100%; text-align: left; font-size: 0.78rem;">
+                  <thead>
+                    <tr style="border-bottom: 2px solid var(--border-medium);">
+                      <th style="padding: 0.6rem 0.75rem;">CORRIDOR / STREET</th>
+                      <th style="padding: 0.6rem 0.75rem;">BASE ELEV</th>
+                      <th style="padding: 0.6rem 0.75rem;">WATER DEPTH</th>
+                      <th style="padding: 0.6rem 0.75rem;">SAFETY STATUS</th>
+                      <th style="padding: 0.6rem 0.75rem;">EST. SPEED</th>
+                      <th style="padding: 0.6rem 0.75rem;">TRAFFIC ADVISORY</th>
+                      <th style="padding: 0.6rem 0.75rem; text-align: right;">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${DELHI_STREET_NETWORK.map(st => {
+                      const isEnv = (state.floodMapMode === 'envelope');
+                      const depth = st.getDepth(h, isEnv);
+                      const isBlocked = depth > 25.0;
+                      const isCaution = depth > 10.0 && depth <= 25.0;
+                      const badgeClass = isBlocked ? 'badge-error' : (isCaution ? 'badge-warning' : 'badge-success');
+                      const badgeText = isBlocked ? 'IMPASSABLE' : (isCaution ? 'CAUTION' : 'CLEAR');
+                      const depthColor = isBlocked ? '#EF4444' : (isCaution ? '#F59E0B' : '#10B981');
+                      const spd = isBlocked ? 0 : Math.max(12, Math.round(st.nominalSpeed - depth * 0.5));
+                      const actionText = isBlocked ? 'Closure Enforced / Detour Active' : (isCaution ? 'Drive With Caution' : 'Nominal Flow / Clear');
+                      const actionColor = isBlocked ? '#EF4444' : (isCaution ? '#D97706' : '#10B981');
+
+                      return `
+                        <tr style="border-bottom: 1px solid var(--border-light);">
+                          <td style="padding: 0.65rem 0.75rem; font-weight: 700;">${st.name}</td>
+                          <td style="padding: 0.65rem 0.75rem; font-family: var(--font-mono); color: var(--text-secondary);">${st.baseElev.toFixed(1)} m</td>
+                          <td id="status-street-depth-${st.id}" style="padding: 0.65rem 0.75rem; font-family: var(--font-mono); font-weight: 800; color: ${depthColor};">${depth.toFixed(1)} cm</td>
+                          <td style="padding: 0.65rem 0.75rem;">
+                            <span id="status-street-badge-${st.id}" class="${badgeClass}">${badgeText}</span>
+                          </td>
+                          <td id="status-street-speed-${st.id}" style="padding: 0.65rem 0.75rem; font-family: var(--font-mono); font-weight: 600;">${spd} km/h</td>
+                          <td id="status-street-action-${st.id}" style="padding: 0.65rem 0.75rem; font-weight: 600; color: ${actionColor}; font-size: 0.74rem;">${actionText}</td>
+                          <td style="padding: 0.65rem 0.75rem; text-align: right;">
+                            <button class="btn-secondary" onclick="inspectStreetFromTable('${st.id}')" style="padding: 0.2rem 0.55rem; font-size: 0.68rem;">INSPECT</button>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Two-Column Grid: Fleet Clearance & Critical Infrastructure -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.4rem;">
+              <!-- Vehicle Fleet Inundation Clearance Matrix -->
+              <div class="card" style="padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div class="label-mono">MULTI-MODAL FLEET CLEARANCE</div>
+                  <h3 style="font-size: 1.15rem; font-weight: 800; margin: 0.15rem 0 0.8rem 0;">Vehicle Type Flood Traversal Capacity</h3>
+                  <p style="font-size: 0.74rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    Exhaust and intake submersion thresholds evaluated against Minto Underpass live water line.
+                  </p>
+
+                  <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0.75rem; background: var(--bg-card-alt); border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+                      <div>
+                        <div style="font-weight: 700; font-size: 0.78rem;">Two-Wheeler / Motorcycle / Scooter</div>
+                        <div style="font-size: 0.68rem; color: var(--text-secondary);">Limit: 10 cm sill depth</div>
+                      </div>
+                      <span id="master-fleet-two_wheeler" class="${h.mintoDepth <= 10.0 ? 'badge-success' : 'badge-error'}">${h.mintoDepth <= 10.0 ? 'PASSABLE' : 'BLOCKED'}</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0.75rem; background: var(--bg-card-alt); border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+                      <div>
+                        <div style="font-weight: 700; font-size: 0.78rem;">Sedan / Hatchback / Auto-Rickshaw</div>
+                        <div style="font-size: 0.68rem; color: var(--text-secondary);">Limit: 15 cm sill depth</div>
+                      </div>
+                      <span id="master-fleet-sedan_car" class="${h.mintoDepth <= 15.0 ? 'badge-success' : 'badge-error'}">${h.mintoDepth <= 15.0 ? 'PASSABLE' : 'BLOCKED'}</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0.75rem; background: var(--bg-card-alt); border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+                      <div>
+                        <div style="font-weight: 700; font-size: 0.78rem;">Emergency Ambulance / Paramilitary PCR</div>
+                        <div style="font-size: 0.68rem; color: var(--text-secondary);">Limit: 25 cm intake clearance</div>
+                      </div>
+                      <span id="master-fleet-emergency_ambulance" class="${h.mintoDepth <= 25.0 ? 'badge-success' : 'badge-error'}">${h.mintoDepth <= 25.0 ? 'PASSABLE' : 'BLOCKED'}</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0.75rem; background: var(--bg-card-alt); border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+                      <div>
+                        <div style="font-weight: 700; font-size: 0.78rem;">DTC Low-Floor City Bus</div>
+                        <div style="font-size: 0.68rem; color: var(--text-secondary);">Limit: 30 cm axle clearance</div>
+                      </div>
+                      <span id="master-fleet-dtc_bus" class="${h.mintoDepth <= 30.0 ? 'badge-success' : 'badge-error'}">${h.mintoDepth <= 30.0 ? 'PASSABLE' : 'BLOCKED'}</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0.75rem; background: var(--bg-card-alt); border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+                      <div>
+                        <div style="font-weight: 700; font-size: 0.78rem;">Delhi Fire Service Heavy Tender</div>
+                        <div style="font-size: 0.68rem; color: var(--text-secondary);">Limit: 45 cm high-snorkel clearance</div>
+                      </div>
+                      <span id="master-fleet-fire_truck" class="${h.mintoDepth <= 45.0 ? 'badge-success' : 'badge-error'}">${h.mintoDepth <= 45.0 ? 'PASSABLE' : 'BLOCKED'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Monitored Delhi Infrastructure Telemetry -->
+              <div class="card" style="padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div class="label-mono">CRITICAL URBAN INFRASTRUCTURE</div>
+                  <h3 style="font-size: 1.15rem; font-weight: 800; margin: 0.15rem 0 0.8rem 0;">Key Delhi Municipal &amp; Transit Assets</h3>
+                  <p style="font-size: 0.74rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    Subsurface concourses, railway terminals, trauma centers, and electrical substations.
+                  </p>
+
+                  <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                    ${h.criticalInfrastructure.map(asset => `
+                      <div style="padding: 0.55rem 0.75rem; background: var(--bg-card-alt); border-radius: var(--radius-sm); border: 1px solid var(--border-light); display: flex; flex-direction: column; gap: 0.3rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                          <span style="font-weight: 700; font-size: 0.78rem;">${asset.name}</span>
+                          <span id="status-asset-badge-${asset.id}" class="${asset.riskClass}" style="font-size: 0.64rem;">${asset.riskLevel}</span>
+                        </div>
+                        <div style="font-size: 0.68rem; color: var(--text-secondary);">${asset.vulnerability}</div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.68rem; font-family: var(--font-mono); margin-top: 0.15rem;">
+                          <span>Threshold Limit: <b>${asset.critDepthCm} cm</b></span>
+                          <span id="status-asset-depth-${asset.id}">Live: <b>${asset.waterDepthCm.toFixed(1)} cm</b></span>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       `;
@@ -2062,7 +3657,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                 </div>
               </div>
               <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid var(--border-light); font-size: 0.7rem; color: var(--text-muted); display: flex; justify-content: space-between;">
-                <span>Solver: 1D Saint-Venant + 2D Ponding</span>
+                <span>Hydrodynamic Simulation: Active</span>
                 <span>Latency: 14 ms</span>
               </div>
             </div>
@@ -2174,7 +3769,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                   Dynamic Inundation Hydrograph &amp; 95% Confidence Envelope
                 </h3>
                 <p style="font-size: 0.72rem; color: #6B7280; margin: 0.25rem 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 400;">
-                  Coupled Saint-Venant 1D-2D hydrograph forecasting depth with ensemble variance spread
+                  Dynamic hydrograph forecasting water depth with ensemble variance spread
                 </p>
               </div>
               <span style="background: #EEF2FF; color: #4338CA; border: 1px solid #E0E7FF; font-size: 0.65rem; font-weight: 600; padding: 0.28rem 0.85rem; border-radius: 9999px; letter-spacing: 0.04em; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.4rem;">
@@ -2268,7 +3863,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                   Spatial Street Inundation Network
                 </div>
                 <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.15rem;">
-                  Live Street-Level Depths &bull; Coupled 1D-2D Saint-Venant (Zero Polygon Overlay)
+                  Live Street-Level Depths &bull; Real-Time Drainage Network (Zero Polygon Overlay)
                 </div>
               </div>
 
@@ -3536,7 +5131,11 @@ APP_SHELL_HTML = """<!DOCTYPE html>
     }
 
     function getPageInfo(path) {
-      if (path === "/nowcast") {
+      if (path === "/" || path === "/dashboard" || path === "/master") {
+        return { title: "Master Flood & Inundation Map", html: renderMasterScreenPage() };
+      } else if (path === "/catchment-kpi") {
+        return { title: "Catchment Telemetry & Assets", html: renderDashboardPage() };
+      } else if (path === "/nowcast") {
         return { title: "Radar Nowcast & Timeline", html: renderNowcastPage() };
       } else if (path === "/causal-chain") {
         return { title: "Causal Pipeline Architecture", html: renderCausalChainPage() };
@@ -3553,7 +5152,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       } else if (path === "/settings") {
         return { title: "Model Parameters & Settings", html: renderSettingsPage() };
       } else {
-        return { title: "Dashboard Overview", html: renderDashboardPage() };
+        return { title: "Master Flood & Inundation Map", html: renderMasterScreenPage() };
       }
     }
 
@@ -3561,14 +5160,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
     function render() {
       const path = state.route;
 
-      if (!state.isLoggedIn && path !== "/" && path !== "/landing") {
-        state.route = "/";
-        window.history.replaceState({}, "", "/");
-        document.getElementById('app-root').innerHTML = renderLanding() + `<div id="modal-container">${renderModal()}</div>`;
-        return;
-      }
-
-      if (path === "/" || path === "/landing") {
+      if (path === "/landing") {
         document.getElementById('app-root').innerHTML = renderLanding() + `<div id="modal-container">${renderModal()}</div>`;
         return;
       }
@@ -3581,7 +5173,11 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
       if (existingShell && existingMain && existingSidebar) {
         // Persistent Shell Architecture: NEVER destroy or reset the sidebar!
+        const isMaster = (path === "/" || path === "/master");
+        existingMain.classList.toggle('master-screen-layout', isMaster);
         existingMain.innerHTML = info.html;
+        existingMain.scrollTop = 0;
+        window.scrollTo(0, 0);
 
         const titleEl = document.getElementById('app-header-page-title');
         if (titleEl) titleEl.textContent = info.title;
@@ -4043,239 +5639,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
         if (window._nowcastFloodPolygon) {
           try { map.removeLayer(window._nowcastFloodPolygon); } catch(e) {}
           window._nowcastFloodPolygon = null;
-        }
-
-        // Comprehensive Delhi Connaught Place & Minto Inundation Street Network
-        const DELHI_STREET_NETWORK = [
-          {
-            id: 'minto_underpass',
-            name: 'Minto Road Railway Subway (Choke Sump)',
-            coords: [
-              [28.6332, 77.2246], [28.6336, 77.2251], [28.6340, 77.2257], [28.6343, 77.2261],
-              [28.6346, 77.2265], [28.6348, 77.2268], [28.6350, 77.2272], [28.6353, 77.2276],
-              [28.6357, 77.2284], [28.6360, 77.2290]
-            ],
-            baseElev: 211.8,
-            getDepth: (h, isEnv) => isEnv ? h.mintoDepth + h.uncertaintyCm : h.mintoDepth,
-            nominalSpeed: 40
-          },
-          {
-            id: 'ddu_marg',
-            name: 'Deen Dayal Upadhyay (DDU) Marg',
-            coords: [
-              [28.6348, 77.2268], [28.6344, 77.2278], [28.6342, 77.2285], [28.6340, 77.2298],
-              [28.6338, 77.2312], [28.6335, 77.2330]
-            ],
-            baseElev: 213.2,
-            getDepth: (h, isEnv) => {
-              const base = Math.max(1.2, Math.round(h.mintoDepth * 0.42 * (1.0 + state.cloggingRatio * 0.25) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.42 * 10) / 10 : base;
-            },
-            nominalSpeed: 45
-          },
-          {
-            id: 'minto_radial_approach',
-            name: 'Radial Road 2 & Minto Radial Approach',
-            coords: [
-              [28.6338, 77.2202], [28.6344, 77.2215], [28.6345, 77.2238], [28.6348, 77.2268]
-            ],
-            baseElev: 215.4,
-            getDepth: (h, isEnv) => {
-              const base = Math.max(1.0, Math.round(h.mintoDepth * 0.38 * (1.0 + state.cloggingRatio * 0.3) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.38 * 10) / 10 : base;
-            },
-            nominalSpeed: 40
-          },
-          {
-            id: 'outer_circle_east',
-            name: 'Connaught Circus Outer Circle (East / Shivaji Bridge)',
-            coords: [
-              [28.6360, 77.2182], [28.6358, 77.2205], [28.6352, 77.2228], [28.6335, 77.2235],
-              [28.6328, 77.2238], [28.6315, 77.2234], [28.6305, 77.2225]
-            ],
-            baseElev: 215.8,
-            getDepth: (h, isEnv) => {
-              const extra = (h.mintoDepth > 35) ? (h.mintoDepth - 35) * 0.22 : 0;
-              const base = Math.max(1.5, Math.round((5.8 * (h.rain / 55.0) + extra) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.25 * 10) / 10 : base;
-            },
-            nominalSpeed: 40
-          },
-          {
-            id: 'outer_circle_west',
-            name: 'Connaught Circus Outer Circle (West / Regal)',
-            coords: [
-              [28.6305, 77.2225], [28.6295, 77.2215], [28.6288, 77.2185], [28.6292, 77.2162],
-              [28.6298, 77.2148], [28.6312, 77.2138], [28.6328, 77.2135], [28.6342, 77.2138],
-              [28.6351, 77.2145], [28.6358, 77.2165], [28.6360, 77.2182]
-            ],
-            baseElev: 216.9,
-            getDepth: (h, isEnv) => {
-              const base = Math.max(0.8, Math.round(3.4 * (h.rain / 60.0) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.12 * 10) / 10 : base;
-            },
-            nominalSpeed: 45
-          },
-          {
-            id: 'inner_circle',
-            name: 'Connaught Circus Inner Circle (Full Ring)',
-            coords: [
-              [28.6340, 77.2180], [28.6342, 77.2190], [28.6338, 77.2202], [28.6330, 77.2207],
-              [28.6322, 77.2205], [28.6315, 77.2202], [28.6312, 77.2198], [28.6308, 77.2185],
-              [28.6312, 77.2174], [28.6315, 77.2170], [28.6322, 77.2166], [28.6328, 77.2164],
-              [28.6335, 77.2166], [28.6339, 77.2169], [28.6340, 77.2180]
-            ],
-            baseElev: 216.2,
-            getDepth: (h, isEnv) => {
-              const base = Math.max(1.0, Math.round(4.6 * (h.rain / 60.0) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.15 * 10) / 10 : base;
-            },
-            nominalSpeed: 40
-          },
-          {
-            id: 'middle_circle',
-            name: 'Connaught Circus Middle Circle Collector',
-            coords: [
-              [28.6348, 77.2185], [28.6344, 77.2208], [28.6328, 77.2215], [28.6306, 77.2208],
-              [28.6300, 77.2185], [28.6306, 77.2162], [28.6328, 77.2155], [28.6344, 77.2162],
-              [28.6348, 77.2185]
-            ],
-            baseElev: 216.4,
-            getDepth: (h, isEnv) => {
-              const base = Math.max(0.9, Math.round(4.1 * (h.rain / 60.0) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.14 * 10) / 10 : base;
-            },
-            nominalSpeed: 35
-          },
-          {
-            id: 'barakhamba_flyover',
-            name: 'Barakhamba Road & Ranjit Singh Flyover (Detour Route)',
-            coords: [
-              [28.6340, 77.2180], [28.6333, 77.2192], [28.6325, 77.2210], [28.6318, 77.2223],
-              [28.6309, 77.2234], [28.6300, 77.2246], [28.6290, 77.2257], [28.6278, 77.2268],
-              [28.6276, 77.2278], [28.6282, 77.2284], [28.6294, 77.2293], [28.6307, 77.2301],
-              [28.6322, 77.2308], [28.6337, 77.2314], [28.6350, 77.2311], [28.6358, 77.2299],
-              [28.6360, 77.2290]
-            ],
-            baseElev: 217.5,
-            getDepth: (h, isEnv) => 0.4,
-            nominalSpeed: 50
-          },
-          {
-            id: 'bhavbhuti_marg',
-            name: 'Bhavbhuti Marg (Railway Bypass Corridor)',
-            coords: [
-              [28.6340, 77.2180], [28.6347, 77.2182], [28.6353, 77.2186], [28.6361, 77.2192],
-              [28.6368, 77.2199], [28.6375, 77.2208], [28.6381, 77.2217], [28.6384, 77.2226],
-              [28.6386, 77.2238], [28.6385, 77.2248], [28.6382, 77.2258], [28.6377, 77.2268],
-              [28.6371, 77.2276], [28.6365, 77.2284], [28.6360, 77.2290]
-            ],
-            baseElev: 216.0,
-            getDepth: (h, isEnv) => {
-              const base = Math.max(0.6, Math.round(2.2 * (h.rain / 50.0) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.1 * 10) / 10 : base;
-            },
-            nominalSpeed: 40
-          },
-          {
-            id: 'kg_marg',
-            name: 'Kasturba Gandhi (KG) Marg Arterial',
-            coords: [
-              [28.6312, 77.2198], [28.6304, 77.2208], [28.6295, 77.2215], [28.6285, 77.2220],
-              [28.6275, 77.2225], [28.6258, 77.2235]
-            ],
-            baseElev: 216.8,
-            getDepth: (h, isEnv) => {
-              const base = Math.max(0.5, Math.round(2.8 * (h.rain / 60.0) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.1 * 10) / 10 : base;
-            },
-            nominalSpeed: 45
-          },
-          {
-            id: 'janpath',
-            name: 'Janpath Road Corridor',
-            coords: [
-              [28.6308, 77.2185], [28.6298, 77.2185], [28.6288, 77.2185], [28.6275, 77.2185],
-              [28.6262, 77.2185], [28.6248, 77.2188], [28.6235, 77.2195]
-            ],
-            baseElev: 217.0,
-            getDepth: (h, isEnv) => {
-              const base = Math.max(0.5, Math.round(2.5 * (h.rain / 60.0) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.08 * 10) / 10 : base;
-            },
-            nominalSpeed: 45
-          },
-          {
-            id: 'chelmsford_road',
-            name: 'Chelmsford Road (Paharganj / NDLS Connector)',
-            coords: [
-              [28.6340, 77.2180], [28.6348, 77.2182], [28.6360, 77.2182], [28.6375, 77.2186],
-              [28.6392, 77.2195], [28.6410, 77.2215]
-            ],
-            baseElev: 215.8,
-            getDepth: (h, isEnv) => {
-              const base = Math.max(0.8, Math.round(3.6 * (h.rain / 60.0) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.12 * 10) / 10 : base;
-            },
-            nominalSpeed: 35
-          },
-          {
-            id: 'tolstoy_marg',
-            name: 'Tolstoy Marg Transverse Interceptor',
-            coords: [
-              [28.6292, 77.2252], [28.6282, 77.2238], [28.6275, 77.2225], [28.6268, 77.2205],
-              [28.6262, 77.2185]
-            ],
-            baseElev: 217.2,
-            getDepth: (h, isEnv) => {
-              const base = Math.max(0.4, Math.round(1.8 * (h.rain / 60.0) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.08 * 10) / 10 : base;
-            },
-            nominalSpeed: 45
-          },
-          {
-            id: 'sansad_marg',
-            name: 'Sansad Marg (Parliament Street)',
-            coords: [
-              [28.6315, 77.2170], [28.6308, 77.2160], [28.6298, 77.2148], [28.6285, 77.2135],
-              [28.6268, 77.2118]
-            ],
-            baseElev: 217.6,
-            getDepth: (h, isEnv) => {
-              const base = Math.max(0.3, Math.round(1.5 * (h.rain / 60.0) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.06 * 10) / 10 : base;
-            },
-            nominalSpeed: 50
-          },
-          {
-            id: 'bks_marg',
-            name: 'Baba Kharak Singh (BKS) Marg',
-            coords: [
-              [28.6328, 77.2164], [28.6328, 77.2150], [28.6328, 77.2135], [28.6325, 77.2125],
-              [28.6322, 77.2115]
-            ],
-            baseElev: 217.8,
-            getDepth: (h, isEnv) => {
-              const base = Math.max(0.3, Math.round(1.4 * (h.rain / 60.0) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.05 * 10) / 10 : base;
-            },
-            nominalSpeed: 45
-          },
-          {
-            id: 'shaheed_bhagat_singh',
-            name: 'Shaheed Bhagat Singh Road',
-            coords: [
-              [28.6339, 77.2169], [28.6345, 77.2158], [28.6351, 77.2145], [28.6360, 77.2128],
-              [28.6370, 77.2105]
-            ],
-            baseElev: 217.4,
-            getDepth: (h, isEnv) => {
-              const base = Math.max(0.4, Math.round(1.7 * (h.rain / 60.0) * 10) / 10);
-              return isEnv ? base + Math.round(h.uncertaintyCm * 0.06 * 10) / 10 : base;
-            },
-            nominalSpeed: 40
-          }
-        ];
+        }        // Uses shared DELHI_STREET_NETWORK definition
 
         // Clear existing street layers
         window._nowcastRoadLayerGroup.clearLayers();
@@ -4323,7 +5687,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
               Safe Vehicle Speed: <b>${currentSpeed} km/h</b> (Nominal ${st.nominalSpeed} km/h)<br>
               Street Base Elevation: <b>${st.baseElev} m AMSL</b><br>
               Lead Time: <b>T + ${horizonMin} Min</b><br>
-              Coupled Model: <b>1D Conduit + 2D Street Overland</b>
+              Network: <b>Delhi Municipal Drainage Flow</b>
             </div>
           `);
 
@@ -4383,7 +5747,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
                 <span>Sump Alert Node: <b>${depth.toFixed(1)} cm</b> (${depth > 25 ? 'Critical Surcharge' : (depth > 10 ? 'Caution' : 'Normal')})</span>
               </div>
               <div style="font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-muted); border-top: 1px dashed var(--border-light); padding-top: 0.25rem; margin-top: 0.15rem;">
-                Coupled 1D-2D Street Overland Flow (Streets Only)
+                Street Network Flow Telemetry (Streets Only)
               </div>
             </div>
           `;
@@ -4407,6 +5771,10 @@ APP_SHELL_HTML = """<!DOCTYPE html>
       const CARTO_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhIjoiYWNfbnM4NXgxZXQiLCJqdGkiOiIzMmE5OTQwYyIsImV4cCI6MTc5MTI5NzQyMH0.U5pH9TRFvYID3Rb-99KMAUF3WNALVNNp0BSCVj28K9U";
 
       function createBasemapLayers() {
+        const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+          maxZoom: 19
+        });
         const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
           maxZoom: 19
@@ -4421,7 +5789,61 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           subdomains: 'abcd',
           maxZoom: 20
         });
-        return { osmStandard, cartoVoyager, cartoDark };
+        return { esriSatellite, osmStandard, cartoVoyager, cartoDark };
+      }
+
+      // 0. Master Screen Full-Bleed Live Map View (Aerial Satellite + Heatmap Ribbons + Flow Arrows)
+      if (document.getElementById('master-screen-map') && window.L) {
+        setTimeout(() => {
+          let container = document.getElementById('master-screen-map');
+          if (!container) return;
+
+          if (container._leaflet_id && window._activeMasterMap) {
+            updateMasterScreenLayers(h, state.horizonMin);
+            return;
+          }
+
+          if (window._activeMasterMap) {
+            try { window._activeMasterMap.remove(); } catch(e) {}
+            window._activeMasterMap = null;
+          }
+
+          let map = L.map('master-screen-map', {
+            zoomControl: false,
+            scrollWheelZoom: false
+          }).setView([28.6335, 77.2230], 15);
+          window._activeMasterMap = map;
+
+          map.on('click', () => { map.scrollWheelZoom.enable(); });
+          map.on('mouseout', () => { map.scrollWheelZoom.disable(); });
+
+          L.control.zoom({ position: 'topright' }).addTo(map);
+
+          setTimeout(() => map.invalidateSize(), 150);
+
+          const { esriSatellite, cartoVoyager, cartoDark, osmStandard } = createBasemapLayers();
+          window._masterBasemaps = { satellite: esriSatellite, street: cartoVoyager, dark: cartoDark, osm: osmStandard };
+
+          if (state.masterBasemap === 'street') {
+            cartoVoyager.addTo(map);
+          } else if (state.masterBasemap === 'dark') {
+            cartoDark.addTo(map);
+          } else {
+            esriSatellite.addTo(map);
+          }
+
+          window._masterConduitLayerGroup = L.layerGroup().addTo(map);
+          window._masterFlowArrowLayerGroup = L.layerGroup().addTo(map);
+          window._masterRibbonLayerGroup = L.layerGroup().addTo(map);
+          window._masterNodeLayerGroup = L.layerGroup().addTo(map);
+          window._masterDetourLayerGroup = L.layerGroup().addTo(map);
+
+          map.on('zoomend moveend', () => {
+            updateMasterFlowArrows();
+          });
+
+          updateMasterScreenLayers(h, state.horizonMin);
+        }, 80);
       }
 
       // 1. Drainage GIS Map View (Screenshot 4 Fidelity)
@@ -4431,9 +5853,12 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           if (!container || container._leaflet_id) return;
 
           let map = L.map('drainage-leaflet-map', {
-            zoomControl: true
+            zoomControl: true,
+            scrollWheelZoom: false
           }).setView([28.6335, 77.2230], 15);
           window._activeDrainageMap = map;
+          map.on('click', () => { map.scrollWheelZoom.enable(); });
+          map.on('mouseout', () => { map.scrollWheelZoom.disable(); });
           setTimeout(() => map.invalidateSize(), 150);
 
           const { osmStandard, cartoVoyager, cartoDark } = createBasemapLayers();
@@ -4446,57 +5871,7 @@ APP_SHELL_HTML = """<!DOCTYPE html>
             "CARTO Dark Matter": cartoDark
           }, null, { position: 'topright' }).addTo(map);
 
-          // Comprehensive Connaught Place Storm Drainage Network
-          const conduits = [
-            // 1. Full Inner Circle Conduit Loop
-            [
-              [28.6340, 77.2180], [28.6342, 77.2190], [28.6338, 77.2202],
-              [28.6330, 77.2207], [28.6322, 77.2205], [28.6315, 77.2202],
-              [28.6312, 77.2198], [28.6308, 77.2185], [28.6312, 77.2174],
-              [28.6315, 77.2170], [28.6322, 77.2166], [28.6328, 77.2164],
-              [28.6335, 77.2166], [28.6339, 77.2169], [28.6340, 77.2180]
-            ],
-            // 2. Full Outer Circle (Connaught Circus) Trunk Loop (Blue conduit matching Screenshot 4)
-            [
-              [28.6360, 77.2182], [28.6358, 77.2205], [28.6352, 77.2228],
-              [28.6335, 77.2235], [28.6328, 77.2238], [28.6315, 77.2234],
-              [28.6305, 77.2225], [28.6295, 77.2215], [28.6288, 77.2185],
-              [28.6292, 77.2162], [28.6298, 77.2148], [28.6312, 77.2138],
-              [28.6328, 77.2135], [28.6342, 77.2138], [28.6351, 77.2145],
-              [28.6358, 77.2165], [28.6360, 77.2182]
-            ],
-            // 3. Middle Circle Collector Ring
-            [[28.6348, 77.2185], [28.6344, 77.2208], [28.6328, 77.2215], [28.6306, 77.2208], [28.6300, 77.2185], [28.6306, 77.2162], [28.6328, 77.2155], [28.6344, 77.2162], [28.6348, 77.2185]],
-            // 4. Central Hub Spoke Feeders
-            [[28.6328, 77.2185], [28.6340, 77.2180]],
-            [[28.6328, 77.2185], [28.6322, 77.2205]],
-            [[28.6328, 77.2185], [28.6308, 77.2185]],
-            [[28.6328, 77.2185], [28.6328, 77.2164]],
-            // 5. Radial 1: Chelmsford Road Arterial Conduit
-            [[28.6340, 77.2180], [28.6348, 77.2182], [28.6360, 77.2182], [28.6375, 77.2186], [28.6392, 77.2195], [28.6410, 77.2215]],
-            // 6. Radial 2: Minto Main Storm Trunk
-            [[28.6338, 77.2202], [28.6344, 77.2215], [28.6352, 77.2228], [28.6345, 77.2238], [28.6338, 77.2248], [28.6344, 77.2258], [28.6348, 77.2268], [28.6353, 77.2274], [28.6357, 77.2284], [28.6360, 77.2290]],
-            // 7. Radial 3: Barakhamba Road Trunk Corridor
-            [[28.6328, 77.2218], [28.6328, 77.2238], [28.6315, 77.2244], [28.6300, 77.2250], [28.6292, 77.2252], [28.6275, 77.2265]],
-            // 8. Radial 4: Kasturba Gandhi Marg Trunk Corridor
-            [[28.6312, 77.2198], [28.6304, 77.2208], [28.6295, 77.2215], [28.6285, 77.2220], [28.6275, 77.2225], [28.6258, 77.2235]],
-            // 9. Radial 5: Janpath Main Storm Drain Corridor
-            [[28.6308, 77.2185], [28.6298, 77.2185], [28.6288, 77.2185], [28.6275, 77.2185], [28.6262, 77.2185], [28.6248, 77.2188], [28.6235, 77.2195]],
-            // 10. Radial 6: Sansad Marg Collector
-            [[28.6315, 77.2170], [28.6308, 77.2160], [28.6298, 77.2148], [28.6285, 77.2135], [28.6268, 77.2118]],
-            // 11. Radial 7: Baba Kharak Singh Marg
-            [[28.6328, 77.2164], [28.6328, 77.2150], [28.6328, 77.2135], [28.6325, 77.2125], [28.6322, 77.2115]],
-            // 12. Radial 8: Shaheed Bhagat Singh Road Drain
-            [[28.6339, 77.2169], [28.6345, 77.2158], [28.6351, 77.2145], [28.6360, 77.2128], [28.6370, 77.2105]],
-            // 13. Bhavbhuti Marg Railway Bypass Collector
-            [[28.6360, 77.2182], [28.6365, 77.2195], [28.6368, 77.2210], [28.6365, 77.2225], [28.6362, 77.2235], [28.6360, 77.2255], [28.6355, 77.2272], [28.6360, 77.2290]],
-            // 14. Deen Dayal Upadhyay (DDU) Marg Interceptor Trunk
-            [[28.6348, 77.2268], [28.6344, 77.2278], [28.6342, 77.2285], [28.6340, 77.2298], [28.6338, 77.2312], [28.6335, 77.2330]],
-            // 15. Tolstoy Marg Transverse Interceptor
-            [[28.6292, 77.2252], [28.6282, 77.2238], [28.6275, 77.2225], [28.6268, 77.2205], [28.6262, 77.2185]],
-            // 16. Outfall Trunk Main to Yamuna River
-            [[28.6360, 77.2290], [28.6364, 77.2302], [28.6368, 77.2315], [28.6372, 77.2320], [28.6378, 77.2332], [28.6385, 77.2340]]
-          ];
+          // Comprehensive Connaught Place Storm Drainage Network          const conduits = DELHI_DRAINAGE_CONDUITS;
 
           conduits.forEach((line, idx) => {
             let isOuterLoop = idx === 1; // Outer Circle Loop - Blue in Screenshot 4
@@ -4625,9 +6000,12 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           }
 
           let map = L.map('nowcast-leaflet-map', {
-            zoomControl: true
+            zoomControl: true,
+            scrollWheelZoom: false
           }).setView([28.6335, 77.2230], 15);
           window._activeNowcastMap = map;
+          map.on('click', () => { map.scrollWheelZoom.enable(); });
+          map.on('mouseout', () => { map.scrollWheelZoom.disable(); });
           setTimeout(() => map.invalidateSize(), 150);
 
           const { osmStandard, cartoVoyager, cartoDark } = createBasemapLayers();
@@ -4691,8 +6069,12 @@ APP_SHELL_HTML = """<!DOCTYPE html>
           let container = document.getElementById('routing-leaflet-map');
           if (!container || container._leaflet_id) return;
 
-          let map = L.map('routing-leaflet-map').setView([28.6330, 77.2230], 15);
+          let map = L.map('routing-leaflet-map', {
+            scrollWheelZoom: false
+          }).setView([28.6330, 77.2230], 15);
           window._activeRoutingMap = map;
+          map.on('click', () => { map.scrollWheelZoom.enable(); });
+          map.on('mouseout', () => { map.scrollWheelZoom.disable(); });
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19
@@ -4930,7 +6312,27 @@ APP_SHELL_HTML = """<!DOCTYPE html>
 
     function updateHorizon(v) {
       state.horizonMin = parseInt(v);
+      if (window._activeMasterMap) {
+        updateMasterHorizon(v);
+        return;
+      }
       const h = calculateHydraulics();
+
+      // Live synchronize top header telemetry
+      const headerMinto = document.getElementById('header-telemetry-minto');
+      const headerMintoLabel = document.getElementById('header-telemetry-minto-label');
+      if (headerMinto) {
+        headerMinto.textContent = `${h.mintoDepth.toFixed(1)} cm`;
+        headerMinto.style.color = h.mintoDepth > 25 ? '#D64545' : '#E8863A';
+      }
+      if (headerMintoLabel) {
+        headerMintoLabel.textContent = state.horizonMin === 45 ? 'PEAK MINTO PONDING (T+45M): ' : `MINTO PONDING (T+${state.horizonMin}M): `;
+      }
+      const mobilePill = document.querySelector('.mobile-minto-pill');
+      if (mobilePill) {
+        mobilePill.textContent = `${h.mintoDepth.toFixed(1)} cm`;
+        mobilePill.style.color = h.mintoDepth > 25 ? '#D64545' : '#E8863A';
+      }
 
       const horizonText = document.getElementById('horizon-display-text');
       const rainText = document.getElementById('rain-display-text');
